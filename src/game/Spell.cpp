@@ -3619,6 +3619,88 @@ void Spell::cast(bool skipCheck)
             break;
     }
 
+    //grounding totem fix
+
+    switch(m_spellInfo->SpellFamilyName)
+    {
+        case SPELLFAMILY_DRUID:
+        {
+            if(m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE)
+            {
+                if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+                break;
+            } 
+            switch(m_spellInfo->Id)
+            {
+                case 16979:                                                      //feral charge
+                case 49376:                                                      //feral charge
+                {
+                    if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+                    break;
+                }
+            }
+            break;
+        }
+
+        case SPELLFAMILY_WARRIOR:
+        {
+            if(m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE)
+            {
+                if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+                break;
+            } 
+            if(m_spellInfo->SpellFamilyFlags.test<CF_WARRIOR_CHARGE>())          //charge
+            {
+                if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+                break;
+            }
+            switch(m_spellInfo->Id)
+            {
+                case 20252:                                                      //intercept
+                {
+                    if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+                    break;
+                }
+            }
+            break;
+        }
+
+        case SPELLFAMILY_ROGUE:
+        {
+            if(m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE)
+            {
+                if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+                break;
+            } 
+            if(     m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_MUTILATE>()         //Honor Among Thieves
+
+                                   /** Rogue poisons **/
+                 || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_INSTANT_POISON>()   
+                 || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_CRIPPLING_POISON>()
+                 || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_MIND_NUMBING_POISON>()
+                 || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_DEADLY_POISON>()
+                 || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_DEADLY_POISON>()
+                 || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_WOUND_POISON>()
+            )
+            {
+                if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+                break;
+            }
+            switch(m_spellInfo->Id)
+            {
+                case 36554:                                                      //ROGUE_SHADOWSTEP
+                case 14183:                                                      //PREMEDITATION
+                {
+                    if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+                    break;
+                }
+            }
+            break;
+        }
+            
+        default: break;
+    }
+
     // traded items have trade slot instead of guid in m_itemTargetGUID
     // set to real guid to be sent later to the client
     m_targets.updateTradeSlotItem();
