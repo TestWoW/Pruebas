@@ -8468,7 +8468,7 @@ void Aura::PeriodicTick()
                     int32 remainingTicks = ticks - GetAuraTicks();
                     int32 addition = int32(amount)*ticks*(-6+2*remainingTicks)/100;
 
-                    if (GetAuraTicks() != 1)
+                    if (GetAuraTicks() > 1 && ticks > 1)
                         // Item - Druid T10 Restoration 2P Bonus
                         if (Aura *aura = pCaster->GetAura(70658, EFFECT_INDEX_0))
                             addition += abs(int32((addition * aura->GetModifier()->m_amount) / ((ticks-1)* 100)));
@@ -10399,9 +10399,10 @@ Unit* SpellAuraHolder::GetCaster() const
 {
     if (!m_target)
         return NULL;
-
-    if (GetCasterGuid() == m_target->GetObjectGuid())
-        return m_target;
+    
+    if (m_target->IsInWorld())
+        if (GetCasterGuid() == m_target->GetObjectGuid())
+            return m_target;
 
     return ObjectAccessor::GetUnit(*m_target, m_casterGuid);// player will search at any maps
 }
@@ -11490,7 +11491,8 @@ void SpellAuraHolder::HandleSpellSpecificBoostsForward(bool apply)
 
 SpellAuraHolder::~SpellAuraHolder()
 {
-    DEBUG_LOG("SpellAuraHolder:: destructor for spell %u called.", GetId());
+    m_aurasStorage.clear();
+    //DEBUG_LOG("SpellAuraHolder:: destructor for spell %u called.", GetId());
 }
 
 void SpellAuraHolder::Update(uint32 diff)
