@@ -209,8 +209,9 @@ class ArenaTeam
         void FinishWeek();
         void FinishGame(int32 mod);
 
-        uint32 GetAverageMMR(Group *group) const;
-
+        void SetBattleRating(uint32 rating) { BattleRating = rating; }
+        uint32 GetBattleRating() { return BattleRating; }
+      
     protected:
 
         uint32 m_TeamId;
@@ -226,5 +227,7 @@ class ArenaTeam
 
         MemberList m_members;
         ArenaTeamStats m_stats;
+       
+        uint32 BattleRating;     
 };
 #endif
