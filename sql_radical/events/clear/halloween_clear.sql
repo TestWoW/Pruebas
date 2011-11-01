@@ -1,1 +1,1 @@
-DELETE FROM `creatures` WHERE `id` = 24575;
+DELETE FROM `creature` WHERE `id` = 24575;
