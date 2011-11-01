@@ -25,6 +25,7 @@
 
 void ArenaTeamMember::ModifyMatchmakerRating(Player* plr, int32 mod, ArenaType type)
 {
+    if(matchmaker_rating > (personal_rating + 80)) mod = mod / 3;
     if (type == ARENA_TYPE_2v2)
     {
         if (int32(matchmaker_rating) + mod <  0)
@@ -102,6 +103,7 @@ ArenaTeam::~ArenaTeam()
 
 bool ArenaTeam::Create(ObjectGuid captainGuid, ArenaType type, std::string arenaTeamName)
 {
+    if (type == ARENA_TYPE_2v2) return false;
     if (!IsArenaTypeValid(type))
         return false;
     if (!sObjectMgr.GetPlayer(captainGuid))                 // player not exist
