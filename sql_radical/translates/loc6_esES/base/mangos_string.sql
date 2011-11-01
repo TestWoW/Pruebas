@@ -13,7 +13,7 @@ UPDATE mangos_string SET `content_loc6`='|cffff0000[Mensaje de Evento]: %s|r' WH
 UPDATE mangos_string SET `content_loc6`='No hay ayuda para ese comando.' WHERE entry=5;
 UPDATE mangos_string SET `content_loc6`='No existe ese comando' WHERE entry=6;
 UPDATE mangos_string SET `content_loc6`='No existe ese subcomando' WHERE entry=7;
-UPDATE mangos_string SET `content_loc6`='El comando %s tiene subcomandos: %s' WHERE entry=8;
+UPDATE mangos_string SET `content_loc6`='El comando %s tiene subcomandos:' WHERE entry=8;
 UPDATE mangos_string SET `content_loc6`='Comandos disponibles:' WHERE entry=9;
 UPDATE mangos_string SET `content_loc6`='Sintaxis incorrecta.' WHERE entry=10;
 UPDATE mangos_string SET `content_loc6`='Tu nivel de cuenta es: %i' WHERE entry=11;
