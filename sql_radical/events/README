@@ -1,0 +1,3 @@
+For delete finished event NPC's or similar, add the respective "*_clear.sql" file of the "clear" folder.
+
+Para eliminar rastros de NPC's o similares de un evento finalizado, añadir el correspondiente archivo "*_clear.sql" de la carpeta "clear".
