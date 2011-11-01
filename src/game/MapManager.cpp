@@ -179,9 +179,52 @@ bool MapManager::CanPlayerEnter(uint32 mapid, Player* player)
                 {
                     // probably there must be special opcode, because client has this string constant in GlobalStrings.lua
                     // TODO: this is not a good place to send the message
-                    player->GetSession()->SendAreaTriggerMessage("You must be in a raid group to enter %s instance", mapName);
+                    switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
+                    {
+                        case LOCALE_enUS:
+                             player->GetSession()->SendAreaTriggerMessage("You must be in a raid group to enter %s instance", mapName);
+                             break;
+                        case LOCALE_esES:
+                             player->GetSession()->SendAreaTriggerMessage("Debes estar en un grupo de banda para entrar en %s", mapName);
+                             break;
+                        case LOCALE_esMX:
+                             player->GetSession()->SendAreaTriggerMessage("Debes estar en un grupo de banda para entrar en %s", mapName);
+                             break;
+                    }
                     DEBUG_LOG("MAP: Player '%s' must be in a raid group to enter instance of '%s'", player->GetName(), mapName);
                     return false;
+                }
+            }
+            if (mapid == 631)
+            {
+                if (Group *pGroup= player->GetGroup())
+                {
+                    Difficulty diff = pGroup->GetRaidDifficulty();
+
+                    if (diff == RAID_DIFFICULTY_10MAN_HEROIC || diff == RAID_DIFFICULTY_25MAN_HEROIC)
+                    {
+                        Player *pLeader = sObjectMgr.GetPlayer(pGroup->GetLeaderGuid());
+                        uint32 achievId = diff == RAID_DIFFICULTY_10MAN_HEROIC ? 4530 : 4597;
+
+                        if (!pLeader || !pLeader->GetAchievementMgr().HasAchievement(achievId))
+                        {
+                            switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
+                            {
+                                case LOCALE_enUS:
+                                     player->GetSession()->SendAreaTriggerMessage("You must have the Lich King defeated first.. to enter %s heroic", mapName);
+                                     break;
+                                case LOCALE_esES:
+                                     player->GetSession()->SendAreaTriggerMessage("Debes haber acabado con el Rey Exánime antes de entrar en %s heroico", mapName);
+                                     break;
+                                case LOCALE_esMX:
+                                     player->GetSession()->SendAreaTriggerMessage("Debes haber acabado con el Rey Exánime antes de entrar en %s heroico", mapName);
+                                     break;
+                            }
+                            // "You must have the Lich King defeated first..." will be shown
+                            player->SendTransferAborted(mapid, TRANSFER_ABORT_DIFFICULTY, diff);
+                            return false;
+                        }
+                    }
                 }
             }
         }

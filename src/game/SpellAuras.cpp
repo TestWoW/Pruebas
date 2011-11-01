@@ -1875,23 +1875,22 @@ void Aura::TriggerSpell()
                         break;
 //                    // Ice Tomb
 //                    case 70157: break;
-                    case 70842:                             // Mana Barrier
+                        // Mana Barrier
+                    case 70842:
                     {
-                        if (!triggerTarget || triggerTarget->getPowerType() != POWER_MANA)
-                            return;
+                        // there should be some spell handling the effect?
+                        uint32 health = triggerTarget->GetHealth();
+                        uint32 amount = triggerTarget->GetMaxHealth() - health;
+                        uint32 mana = triggerTarget->GetPower(POWER_MANA);
 
-                        int32 damage = triggerTarget->GetHealth() - triggerTarget->GetMaxHealth();
-                        if (damage >= 0)
-                            return;
-
-                        if (triggerTarget->GetPower(POWER_MANA) < -damage)
+                        if (amount > mana)
                         {
-                            damage = -triggerTarget->GetPower(POWER_MANA);
-                            triggerTarget->RemoveAurasDueToSpell(auraId);
+                            triggerTarget->RemoveAurasDueToSpell(GetId());
+                            amount = mana;
                         }
 
-                        triggerTarget->DealHeal(triggerTarget, -damage, auraSpellInfo);
-                        triggerTarget->ModifyPower(POWER_MANA, damage);
+                        triggerTarget->SetHealth(health + amount);
+                        triggerTarget->SetPower(POWER_MANA, mana - amount);
                         break;
                     }
 //                    // Summon Timer: Suppresser
@@ -1900,8 +1899,22 @@ void Aura::TriggerSpell()
 //                    case 71110: break;
 //                    // Aura of Darkness
 //                    case 71111: break;
-//                    // Ball of Flames Visual
-//                    case 71706: break;
+                    // Ball of Flames Visual
+                    case 71706:
+                    {
+                        // don't "proc" on heroic
+                        if (triggerTarget->GetMap()->GetDifficulty() <= RAID_DIFFICULTY_25MAN_NORMAL)
+                        {
+                            if (SpellAuraHolderPtr holder = triggerTarget->GetSpellAuraHolder(71756))
+                            {
+                                if (holder->GetStackAmount() <= 1)
+                                    triggerTarget->RemoveSpellAuraHolder(holder);
+                                else
+                                    holder->ModStackAmount(-1);
+                            }
+                        }
+                        break;
+                    }
 //                    // Summon Broken Frostmourne
 //                    case 74081: break;
                     default:
@@ -2220,7 +2233,7 @@ void Aura::TriggerSpell()
                 triggerTarget->CastCustomSpell(triggerTarget, trigger_spell_id, &mana, NULL, NULL, true, NULL, this);
                 return;
             }
-            case 71340:
+            case 71340:                                      // Pact of Darkfallen
             {
                 triggerTarget->CastSpell(triggerTarget, 71341, true);
                 break;
@@ -2566,11 +2579,23 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                             caster->CastSpell(caster, 68899, false);
                         }
                         return;
+                    case 69152:                             // Gaseous Blight (Festergut)
+                        target->RemoveAurasDueToSpell(69126); // previous gas state
+                        return;
+                    case 69154:                             // Gaseous Blight (Festergut)
+                        target->RemoveAurasDueToSpell(69152); // previous gas state
+                        return;
                     case 71342:                             // Big Love Rocket
                         Spell::SelectMountByAreaAndSkill(target, GetSpellProto(), 71344, 71345, 71346, 71347, 0);
                         return;
                     case 71563:                             // Deadly Precision
                         target->CastSpell(target, 71564, true, NULL, this);
+                        return;
+                    case 72087:                             // Kinetic Bomb Knockback
+                        float x, y, z;
+                        target->GetPosition(x, y, z);
+                        target->GetMotionMaster()->Clear();
+                        target->GetMotionMaster()->MovePoint(0, x, y, z + 6.0f * GetStackAmount());
                         return;
                     case 72286:                             // Invincible
                         Spell::SelectMountByAreaAndSkill(target, GetSpellProto(), 72281, 72282, 72283, 72284, 0);
@@ -3215,6 +3240,26 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 target->CastSpell(target, 68848, true, NULL, this);
                 // Draw Corrupted Soul
                 target->CastSpell(target, 68846, true, NULL, this);
+                return;
+            }
+            case 70308:                                     // Mutated Transformation
+            {
+                float x, y, z;
+                target->GetPosition(x, y, z);
+
+                if (Creature *pAbo = target->SummonCreature(37672, x, y, z, 0.0f, TEMPSUMMON_CORPSE_DESPAWN, 1000))
+                {
+                    target->CastSpell(pAbo, 46598, true); // Enter vehicle
+                }
+                return;
+            }
+            case 72087:                                     // Kinetic Bomb Knockback
+            {
+                float x, y, z;
+                target->GetPosition(x, y, z);
+                z = target->GetTerrain()->GetHeight(x, y, z, true, MAX_FALL_DISTANCE);
+                target->GetMotionMaster()->Clear();
+                target->GetMotionMaster()->MovePoint(0, x, y, z);
                 return;
             }
         }
@@ -5784,6 +5829,13 @@ void Aura::HandleAuraProcTriggerSpell(bool apply, bool Real)
             else
                 target->getHostileRefManager().ResetThreatRedirection();
             break;
+        case 72059:                                         // Unstable (Kinetic Bomb - Blood Council encounter)
+            if (!apply)
+            {
+                if (target->GetTypeId() == TYPEID_UNIT)
+                    ((Creature*)target)->ForcedDespawn();
+            }
+            break;
         default:
             break;
     }
@@ -5887,9 +5939,23 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
                 }
 
                 return;
+            case 71280:                                     // Choking Gas Explode Trigger
+                {
+                    if (Unit *pCaster = GetCaster())
+                        pCaster->CastSpell(pCaster, 71279, true);
+                }
+                return;
             case 71441:                                     // Unstable Ooze Explosion (Icecrown Citadel encounter)
                 if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
                     target->CastSpell(target, 67375, true, NULL, this);
+
+                return;
+            case 71265:                                     // Swarming Shadows
+                if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                {
+                    Unit *caster = GetCaster();
+                    caster->CastCustomSpell(target, 71266, NULL, NULL,NULL, true);
+                }
 
                 return;
             default:
@@ -6080,6 +6146,11 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
                     if (caster && target)
                         caster->CastCustomSpell(target, 63278, 0, &(spell->EffectBasePoints[0]), 0, false, 0, 0, caster->GetObjectGuid() , spell);
                     return;
+                }
+                case 73001:                                   // Shadow Prison
+                {
+                    if (target)
+                        target->CastSpell(target, 72998, true);
                 }
             }
         }
@@ -8197,6 +8268,16 @@ void Aura::PeriodicTick()
                         }
                         break;
                     }
+                    case 70672: // Gaseous bloat
+                    {
+                        uint32 stacks = GetStackAmount();
+                        if (SpellAuraHolderPtr holder= target->GetSpellAuraHolder(70672))
+                        {
+                            if (stacks > 1)
+                                holder->SetStackAmount(--stacks);
+                        }
+                        break;
+                    }
                     case 70541:
                     case 73779:
                     case 73780:
@@ -8234,6 +8315,13 @@ void Aura::PeriodicTick()
                     case 67296:
                     case 67298:
                         pCaster->CastSpell(target, 65952, true);
+                        break;
+                    // Boiling Blood (Saurfang)
+                    case 72385:
+                    case 72441:
+                    case 72442:
+                    case 72443:
+                        target->CastSpell(target, 72202, true); // Blood Link
                         break;
                     default:
                         break;
@@ -9255,6 +9343,20 @@ void Aura::PeriodicDummyTick()
 
                     // Should actually be SMSG_SPELL_START, too
                     target->CastSpell(target, 68873, true);
+                    return;
+                }
+                case 70069:                                   // Ooze Flood Periodic Trigger (Rotface)
+                {
+                    if (target)
+                        target->CastSpell(target, spell->CalculateSimpleValue(GetEffIndex()), true);
+                    return;
+                }
+                case 73001:                                   // Shadow Prison (Blood Council)
+                {
+                    // cast dmg spell when moving
+                    if (target->GetTypeId() == TYPEID_PLAYER && ((Player*)target)->isMoving())
+                        target->CastSpell(target, 72999, true);
+
                     return;
                 }
 // Exist more after, need add later
@@ -10621,6 +10723,11 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                 case 71532:
                 case 71533:
                 {
+                    if (apply)
+                    {
+                        if (Unit* caster = GetCaster())
+                            caster->RemoveAurasDueToSpell(70877);
+                    }
                     spellId1 = 70871;
                     break;
                 }
@@ -10651,13 +10758,25 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     break;
                 }
                 case 69674:                                 // Mutated Infection
+                case 71224:
+                case 73022:
+                case 73023:
                 {
                     if (!apply)
                     {
-                        if (m_removeMode == AURA_REMOVE_BY_DISPEL)
+                        cast_at_remove = true;
+                        spellId1 = GetSpellProto() ? GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_2) : 0;
+                    }
+                    break;
+                }
+                case 70877:                                 // Frenzied Bloodthirst
+                {
+                    if (!apply)
+                    {
+                        if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
                         {
                             cast_at_remove = true;
-                            spellId1 = 69706;
+                            spellId1 = 8329; //Suicide, temp hack.
                         }
                     }
                     break;
@@ -11796,4 +11915,39 @@ uint32 Aura::CalculateCrowdControlBreakDamage()
         }
     }
     return damageCap;
+}
+
+void Aura::HandleAuraShareDamage(bool apply, bool Real)
+{
+    // Invocation of Blood
+    // not sure if all spells should work like that
+    switch (GetId())
+    {
+        case 70952:
+        case 70981:
+        case 70982:
+        {
+            Unit *pTarget = GetTarget();
+
+            if (!pTarget)
+                return;
+
+            if (apply)
+            {
+                Unit *pCaster = GetCaster();
+
+                if (!pCaster)
+                    return;
+
+                pTarget->SetHealthPercent(pCaster->GetHealthPercent());
+            }
+            else
+            {
+                if (pTarget->isAlive())
+                    pTarget->SetHealth(1);
+            }
+
+            break;
+        }
+    }
 }
