@@ -420,7 +420,7 @@ UPDATE mangos_string SET `content_loc7`='¡Jugador no encontrado!' WHERE entry=49
 UPDATE mangos_string SET `content_loc7`='¡El jugador ya esta en una hermandad!' WHERE entry=500;
 UPDATE mangos_string SET `content_loc7`='¡No se creo la hermandad! (¿ya existe?)' WHERE entry=501;
 UPDATE mangos_string SET `content_loc7`='Ningún objeto del conjunto %u encontrado.' WHERE entry=502;
-UPDATE mangos_string SET `content_loc7`='La distancia es: (3D) %f (2D) %f yardas.' WHERE entry=503;
+UPDATE mangos_string SET `content_loc7`='The distance is: (3D) %f (2D) %f - (3D, point-to-point) %f yards.' WHERE entry=503;
 UPDATE mangos_string SET `content_loc7`='Objeto \'%i\' \'%s\' Casilla Objeto %i' WHERE entry=504;
 UPDATE mangos_string SET `content_loc7`='Objeto \'%i\' no existe.' WHERE entry=505;
 UPDATE mangos_string SET `content_loc7`='Objeto \'%i\' \'%s\' añadido a ranura %i' WHERE entry=506;
@@ -429,7 +429,7 @@ UPDATE mangos_string SET `content_loc7`='%d - propietario: %s (guid: %u cuenta: 
 UPDATE mangos_string SET `content_loc7`='%d - remitente: %s (guid: %u cuenta: %u) receptor: %s (guid: %u cuenta: %u) %s' WHERE entry=509;
 UPDATE mangos_string SET `content_loc7`='%d - propietario: %s (guid: %u cuenta: %u) %s' WHERE entry=510;
 UPDATE mangos_string SET `content_loc7`='¡Tipo de enlace incorrecto!' WHERE entry=511;
-UPDATE mangos_string SET `content_loc7`='%d - |cffffffff|Hobjeto:%d:0:0:0:0:0:0:0:0|h[%s]|h|r' WHERE entry=512;
+UPDATE mangos_string SET `content_loc7`='%d - |cffffffff|Hitem:%d:0:0:0:0:0:0:0:0|h[%s]|h|r %s' WHERE entry=512;
 UPDATE mangos_string SET `content_loc7`='%d - |cffffffff|Hmisión:%d:%d|h[%s]|h|r %s' WHERE entry=513;
 UPDATE mangos_string SET `content_loc7`='%d - |cffffffff|Hentrada criatura:%d|h[%s]|h|r' WHERE entry=514;
 UPDATE mangos_string SET `content_loc7`='%d%s - |cffffffff|Hcriatura:%d|h[%s X:%f Y:%f Z:%f IdMapa:%d]|h|r' WHERE entry=515;
@@ -493,7 +493,7 @@ UPDATE mangos_string SET `content_loc7`='Modificaste para %s campo uint32:%u a s
 UPDATE mangos_string SET `content_loc7`='Ahora eres invisible.' WHERE entry=577;
 UPDATE mangos_string SET `content_loc7`='Ahora eres visible.' WHERE entry=578;
 UPDATE mangos_string SET `content_loc7`='El jugador o criatura seleccionados no tienen víctima.' WHERE entry=579;
-UPDATE mangos_string SET `content_loc7`='Jugador %s aprendió todos los hechizos por defecto de su raza/clase y los hechizos de recompensa al completar misiones.' WHERE entry=580;
+UPDATE mangos_string SET `content_loc7`='Has aprendido todos los hechizos por defecto de su raza/clase y los hechizos de recompensa al completar misiones.' WHERE entry=580;
 UPDATE mangos_string SET `content_loc7`='Encontrados objetos del juego cercanos (a distancia %f): %u' WHERE entry=581;
 UPDATE mangos_string SET `content_loc7`='Tiempo de reaparición: Total:%s Restante:%s' WHERE entry=582;
 UPDATE mangos_string SET `content_loc7`='%d - |cffffffff|Hevento juego:%d|h[%s]|h|r%s' WHERE entry=583;
@@ -565,7 +565,7 @@ UPDATE mangos_string SET `content_loc7`='¡La Alianza ha perdido el control de la
 UPDATE mangos_string SET `content_loc7`='¡La Horda ha perdido el control de la Torre de los Elfos de Sangre!' WHERE entry=680;
 UPDATE mangos_string SET `content_loc7`='¡La Alianza ha perdido el control de las Ruinas del Atracador Vil!' WHERE entry=681;
 UPDATE mangos_string SET `content_loc7`='¡La Horda ha perdido el control de las Ruinas del Atracador Vil!' WHERE entry=682;
-UPDATE mangos_string SET `content_loc7`='¡$s ha capturado la bandera!' WHERE entry=683;
+UPDATE mangos_string SET `content_loc7`='¡%s ha capturado la bandera!' WHERE entry=683;
 UPDATE mangos_string SET `content_loc7`='¡La Alianza ha capturado la bandera!' WHERE entry=684;
 UPDATE mangos_string SET `content_loc7`='¡La Horda ha capturado la bandera!' WHERE entry=685;
 UPDATE mangos_string SET `content_loc7`='¡La bandera ha sido perdida!' WHERE entry=686;
@@ -698,7 +698,7 @@ UPDATE mangos_string SET `content_loc7`='El mensaje diario cambió a: %s' WHERE e
 UPDATE mangos_string SET `content_loc7`='Mensaje enviado a %s: %s' WHERE entry=1102;
 UPDATE mangos_string SET `content_loc7`='%d - %s %s' WHERE entry=1103;
 UPDATE mangos_string SET `content_loc7`='%d - %s' WHERE entry=1104;
-UPDATE mangos_string SET `content_loc7`='%d - %s' WHERE entry=1105;
+UPDATE mangos_string SET `content_loc7`='%d - %s %s' WHERE entry=1105;
 UPDATE mangos_string SET `content_loc7`='%d - %s %s' WHERE entry=1106;
 UPDATE mangos_string SET `content_loc7`='%d - %s' WHERE entry=1107;
 UPDATE mangos_string SET `content_loc7`='%d - %s %s' WHERE entry=1108;
