@@ -465,7 +465,7 @@ UPDATE mangos_string SET `content_loc6`='Posición: %f %f %f.' WHERE entry=544;
 UPDATE mangos_string SET `content_loc6`='¡*** Es un vendedor!' WHERE entry=545;
 UPDATE mangos_string SET `content_loc6`='¡*** Es un entrenador!' WHERE entry=546;
 UPDATE mangos_string SET `content_loc6`='ID Mazmorra: %u' WHERE entry=547;
-UPDATE mangos_string SET `content_loc6`='Jugador%s %s (guid: %u) Cuenta: %s (id: %u) NivelMJ: %u Ultima IP: %s Latencia: %ums' WHERE entry=548;
+UPDATE mangos_string SET `content_loc6`='Player%s %s (guid: %u) Account: %s (id: %u) E-mail: %s GMLevel: %u Last IP: %s Last login: %s Latency: %ums' WHERE entry=548;
 UPDATE mangos_string SET `content_loc6`='Tiempo Jugado: %s Nivel: %u Dinero: %ug%us%uc' WHERE entry=549;
 UPDATE mangos_string SET `content_loc6`='Comando .pinfo no soporta la opción \'rep\' para jugadores desconectados.' WHERE entry=550;
 UPDATE mangos_string SET `content_loc6`='%s ha explorado ahora todas las zonas.' WHERE entry=551;
