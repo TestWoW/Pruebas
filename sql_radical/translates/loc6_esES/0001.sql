@@ -466,6 +466,7 @@ UPDATE `locales_quest` SET `Title_loc6` = 'Hay algo en el aire (y no es amor)', 
 
 -- gossip_menu_options
 
+INSERT IGNORE INTO `locales_gossip_menu_option` (`menu_id`, `id`, `option_text_loc6`, `box_text_loc6`) VALUES('10996','0','¡Vayamos, Brann!',NULL) ON DUPLICATE KEY UPDATE `option_text_loc6`='¡Vayamos, Brann!' ;
 INSERT IGNORE INTO `locales_gossip_menu_option` (`menu_id`, `id`, `option_text_loc6`, `box_text_loc6`) VALUES('10996','0','Ormus, ¿qué les ha pasado a tus ojos?',NULL) ON DUPLICATE KEY UPDATE `option_text_loc6`='Ormus, ¿qué les ha pasado a tus ojos?' ;
 INSERT IGNORE INTO `locales_gossip_menu_option` (`menu_id`, `id`, `option_text_loc6`, `box_text_loc6`) VALUES('0','7','Quiero ir al banco.',NULL) ON DUPLICATE KEY UPDATE `option_text_loc6`='Quiero ir al banco.' ;
 INSERT IGNORE INTO `locales_gossip_menu_option` (`menu_id`, `id`, `option_text_loc6`, `box_text_loc6`) VALUES('35642','0','Quiero ir al banco.',NULL) ON DUPLICATE KEY UPDATE `option_text_loc6`='Quiero ir al banco.' ;

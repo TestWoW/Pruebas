@@ -264,8 +264,8 @@ void PlayerMenu::SendTalking( uint32 textID )
         for(uint32 i = 0; i < 8; ++i)
         {
             data << float(0);
-            data << "Greetings $N";
-            data << "Greetings $N";
+            data << "Encantado $N.";
+            data << "Encantado $N.";
             data << uint32(0);
             data << uint32(0);
             data << uint32(0);

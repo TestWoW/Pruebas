@@ -113,7 +113,7 @@ UPDATE `creature_template` SET `minhealth` = '215680', `maxhealth` = '215680', `
 
 DELETE FROM `creature` WHERE `id` = 38248;
 
-UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'mob_svalna' WHERE `entry` = 37126;
+-- UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'mob_svalna' WHERE `entry` = 37126;
 UPDATE `creature_template` SET `name` = '[Svalna Event]', `unit_flags` = '33554818', `modelid_1` = '11686', `ScriptName` = 'mob_svalna_event' WHERE `entry` = 24693;
 
 -- NPC's mal situados recolocados
