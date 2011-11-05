@@ -3790,10 +3790,17 @@ void Spell::cast(bool skipCheck)
     }
     else
     {
-        // Immediate spell, no big deal
-        handle_immediate();
-
-        m_caster->ProcDamageAndSpell(procTarget, m_procAttacker, 0, PROC_EX_CAST_END, 0, m_attackType, m_spellInfo);
+        if (GetCastTime())
+        {
+            m_caster->ProcDamageAndSpell(procTarget, m_procAttacker, 0, PROC_EX_CAST_END, 0, m_attackType, m_spellInfo);
+            // Immediate spell, no big deal
+            handle_immediate();
+        }
+        else
+        {
+            handle_immediate();
+            m_caster->ProcDamageAndSpell(procTarget, m_procAttacker, 0, PROC_EX_CAST_END, 0, m_attackType, m_spellInfo);
+        }
     }
 
     m_caster->DecreaseCastCounter();
