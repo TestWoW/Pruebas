@@ -295,6 +295,8 @@ Unit::Unit() :
     m_spoofSamePlayerFaction = false;
     // Frozen Mod
 
+    // Seal fate mutilate fix
+    mpoints = 0;
 }
 
 Unit::~Unit()

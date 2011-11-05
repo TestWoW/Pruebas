@@ -4199,6 +4199,17 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
             // Need add combopoint AFTER finishing move (or they get dropped in finish phase)
             if (Spell* spell = GetCurrentSpell(CURRENT_GENERIC_SPELL))
             {
+                if(trigger_sepll_id == 14186 && spell->m_spellInfo->IsFitToFamily<SPELLFAMILY_ROGUE, CF_ROGUE_MUTILATE>())  //mutilate fix
+                {
+                    int8 combo = GetComboPoints();
+                    if(combo != mpoints)
+                    {
+                        AddCombopoints(pVictim,1);
+                        mpoints = GetComboPoints();
+                        return SPELL_AURA_PROC_OK;
+                    }
+                    return SPELL_AURA_PROC_OK;
+                }
                 spell->AddTriggeredSpell(trigger_spell_id);
                 return SPELL_AURA_PROC_OK;
             }
