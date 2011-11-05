@@ -3703,12 +3703,12 @@ void Spell::cast(bool skipCheck)
             if(     m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_MUTILATE>()         //Honor Among Thieves
 
                                    /** Rogue poisons **/
-                 || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_INSTANT_POISON>()   
+                 /*|| m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_INSTANT_POISON>()   
                  || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_CRIPPLING_POISON>()
                  || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_MIND_NUMBING_POISON>()
                  || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_DEADLY_POISON>()
                  || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_DEADLY_POISON>()
-                 || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_WOUND_POISON>()
+                 || m_spellInfo->SpellFamilyFlags.test<CF_ROGUE_WOUND_POISON>()*/
             )
             {
                 if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
