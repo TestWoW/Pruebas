@@ -1476,8 +1476,7 @@ void Player::SetDeathState(DeathState s)
             if (pet->isControlled())
                 SetTemporaryUnsummonedPetNumber(pet->GetCharmInfo()->GetPetNumber());
 
-        //FIXME: is pet dismissed at dying or releasing spirit? if second, add SetDeathState(DEAD) to HandleRepopRequestOpcode and define pet unsummon here with (s == DEAD)
-            RemovePet(PET_SAVE_REAGENTS);
+            RemovePet(PET_SAVE_AS_CURRENT);
         }
 
         // save value before aura remove in Unit::SetDeathState
