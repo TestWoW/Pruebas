@@ -3487,9 +3487,15 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
     else if (IsPositiveSpell(spell->Id) && IsFriendlyTo(pVictim))
         return SPELL_MISS_NONE;
 
+    if (spell->Id == 35101)//concusive barrage
+    {      
+       CanReflect = false;
+    }
     // Try victim reflect spell
     if (CanReflect)
     {
+	 if(spell->SpellFamilyName == SPELLFAMILY_HUNTER && spell->SpellFamilyFlags.test<CF_HUNTER_FREEZING_TRAP_EFFECT>())//deflect freezing trap
+        	return SPELL_MISS_DEFLECT;
         int32 reflectchance = pVictim->GetTotalAuraModifier(SPELL_AURA_REFLECT_SPELLS);
         Unit::AuraList const& mReflectSpellsSchool = pVictim->GetAurasByType(SPELL_AURA_REFLECT_SPELLS_SCHOOL);
         for(Unit::AuraList::const_iterator i = mReflectSpellsSchool.begin(); i != mReflectSpellsSchool.end(); ++i)
