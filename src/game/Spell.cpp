@@ -1709,6 +1709,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 73142:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 10N)
                 case 73144:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 10H)
                 case 51146:                                 // Searching Gaze (Halls Of Stone)
+                case 68980:                                 // Harvest Soul
+                case 74325:                                 // Harvest Soul
                     unMaxTargets = 1;
                     break;
                 case 28542:                                 // Life Drain
@@ -1773,6 +1775,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 25991:                                 // Poison Bolt Volley (Pincess Huhuran)
                     unMaxTargets = 15;
                     break;
+                case 71769:                                 // Raise Dead
+                case 74296:                                 // Harvests Soul
+                case 74297:                                 // Harvests Soul
+                case 72429:                                 // Mass Resurrection
+                    unMaxTargets = 25;
                 default:
                     break;
             }
@@ -1836,6 +1843,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 73143:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 25N)
                 case 73144:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 10H)
                 case 73145:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 25H)
+                case 69832:                                 // Unstable Ooze Explosion (Rotface)
                 case 69075:                                 // Bone Storm
                 case 70834:                                 // Bone Storm
                 case 70835:                                 // Bone Storm
@@ -1851,6 +1859,15 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 71805:                                 // Plague Stench
                 case 71160:                                 // Plague Stench
                 case 71161:                                 // Plague Stench
+                case 70337:                                 // Necrotic Plague
+                case 70338:                                 // Necrotic Plague
+                case 73785:                                 // Necrotic Plague
+                case 73786:                                 // Necrotic Plague
+                case 73787:                                 // Necrotic Plague
+                case 73789:                                 // Necrotic Plague
+                case 73912:                                 // Necrotic Plague
+                case 73913:                                 // Necrotic Plague
+                case 73914:                                 // Necrotic Plague
                     radius = 10;
                     break;
                 case 69845:                                 // Sindragosa Frost bomb (hack!)
@@ -1859,6 +1876,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 71055:
                     radius = 50;
                     break;
+                case 71769:                                 // Raise Dead
+                case 72376:                                 // Raise Dead
                 case 72350:                                 // Fury of Frostmourne
                 case 72351:                                 // Fury of Frostmourne
                     radius = 300;
@@ -3464,6 +3483,8 @@ void Spell::cast(bool skipCheck)
                 AddTriggeredSpell(74800);                  // Soul consumption
             else if (m_spellInfo->Id == 61968)             // Flash Freeze (Hodir: Ulduar)
                 AddTriggeredSpell(62148);                  // visual effect
+            else if (m_spellInfo->Id == 69839)             // Unstable Ooze Explosion (Rotface)
+                AddPrecastSpell(69832);                    // cast "cluster" before silence and pacify
             else if (m_spellInfo->Id == 58672)             // Impale, damage and loose threat effect (Vault of Archavon, Archavon the Stone Watcher)
                 AddPrecastSpell(m_caster->GetMap()->IsRegularDifficulty() ? 58666 : 60882);
             break;
@@ -8917,18 +8938,34 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
-        case 71769:                                     // Raise Dead
+        case 72376:                                     // Raise Dead
         {
             UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            FillAreaTargets(tempTargetUnitMap, 300.0f, PUSH_DEST_CENTER, SPELL_TARGETS_ALL);
             if (!tempTargetUnitMap.empty())
             {
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
                 {
-                    targetUnitMap.remove(m_caster);
-
                     if (!(*iter)->GetObjectGuid().IsPlayer())
                         continue;
+
+                    targetUnitMap.push_back((*iter));
+                }
+            }
+            targetUnitMap.remove(m_caster);
+            break;
+        }
+        case 72429:                                     // Mass Resurrection
+        {
+            UnitList tempTargetUnitMap;
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_ALL);
+            if (!tempTargetUnitMap.empty())
+            {
+                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
+                {
+                    if (!(*iter)->GetObjectGuid().IsPlayer())
+                        continue;
+
                     targetUnitMap.push_back((*iter));
                 }
             }
@@ -8954,7 +8991,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                     if ((*iter)->GetObjectGuid().IsTotem() || !(*iter)->GetEntry() == 36597)            // Exclude totems and Lich King
                         continue;
 
-                    if (m_caster->GetDistance(*iter) < 10.0f) // custom?
+                    if (m_caster->GetDistance(*iter) < 15.0f) // custom?
                         continue;
 
                     targetUnitMap.push_back((*iter));

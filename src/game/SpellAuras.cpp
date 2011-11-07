@@ -10812,6 +10812,32 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     }
                     break;
                 }
+                case 69409:                                 // Soul Reaper
+                {
+                    Unit *caster = GetCaster();
+                    if (!apply)
+                    {
+                        cast_at_remove = true;
+                        caster->CastSpell(caster, 69410, true);
+                    }
+                    break;
+                }
+                case 68980:                                 // Harvest Soul
+                case 74325:
+                case 74296:
+                case 74297:
+                {
+                    if (!apply)
+                    {
+                        if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
+                        {
+                            cast_at_remove = true;
+                            spellId1 = 73655;
+                            spellId2 = 73078;
+                        }
+                    }
+                    break;
+                }
                 default:
                     return;
             }

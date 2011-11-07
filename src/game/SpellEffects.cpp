@@ -3362,6 +3362,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     return;
 
                 // dummy cast itself ignored by client in logs
+                m_caster->SetPower(POWER_RAGE, m_caster->GetPower(POWER_RAGE) + 150); // Temp hack
                 m_caster->CastCustomSpell(unitTarget,50782,&damage,NULL,NULL,true);
                 return;
             }
@@ -9242,6 +9243,29 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
+                case 69057:                                 // Bone Spike Graveyard (Lord Marrowgar)
+                case 70826:                                 // Bone Spike Graveyard (Lord Marrowgar)
+                case 72088:                                 // Bone Spike Graveyard (Lord Marrowgar)
+                case 72089:                                 // Bone Spike Graveyard (Lord Marrowgar)
+                case 73142:                                 // Bone Spike Graveyard (Lord Marrowgar)
+                case 73143:                                 // Bone Spike Graveyard (Lord Marrowgar)
+                case 73144:                                 // Bone Spike Graveyard (Lord Marrowgar)
+                case 73145:                                 // Bone Spike Graveyard (Lord Marrowgar)
+                {
+                    if (unitTarget)
+                    {
+                        float x, y, z;
+                        unitTarget->GetPosition(x, y, z);
+
+                        if (Creature *pSpike = unitTarget->SummonCreature(38711, x, y, z, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 2000))
+                        {
+                            unitTarget->CastSpell(pSpike, 46598, true); // enter vehicle
+                            pSpike->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
+                        }
+                    }
+
+                    return;
+                }
                 case 68861:                                 // Consume Soul (ICC FoS: Bronjahm)
                 {
                     if (unitTarget)
@@ -9333,17 +9357,9 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->CastSpell(unitTarget, 66334, true);
                     return;
                 }
-                case 69057:                                 // Bone Spike Graveyard (Icecrown Citadel, ->
-                case 70826:                                 // -> Lord Marrowgar encounter, all difficulties)
-                case 72088:                                 // ----- // -----
-                case 72089:                                 // ----- // -----
-                case 73142:                                 // Bone Spike Graveyard (during Bone Storm) ->
-                case 73143:                                 // (Icecrown Citadel, -> Lord Marrowgar encounter, ->
-                case 73144:                                 // all difficulties)
-                case 73145:                                 // ----- // -----
+                case 69147:                                 // Coldflame (circle, Lord Marrowgar - Icecrown Citadel)
                 {
-                    if (unitTarget)
-                        unitTarget->CastSpell(unitTarget, 69062, true);
+                    m_caster->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
                     return;
                 }
                 case 69538:                                 // Small Ooze Combine (Rotface)
@@ -9429,11 +9445,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 {
                     if (unitTarget)
                         unitTarget->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
-                    return;
-                }
-                case 69147:                                 // Coldflame (circle, Lord Marrowgar - Icecrown Citadel)
-                {
-                    m_caster->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
                     return;
                 }
                 case 70117:                                 // Ice grip (Sindragosa pull effect)
@@ -9593,14 +9604,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 72704, true);
                     return;
                 }
-                case 72378:                                 // Blood Nova
-                case 73058:
-                {
-                    Powers bloodPower;
-                    bloodPower = m_caster->getPowerType();
-                    m_caster->SetPower(bloodPower, m_caster->GetPower(bloodPower) + 2);
-                    return;
-                }
                 case 72864:                                 // Death plague
                 {
                     if (!unitTarget)
@@ -9619,20 +9622,20 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 }
                 case 72429:                                 // Mass Resurrection
                 {
-                    Map* pMap = m_caster->GetMap();
-                    if (!pMap->Instanceable())
+                    if (!unitTarget)
                         return;
-                    Map::PlayerList const& pPlayers = pMap->GetPlayers();
-                    if (!pPlayers.isEmpty())
-                    {
-                        for (Map::PlayerList::const_iterator itr = pPlayers.begin(); itr != pPlayers.end(); ++itr)
-                        {
-                            Unit *pTarget = itr->getSource();
-                            if (pTarget && !pTarget->isAlive())
-                                m_caster->CastSpell(pTarget, 72423, false);
-                        }
-                    }
+
+                    m_caster->CastSpell(unitTarget, 72423, false);
+                    m_caster->CastSpell(unitTarget, 69640, false);
                     return;
+                }
+                case 74445:                                 // Valkyr Carry (control vehicle)
+                {
+                    if(!unitTarget || !m_caster)
+                        return;
+
+                    unitTarget->CastSpell(m_caster, 46598, true); // Control Vehicle aura
+                    break;
                 }
                 case 74455:                                 // Conflagration (Saviana Ragefire)
                 {
