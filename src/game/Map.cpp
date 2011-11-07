@@ -319,6 +319,8 @@ bool Map::Add(Player *player)
     if (i_data)
         i_data->OnPlayerEnter(player);
 
+    sLFGMgr.OnPlayerEnterMap(player, this);
+
     return true;
 }
 
@@ -586,6 +588,8 @@ void Map::Remove(Player *player, bool remove)
 {
     if (i_data)
         i_data->OnPlayerLeave(player);
+
+    sLFGMgr.OnPlayerLeaveMap(player, this);
 
     if(remove)
         player->CleanupsBeforeDelete();
@@ -3076,6 +3080,8 @@ void Map::ScriptsProcess()
                     else
                         pBuddy->SetFlag(UNIT_NPC_FLAGS, step.script->npcFlag.flag);
                 }
+
+                break;
             }
             default:
                 sLog.outError("Unknown SCRIPT_COMMAND_ %u called for script id %u.", step.script->command, step.script->id);
