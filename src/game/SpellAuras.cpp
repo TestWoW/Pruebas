@@ -1235,6 +1235,8 @@ void Aura::HandleAddModifier(bool apply, bool Real)
     {
         SpellEntry const* spellProto = GetSpellProto();
 
+	 uint64 modMask0 = 0;
+        uint64 modMask1 = 0;
         // Add custom charges for some mod aura
         switch (spellProto->Id)
         {
