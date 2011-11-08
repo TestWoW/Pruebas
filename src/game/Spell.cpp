@@ -7569,6 +7569,70 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
             return false;
     }
 
+    // Checkout if target is behing particular object
+    uint32 uiObjectEntry = 0;
+
+    switch(m_spellInfo->Id)
+    {
+        case 68786:     // Permafrost (Garfrost)
+        case 70336:     // Permafrost Heroic (Garfrost)
+            uiObjectEntry = 196485;
+            break;
+        case 69845:     // Frost Bomb (Sindragosa)
+        case 71053:
+        case 71054:
+        case 71055:
+        case 70127:     // Mystic Buffet (Sindragosa)
+        case 72528:
+        case 72529:
+        case 72530:
+            uiObjectEntry = 201722;
+            break;
+    }
+
+    if (uiObjectEntry)
+    {
+        // Description:
+        // code check out if player is hidden behind GO in circle with diameter equal to GO size
+        // with center placed on the perimeter of GO
+        //     C<- caster
+        //    / \<- cone of spell
+        //   /   \
+        //  / (o) \<- shelter object
+        // /  (T)  \<- target in safty circle
+
+        std::list<GameObject*>lObjectList;
+        target->GetGameObjectListWithEntryInGrid(lObjectList, uiObjectEntry, target->GetDistance2d(m_caster));
+        float fTargetX, fTargetY, fTargetZ;
+        float fCasterX, fCasterY, fCasterZ;
+        target->GetPosition(fTargetX, fTargetY, fTargetZ);
+        m_caster->GetPosition(fCasterX, fCasterY, fCasterZ);
+        for (std::list<GameObject*>::iterator itr = lObjectList.begin(); itr != lObjectList.end(); ++itr)
+        {
+            float fDistBlock = m_caster->GetDistance2d(*itr);
+            float fDistVictim = m_caster->GetDistance2d(target);
+            float fDistVictimToBlock = target->GetDistance2d(*itr);
+
+            // quick check
+            if (fDistBlock > fDistVictim)
+                continue;
+
+            float fObjectSize = (*itr)->GetGOInfo()->size;
+
+            // Ice Block in Sindragosa ecounter - size is very small, so we have to use bigger values
+            if (uiObjectEntry == 201722)
+                fObjectSize = 4.0f;
+
+            // not too accurate but fast, good enough for now
+            // small part of ground behind and on sides of the obstacle
+            if (fDistVictimToBlock < fObjectSize + 5.0f &&
+                fDistVictim > fDistBlock + fObjectSize - 2.0f)
+            {
+                return false;
+            }
+        }
+    }
+
     // Check Sated & Exhaustion debuffs
     if (((m_spellInfo->Id == 2825) && (target->HasAura(57724))) ||
         ((m_spellInfo->Id == 32182) && (target->HasAura(57723))))
@@ -7576,14 +7640,6 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
 
     // Check vampiric bite
     if (m_spellInfo->Id == 70946 && target->HasAura(70867))
-        return false;
-
-    // Sindragosa frost bomb hack
-    if ((m_spellInfo->Id == 69845
-        || m_spellInfo->Id == 71053
-        || m_spellInfo->Id == 71054
-        || m_spellInfo->Id == 71055)
-         && target->HasAura(70867))
         return false;
 
     // Check targets for LOS visibility (except spells without range limitations )
@@ -8367,6 +8423,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 54148: //Svala Choose Only Player
         {
             UnitList tmpUnitMap;
+            UnitList playerUnitMap;
             FillAreaTargets(tmpUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
 
             if (tmpUnitMap.empty())
@@ -8375,9 +8432,26 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
             {
                  if (!*itr) continue;
+                 if ((*itr)->GetTypeId() == TYPEID_PLAYER)  
+                    playerUnitMap.push_back(*itr);  
+            }
+  
+            if (playerUnitMap.empty())  
+                break;  
+  
 
-                 if ((*itr)->GetTypeId() == TYPEID_PLAYER)
-                     targetUnitMap.push_back(*itr);
+            uint32 t = 0;
+            UnitList::iterator iter = playerUnitMap.begin();  
+            while (iter != playerUnitMap.end())
+            {  
+                ++t;  
+                ++iter;  
+            }
+
+            iter = playerUnitMap.begin();  
+            std::advance(iter, urand(0, t-1));
+            if (*iter)
+                targetUnitMap.push_back(*iter);
             }
 
             break;
@@ -8730,6 +8804,20 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
 
             break;
         }
+        case 69762: // Unchained Magic (Sindragosa)
+        {
+            UnitList tempTargetUnitMap;
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            if (!tempTargetUnitMap.empty())
+            {
+                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
+                {
+                    if ((*iter)->getPowerType() == POWER_MANA)
+                        targetUnitMap.push_back(*iter);
+                }
+            }
+            break;
+        }
         case 69832: // Unstable Ooze Explosion (Rotface)
         {
             UnitList tempTargetUnitMap;
@@ -8777,6 +8865,15 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                 }
             }
 
+            break;
+        }
+        case 70127: // Mystic Buffet (Sindragosa)
+        case 72528:
+        case 72529:
+        case 72530:
+        {
+            FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            targetUnitMap.remove(m_caster);
             break;
         }
         case 71075: // Invocation of Blood (V) Move

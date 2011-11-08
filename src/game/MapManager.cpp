@@ -195,34 +195,37 @@ bool MapManager::CanPlayerEnter(uint32 mapid, Player* player)
                     return false;
                 }
             }
-            if (mapid == 631)
+            if(!player->isGameMaster() && !sWorld.getConfig(CONFIG_BOOL_INSTANCE_IGNORE_RAID))
             {
-                if (Group *pGroup= player->GetGroup())
+                if (mapid == 631)
                 {
-                    Difficulty diff = pGroup->GetRaidDifficulty();
-
-                    if (diff == RAID_DIFFICULTY_10MAN_HEROIC || diff == RAID_DIFFICULTY_25MAN_HEROIC)
+                    if (Group *pGroup= player->GetGroup())
                     {
-                        Player *pLeader = sObjectMgr.GetPlayer(pGroup->GetLeaderGuid());
-                        uint32 achievId = diff == RAID_DIFFICULTY_10MAN_HEROIC ? 4530 : 4597;
+                        Difficulty diff = pGroup->GetRaidDifficulty();
 
-                        if (!pLeader || !pLeader->GetAchievementMgr().HasAchievement(achievId))
+                        if (diff == RAID_DIFFICULTY_10MAN_HEROIC || diff == RAID_DIFFICULTY_25MAN_HEROIC)
                         {
-                            switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
+                            Player *pLeader = sObjectMgr.GetPlayer(pGroup->GetLeaderGuid());
+                            uint32 achievId = diff == RAID_DIFFICULTY_10MAN_HEROIC ? 4530 : 4597;
+
+                            if (!pLeader || !pLeader->GetAchievementMgr().HasAchievement(achievId))
                             {
-                                case LOCALE_enUS:
-                                     player->GetSession()->SendAreaTriggerMessage("You must have the Lich King defeated first.. to enter %s heroic", mapName);
-                                     break;
-                                case LOCALE_esES:
-                                     player->GetSession()->SendAreaTriggerMessage("Debes haber acabado con el Rey Exánime antes de entrar en %s heroico", mapName);
-                                     break;
-                                case LOCALE_esMX:
-                                     player->GetSession()->SendAreaTriggerMessage("Debes haber acabado con el Rey Exánime antes de entrar en %s heroico", mapName);
-                                     break;
+                                switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
+                                {
+                                    case LOCALE_enUS:
+                                         player->GetSession()->SendAreaTriggerMessage("You must have the Lich King defeated first.. to enter %s heroic", mapName);
+                                         break;
+                                    case LOCALE_esES:
+                                         player->GetSession()->SendAreaTriggerMessage("Debes haber acabado con el Rey Exánime antes de entrar en %s heroico", mapName);
+                                         break;
+                                    case LOCALE_esMX:
+                                         player->GetSession()->SendAreaTriggerMessage("Debes haber acabado con el Rey Exánime antes de entrar en %s heroico", mapName);
+                                         break;
+                                }
+                                // "You must have the Lich King defeated first..." will be shown
+                                player->SendTransferAborted(mapid, TRANSFER_ABORT_DIFFICULTY, diff);
+                                return false;
                             }
-                            // "You must have the Lich King defeated first..." will be shown
-                            player->SendTransferAborted(mapid, TRANSFER_ABORT_DIFFICULTY, diff);
-                            return false;
                         }
                     }
                 }

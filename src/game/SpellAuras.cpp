@@ -351,7 +351,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNULL,                                      //297 1 spell (counter spell school?)
     &Aura::HandleUnused,                                    //298 unused (3.2.2a)
     &Aura::HandleUnused,                                    //299 unused (3.2.2a)
-    &Aura::HandleNoImmediateEffect,                         //300 3 spells, share damage (in percent) with aura owner and aura target. implemented in Unit::DealDamage
+    &Aura::HandleAuraShareDamage,                           //300 3 spells, share damage (in percent) with aura owner and aura target. implemented in Unit::DealDamage
     &Aura::HandleNULL,                                      //301 SPELL_AURA_HEAL_ABSORB 5 spells
     &Aura::HandleUnused,                                    //302 unused (3.2.2a)
     &Aura::HandleNULL,                                      //303 17 spells
@@ -1882,9 +1882,15 @@ void Aura::TriggerSpell()
                     case 70017:                             // Gunship Cannon Fire
                         trigger_spell_id = 70021;
                         break;
-//                    // Ice Tomb
-//                    case 70157: break;
-                        // Mana Barrier
+                    // Ice Tomb
+                    case 70157:
+                        GetModifier()->m_amount += 1;
+
+                        if (GetModifier()->m_amount == 25)
+                            triggerTarget->CastSpell(triggerTarget, 71665, true);
+
+                        break;
+                    // Mana Barrier
                     case 70842:
                     {
                         // there should be some spell handling the effect?
@@ -3249,6 +3255,16 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 target->CastSpell(target, 68848, true, NULL, this);
                 // Draw Corrupted Soul
                 target->CastSpell(target, 68846, true, NULL, this);
+                return;
+            }
+            case 69766:                                     // Instability (Sindragosa)
+            {
+                // trigger Backlash if aura wears off
+                if (m_removeMode != AURA_REMOVE_BY_EXPIRE)
+                    return;
+
+                int32 damage = GetModifier()->m_amount;
+                target->CastCustomSpell(target, 69770, &damage, 0, 0, true, 0, this, GetCasterGuid(), GetSpellProto());
                 return;
             }
             case 70308:                                     // Mutated Transformation
@@ -5959,16 +5975,33 @@ void Aura::HandlePeriodicTriggerSpell(bool apply, bool /*Real*/)
                     target->CastSpell(target, 67375, true, NULL, this);
 
                 return;
-            case 71265:                                     // Swarming Shadows
-                if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
-                {
-                    Unit *caster = GetCaster();
-                    caster->CastCustomSpell(target, 71266, NULL, NULL,NULL, true);
-                }
-
-                return;
             default:
                 break;
+        }
+    }
+    switch (GetId())
+    {
+        case 70157:                                     // Ice Tomb (Sindragosa)
+        {
+            if (apply)
+            {
+                if (GameObject *pGO = target->SummonGameobject(201722, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0.0f, 180))
+                {
+                    pGO->SetSpellId(GetId());
+                    target->AddGameObject(pGO);
+                }
+                if (Creature *pCreature = target->SummonCreature(36980, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN, 180000))
+                {
+                    pCreature->SetCreatorGuid(target->GetObjectGuid());
+                }
+            }
+            else
+            {
+                if (GameObject *pGo = target->GetGameObject(GetId()))
+                    pGo->Delete();
+            }
+
+            return;
         }
     }
 }
@@ -10732,6 +10765,11 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                 case 63277:                                 // Shadow Crash (General Vezax - Ulduar)
                 {
                     spellId1 = 65269;
+                    break;
+                }
+                case 70157:                                 // Ice Tomb (Sindragosa)
+                {
+                    spellId1 = 69700;
                     break;
                 }
                 case 70867:                                 // Soul of Blood Qween

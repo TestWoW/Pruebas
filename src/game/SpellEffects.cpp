@@ -3092,6 +3092,24 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->GetMotionMaster()->MovementExpired();
                     return;
                 }
+                case 69675:                                 // Ice Tomb (Sindragosa)
+                {
+                    if (unitTarget)
+                        m_caster->CastSpell(unitTarget, 70157, true, 0, 0, ObjectGuid(), m_spellInfo);
+
+                    return;
+                }
+                case 69712:                                 // Ice Tomb (Sindragosa)
+                {
+                    // trigger spheres to targets with Frost Beacon mark
+                    if (unitTarget)
+                    {
+                        if (unitTarget->HasAura(70126, EFFECT_INDEX_0))
+                            m_caster->CastSpell(unitTarget, 69675, true, 0, 0, ObjectGuid(), m_spellInfo);
+                    }
+
+                    return;
+                }
                 case 69922:                                 // Temper Quel'Delar
                 {
                     if (!unitTarget)
@@ -9625,8 +9643,8 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (!unitTarget)
                         return;
 
-                    m_caster->CastSpell(unitTarget, 72423, false);
-                    m_caster->CastSpell(unitTarget, 69640, false);
+                    m_caster->CastSpell(unitTarget, 72423, true);
+                    m_caster->CastSpell(unitTarget, 69640, true);
                     return;
                 }
                 case 74445:                                 // Valkyr Carry (control vehicle)

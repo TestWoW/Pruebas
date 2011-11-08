@@ -2213,6 +2213,11 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     if (!damage)
                         return SPELL_AURA_PROC_FAILED;
 
+                    /* Temp */
+                    int cura = rand() % 3;
+                    if(cura != 1) return SPELL_AURA_PROC_FAILED;
+                    //////////
+
                     basepoints[0] = int32( pVictim->GetMaxHealth() * triggeredByAura->GetModifier()->m_amount / 100 );
                     pVictim->CastCustomSpell(pVictim, 20267, &basepoints[0], NULL, NULL, true, NULL, triggeredByAura);
                     return SPELL_AURA_PROC_OK;
@@ -2223,6 +2228,11 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     // only at real damage
                     if (!damage)
                         return SPELL_AURA_PROC_FAILED;
+
+                    /* Temp */
+                    int cura = rand() % 3;
+                    if(cura != 1) return SPELL_AURA_PROC_FAILED;
+                    /////////
 
                     if (pVictim->getPowerType() == POWER_MANA)
                     {
@@ -3569,6 +3579,13 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
                         CastCustomSpell(caster, 69034, &basepoints, NULL, NULL, true, NULL, triggeredByAura, GetObjectGuid());
 
                     return SPELL_AURA_PROC_OK;
+                }
+                case 71494:                                 // Vengeful Blast
+                {
+                    // despawn Vengeful Shade after proc
+                    if (GetTypeId() == TYPEID_UNIT)
+                        ((Creature*)this)->ForcedDespawn(1000);
+                    break;
                 }
                 case 72178:                                 // Blood link Saurfang aura
                 {
