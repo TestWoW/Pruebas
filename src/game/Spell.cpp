@@ -8452,7 +8452,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             std::advance(iter, urand(0, t-1));
             if (*iter)
                 targetUnitMap.push_back(*iter);
-            }
+            //}
 
             break;
         }
