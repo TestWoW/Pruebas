@@ -2460,6 +2460,10 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 case 58597:
                 {
                     triggered_spell_id = 66922;
+			if(pVictim)
+                        if(!pVictim->HasAura(53569, EFFECT_INDEX_0) && !pVictim->HasAura(53576, EFFECT_INDEX_0))
+                            return SPELL_AURA_PROC_FAILED;
+
                     basepoints[0] = int32(damage / GetSpellAuraMaxTicks(triggered_spell_id));
                     target = this;
                     break;
