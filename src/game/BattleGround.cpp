@@ -582,16 +582,31 @@ void BattleGround::Update(uint32 diff)
     {
         if (m_StartTime > uint32(ARENA_TIME_LIMIT))
         {
-            Team winner;
-            // winner is team with higher damage
-            if (GetDamageDoneForTeam(ALLIANCE) > GetDamageDoneForTeam(HORDE))
-                winner = ALLIANCE;
-            else if (GetDamageDoneForTeam(HORDE) > GetDamageDoneForTeam(ALLIANCE))
-                winner = HORDE;
-            else
-                winner = TEAM_NONE;
-           EndBattleGround(winner);
-           m_ArenaEnded = true;
+            ArenaTeam * green_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(HORDE));                   
+            ArenaTeam * gold_team = sObjectMgr.GetArenaTeamById(GetArenaTeamIdForTeam(GetOtherTeam(HORDE)));
+    
+            uint32 gold_rating = 0;                          
+            uint32 green_rating = 0;                         
+    
+            if (green_team && gold_team)
+            {
+                gold_rating = gold_team->GetBattleRating();
+                green_rating = green_team->GetBattleRating();
+                //two teams must lost
+                int32 green_change = green_team->LostAgainst(gold_rating);
+                int32 gold_change = gold_team->LostAgainst(green_rating);
+
+                DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Loser change: %i ---", green_rating, gold_rating, green_change, gold_change);
+            
+                SetArenaTeamRatingChangeForTeam(HORDE, green_change);
+                SetArenaTeamRatingChangeForTeam(GetOtherTeam(HORDE), gold_change);
+ 
+                green_team->SaveToDB();
+                gold_team->SaveToDB();
+            }
+
+            EndBattleGround(TEAM_NONE);
+            m_ArenaEnded = true;
         }
     }
 

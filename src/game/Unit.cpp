@@ -3501,15 +3501,15 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
     // Try victim reflect spell
     if (CanReflect)
     {
-	 int32 reflectchance = pVictim->GetTotalAuraModifier(SPELL_AURA_REFLECT_SPELLS);
+        int32 reflectchance = pVictim->GetTotalAuraModifier(SPELL_AURA_REFLECT_SPELLS);
         Unit::AuraList const& mReflectSpellsSchool = pVictim->GetAurasByType(SPELL_AURA_REFLECT_SPELLS_SCHOOL);
         for(Unit::AuraList::const_iterator i = mReflectSpellsSchool.begin(); i != mReflectSpellsSchool.end(); ++i)
             if((*i)->GetModifier()->m_miscvalue & GetSpellSchoolMask(spell))
                 reflectchance += (*i)->GetModifier()->m_amount;
         if (reflectchance > 0 && roll_chance_i(reflectchance))
         {
-		if(spell->SpellFamilyName == SPELLFAMILY_HUNTER && spell->SpellFamilyFlags.test<CF_HUNTER_FREEZING_TRAP_EFFECT>())//deflect freezing trap
-        		return SPELL_MISS_DEFLECT;
+            if(spell->SpellFamilyName == SPELLFAMILY_HUNTER && spell->SpellFamilyFlags.test<CF_HUNTER_FREEZING_TRAP_EFFECT>())//deflect freezing trap
+                return SPELL_MISS_DEFLECT;
         
             // Start triggers for remove charges if need (trigger only for victim, and mark as active spell)
             ProcDamageAndSpell(pVictim, PROC_FLAG_NONE, PROC_FLAG_TAKEN_NEGATIVE_SPELL_HIT, PROC_EX_REFLECT, 1, BASE_ATTACK, spell);
@@ -8172,7 +8172,7 @@ bool Unit::IsImmuneToSpell(SpellEntry const* spellInfo)
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
         {
             if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1))){
-		       if((*iter)->GetId() == 46924 && mechanic == MECHANIC_DISARM) // Hack to remove Bladestorm disarm immunity
+                if((*iter)->GetId() == 46924 && mechanic == MECHANIC_DISARM) // Hack to remove Bladestorm disarm immunity
                     continue;
                 return true;
 		}
@@ -8203,7 +8203,7 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
         {
             if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1))){
-		  // Bladestorm exception (Psychic Horror check here)
+            // Bladestorm exception (Psychic Horror check here)
                 if ((*iter)->GetId() == 46924 && mechanic == MECHANIC_DISARM)
                     continue;
                 return true;
