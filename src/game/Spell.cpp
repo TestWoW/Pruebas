@@ -3298,6 +3298,19 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
         }
     }
 
+    // disengage vs roots
+    if(m_spellInfo->Id == 781)
+    {
+        //bool root = false;
+        Unit::AuraList const& stunAuras = m_caster->GetAurasByType(SPELL_AURA_MOD_ROOT);
+        for (Unit::AuraList::const_iterator itr = stunAuras.begin(); itr != stunAuras.end(); ++itr)
+            if ((*itr)->HasMechanic(MECHANIC_ROOT)) 
+            {
+                result = SPELL_FAILED_ROOTED;
+                break;
+            }
+    }
+
     if (result != SPELL_CAST_OK && !IsAutoRepeat())          //always cast autorepeat dummy for triggering
     {
         if (triggeredByAura)

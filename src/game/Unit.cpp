@@ -3259,8 +3259,8 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     bool canParry = true;
 
     // some spells cannot be deflected by deterrence
-    if(    pVictim->HasAuraType(SPELL_AURA_MOD_PARRY_FROM_BEHIND_PERCENT)       // FIXME: only for deterrence
-        && spell->Id == 7384                                                    // overpower
+    if(    pVictim->HasAuraType(SPELL_AURA_MOD_PARRY_FROM_BEHIND_PERCENT)       
+        && (spell->Id == 7384 || pVictim->HasStealthAura())                 // overpower and stealed atacks
       )
     {
         return SPELL_MISS_NONE;
