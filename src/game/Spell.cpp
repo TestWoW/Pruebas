@@ -3298,19 +3298,6 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
         }
     }
 
-    // disengage vs roots
-    if(m_spellInfo->Id == 781)
-    {
-        //bool root = false;
-        Unit::AuraList const& stunAuras = m_caster->GetAurasByType(SPELL_AURA_MOD_ROOT);
-        for (Unit::AuraList::const_iterator itr = stunAuras.begin(); itr != stunAuras.end(); ++itr)
-            if ((*itr)->HasMechanic(MECHANIC_ROOT)) 
-            {
-                result = SPELL_FAILED_ROOTED;
-                break;
-            }
-    }
-
     if (result != SPELL_CAST_OK && !IsAutoRepeat())          //always cast autorepeat dummy for triggering
     {
         if (triggeredByAura)
@@ -6185,13 +6172,13 @@ SpellCastResult Spell::CheckCast(bool strict)
             case SPELL_EFFECT_LEAP:
             case SPELL_EFFECT_TELEPORT_UNITS_FACE_CASTER:
             {
-                float direction = (m_spellInfo->Effect[i] == SPELL_EFFECT_LEAP_BACK ? M_PI + m_caster->GetOrientation() : m_caster->GetOrientation());
+               /* float direction = (m_spellInfo->Effect[i] == SPELL_EFFECT_LEAP_BACK ? M_PI + m_caster->GetOrientation() : m_caster->GetOrientation());
                 float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[i]));
                 float fx = m_caster->GetPositionX() + dis * cos(direction);
                 float fy = m_caster->GetPositionY() + dis * sin(direction);
                 // simple check for avoid falling under map
                 if (!m_caster->GetTerrain()->IsNextZcoordOK(fx, fy, m_caster->GetPositionZ(),8.0f))
-                    return SPELL_FAILED_TRY_AGAIN;
+                    return SPELL_FAILED_TRY_AGAIN;*/
 
                 // not allow use this effect at battleground until battleground start
                 if (m_caster->GetTypeId() == TYPEID_PLAYER)
@@ -8276,29 +8263,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                 return true;
             break;
         }
-        case 45822: // Alterac buffs
-        case 45823:
-        case 45824:
-        case 45826:
-        case 45828:
-        case 45829:
-        case 45830:
-        case 45831:
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->GetObjectGuid().IsPlayer())
-                        continue;
-
-                    targetUnitMap.push_back((*iter));
-                }
-            }
-            break;
-        }
         case 46584: // Raise Dead
         {
             Unit* pCorpseTarget = NULL;
@@ -8984,25 +8948,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         {
             FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             targetUnitMap.remove(m_caster);
-        }
-        case 70728: // Exploit Weakness triggered
-        case 70840: // Devious Minds triggered
-        {
-            targetUnitMap.push_back(m_caster);
-            if (m_caster->GetObjectGuid().IsPet())
-            {
-                if (Unit* owner = m_caster->GetOwner())
-                    targetUnitMap.push_back(owner);
-            }
-            else
-            {
-               GroupPetList const& groupPets = m_caster->GetPets();
-               if (!groupPets.empty())
-                   for (GroupPetList::const_iterator itr = groupPets.begin(); itr != groupPets.end(); ++itr)
-                       if (Pet* pet = m_caster->GetMap()->GetPet(*itr))
-                           targetUnitMap.push_back((Unit*)pet);
-            }
-            break;
         }
         case 72378: // Blood Nova (Saurfang)
         case 73058:
