@@ -12026,6 +12026,11 @@ uint32 Aura::CalculateCrowdControlBreakDamage()
     if (damageCap < 50)
         damageCap = 50;
 
+    // some specific values
+    // Hungering Cold - any damage
+    if (GetSpellProto()->SpellIconID == 2797)
+        damageCap = 1;
+
     Unit* caster = GetCaster();
 
     if (!caster)
