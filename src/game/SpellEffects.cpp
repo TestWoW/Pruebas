@@ -3412,7 +3412,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     return;
 
                 // dummy cast itself ignored by client in logs
-                m_caster->SetPower(POWER_RAGE, m_caster->GetPower(POWER_RAGE) + 150); // Temp hack
+                //m_caster->SetPower(POWER_RAGE, m_caster->GetPower(POWER_RAGE) + 150); // Temp hack
                 m_caster->CastCustomSpell(unitTarget,50782,&damage,NULL,NULL,true);
                 return;
             }

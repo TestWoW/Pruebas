@@ -2977,7 +2977,8 @@ MeleeHitOutcome Unit::RollMeleeOutcomeAgainst (const Unit *pVictim, WeaponAttack
         int32 maxskill = attackerMaxSkillValueForLevel;
         skill = (skill > maxskill) ? maxskill : skill;
 
-        tmp = (10 + 2*(victimDefenseSkill - skill)) * 100;
+        //tmp = (10 + 2*(victimDefenseSkill - skill)) * 100;
+	 tmp = (10 + victimDefenseSkill - skill) * 100;
         tmp = tmp > 4000 ? 4000 : tmp;
         if (roll < (sum += tmp))
         {
@@ -3223,6 +3224,10 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
 
     // cannot parry/dodge/miss if melee spell selfcasted
     if (pVictim && pVictim->GetObjectGuid() == GetObjectGuid())
+        return SPELL_MISS_NONE;
+
+    // hack: Slam dummy/client spell (do not check miss twice)
+    if (spell->SpellFamilyFlags.test<CF_WARRIOR_SLAM>() && spell->Id != 50782)
         return SPELL_MISS_NONE;
 
     // bonus from skills is 0.04% per skill Diff
