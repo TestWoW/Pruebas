@@ -5046,7 +5046,11 @@ SpellAuraProcResult Unit::IsTriggeredAtCustomProcEvent(Unit *pVictim, SpellAuraH
     SpellEntry const* spellProto = holder->GetSpellProto();
 
     if (procSpell == spellProto)
+<<<<<<< HEAD
        return SPELL_AURA_PROC_FAILED;
+=======
+        return SPELL_AURA_PROC_FAILED;
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 
     uint32 EventProcFlag = GetProcFlag(spellProto);
 
@@ -5076,7 +5080,11 @@ SpellAuraProcResult Unit::IsTriggeredAtCustomProcEvent(Unit *pVictim, SpellAuraH
                 }
                 case SPELL_AURA_DAMAGE_SHIELD:
                     if (procFlag & PROC_FLAG_TAKEN_MELEE_HIT)
+<<<<<<< HEAD
                         return SPELL_AURA_PROC_OK;
+=======
+                        return SPELL_AURA_PROC_OK;;
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
                     break;
                 case SPELL_AURA_MOD_STEALTH:
                 case SPELL_AURA_MOD_INVISIBILITY:

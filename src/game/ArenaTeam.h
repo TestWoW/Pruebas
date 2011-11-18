@@ -211,7 +211,11 @@ class ArenaTeam
 
         void SetBattleRating(uint32 rating) { BattleRating = rating; }
         uint32 GetBattleRating() { return BattleRating; }
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
     protected:
 
         uint32 m_TeamId;
@@ -227,7 +231,12 @@ class ArenaTeam
 
         MemberList m_members;
         ArenaTeamStats m_stats;
+<<<<<<< HEAD
        
         uint32 BattleRating;     
+=======
+
+        uint32 BattleRating;
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 };
 #endif

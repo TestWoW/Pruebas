@@ -102,6 +102,7 @@ void BattleGroundSA::FillInitialWorldStates(WorldPacket& data, uint32& count)
             _GydOccupied(i, HORDE);
         else if (m_Gyd[i] == BG_SA_GARVE_STATUS_ALLY_OCCUPIED || m_Gyd[i] == BG_SA_GARVE_STATUS_ALLY_CONTESTED)
             _GydOccupied(i, ALLIANCE);
+<<<<<<< HEAD
     }
 
     for (uint8 i = 0; i < BG_SA_MAX_WS; ++i)
@@ -110,6 +111,16 @@ void BattleGroundSA::FillInitialWorldStates(WorldPacket& data, uint32& count)
         FillInitialWorldState(data, count, BG_SA_WorldStatusH[i], (GetDefender() == HORDE) ? 0 : 1);
     }
 
+=======
+    }
+
+    for (uint8 i = 0; i < BG_SA_MAX_WS; ++i)
+    {
+        FillInitialWorldState(data, count, BG_SA_WorldStatusA[i], (GetDefender() == HORDE) ? 1 : 0);
+        FillInitialWorldState(data, count, BG_SA_WorldStatusH[i], (GetDefender() == HORDE) ? 0 : 1);
+    }
+
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
     for (uint32 z = 0; z < BG_SA_GATE_MAX; ++z)
     {
         FillInitialWorldState(data, count, BG_SA_GateStatus[z], GateStatus[z]);
@@ -267,6 +278,12 @@ void BattleGroundSA::Update(uint32 diff)
             SetStatus(STATUS_IN_PROGRESS); // Start round two
             PlaySoundToAll(SOUND_BG_START);
             SendWarningToAll(LANG_BG_SA_HAS_BEGUN);
+
+            for (BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
+            {
+                if (Player* plr = sObjectMgr.GetPlayer(itr->first))
+                    plr->RemoveAurasDueToSpell(SPELL_PREPARATION);
+            }
         }
         else
             TimeST2Round -= diff;
@@ -364,7 +381,7 @@ void BattleGroundSA::UpdatePlayerScore(Player* Source, uint32 type, uint32 value
 void BattleGroundSA::ResetBattle(uint32 winner, Team teamDefending)
 {
     Phase = SA_ROUND_TWO;
-    shipsTimer = 60000;
+    shipsTimer = BG_SA_BOAT_START;
     shipsStarted = false;
 
     for (int32 i = 0; i < BG_SA_GATE_MAX; ++i)
@@ -426,6 +443,16 @@ void BattleGroundSA::UpdatePhase()
         Round_timer = (BG_SA_ROUNDLENGTH - RoundScores[0].time);
         SetStatus(STATUS_WAIT_JOIN);
         SendMessageToAll(LANG_BG_SA_START_TWO_MINUTE, CHAT_MSG_BG_SYSTEM_NEUTRAL, NULL);
+<<<<<<< HEAD
+=======
+
+        // adding Preparation buff for the 2nd round, has to be added in status STATUS_WAIT_JOIN
+        for (BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
+        {
+            if (Player* plr = sObjectMgr.GetPlayer(itr->first))
+                plr->CastSpell(plr, SPELL_PREPARATION, true);
+        }
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
     }
 
     // Spawn banners and graveyards
@@ -561,12 +588,21 @@ void BattleGroundSA::EventPlayerClickedOnFlag(Player *source, GameObject* target
         {
             SendWarningToAllSA(gyd, STATUS_CONQUESTED, HORDE);
             PlaySoundToAll(BG_SA_SOUND_GYD_CAPTURED_HORDE);
+<<<<<<< HEAD
         }
         switch(gyd)
         {
             case 0: SpawnEvent(SA_EVENT_ADD_VECH_E, 0, true);break;
             case 1: SpawnEvent(SA_EVENT_ADD_VECH_W, 0, true);break;
         }
+=======
+        }
+        switch(gyd)
+        {
+            case 0: SpawnEvent(SA_EVENT_ADD_VECH_E, 0, true);break;
+            case 1: SpawnEvent(SA_EVENT_ADD_VECH_W, 0, true);break;
+        }
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
     }
 }
 
@@ -974,6 +1010,20 @@ void BattleGroundSA::TeleportPlayerToCorrectLoc(Player *plr, bool resetBattle)
     if (!plr)
         return;
 
+    if (resetBattle)
+    {
+        if (!plr->isAlive())
+        {
+            plr->ResurrectPlayer(1.0f);
+            plr->SpawnCorpseBones();
+        }
+
+        plr->RemoveArenaAuras(true);
+        plr->SetHealth(plr->GetMaxHealth());
+        plr->SetPower(POWER_MANA, plr->GetMaxPower(POWER_MANA));
+        plr->CombatStopWithPets(true);
+    }
+
     if (!shipsStarted)
     {
         if (plr->GetTeam() != GetDefender())
@@ -1012,18 +1062,6 @@ void BattleGroundSA::TeleportPlayerToCorrectLoc(Player *plr, bool resetBattle)
             plr->TeleportTo(607, 1209.7f, -65.16f, 70.1f, 0.0f, 0);
     }
     SendTransportInit(plr);
-    if (resetBattle)
-    {
-        if (!plr->isAlive())
-        {
-            plr->ResurrectPlayer(1.0f);
-            plr->SpawnCorpseBones();
-        }
-
-        plr->SetHealth(plr->GetMaxHealth());
-        plr->SetPower(POWER_MANA, plr->GetMaxPower(POWER_MANA));
-        plr->CombatStopWithPets(true);
-    }
 }
 
 void BattleGroundSA::SendTransportInit(Player *player)

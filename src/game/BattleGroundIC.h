@@ -151,8 +151,13 @@ enum BG_IC_GoId
     BG_IC_GO_HORDE_GATE_2    = 195495, // east
     BG_IC_GO_HORDE_GATE_3    = 195494, // front
 
+<<<<<<< HEAD
     BG_IC_GO_ALLIANCE_FRONT  = 195703, // the actual gate that opens, without frame, needs to be spawned separately just at front gates
     BG_IC_GO_HORDE_FRONT     = 195491
+=======
+    BG_IC_GO_ALLIANCE_PORT  = 195703, // the actual portcullis that opens, without frame, needs to be spawned separately just at front gates
+    BG_IC_GO_HORDE_PORT     = 195491
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 };
 
 enum BG_IC_GoType
@@ -165,10 +170,22 @@ enum BG_IC_GoType
     BG_IC_GO_T_HORDE_GATE_2,
     BG_IC_GO_T_HORDE_GATE_3,
 
+<<<<<<< HEAD
     BG_IC_GO_T_ALLIANCE_FRONT,
     BG_IC_GO_T_HORDE_FRONT,
 
     BG_IC_MAXOBJ = 8
+=======
+    BG_IC_GO_T_ALLIANCE_WEST,
+    BG_IC_GO_T_ALLIANCE_EAST,
+    BG_IC_GO_T_ALLIANCE_FRONT,
+
+    BG_IC_GO_T_HORDE_WEST,
+    BG_IC_GO_T_HORDE_EAST,
+    BG_IC_GO_T_HORDE_FRONT,
+
+    BG_IC_MAXOBJ = 12
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 };
 
 enum BG_IC_GUNSHIPS
@@ -267,7 +284,11 @@ const float allianceGunshipPassengers[5][4] =
     {-2.81125f, 26.2077f, 21.6566f, 1.60659f}
 };*/
 
+<<<<<<< HEAD
 static float const BG_IC_GATELOCS[8][4] =
+=======
+static float const BG_IC_GATELOCS[6][4] =
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 {
     // west / east / front alli gate
     {351.615f,  -762.75f,   48.9162f,   -1.5708f},
@@ -277,9 +298,12 @@ static float const BG_IC_GATELOCS[8][4] =
     {1217.9f,   -676.948f,  47.6341f,   1.5708f},
     {1218.74f,  -851.155f,  48.2533f,   -1.5708f},
     {1150.9f,   -762.606f,  47.5077f,   3.14159f},
+<<<<<<< HEAD
     // front gates (the actual gates that open)
     {413.479f,  -833.95f,   48.5238f,   3.14159f},
     {1150.9f,   -762.606f,  47.0f,      3.14159f}
+=======
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 };
 
 class BattleGroundICScore : public BattleGroundScore
@@ -310,9 +334,15 @@ class BattleGroundIC : public BattleGround
         virtual void HandleKillUnit(Creature *unit, Player *killer);
         virtual void HandleKillPlayer(Player* player, Player* killer);
         virtual void Reset();
+<<<<<<< HEAD
 
         virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
 
+=======
+
+        virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
+
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
         void RemovePlayer(Player* plr);
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         bool SetupBattleGround();
@@ -327,6 +357,15 @@ class BattleGroundIC : public BattleGround
         static BattleGroundTeamIndex GetTeamIndexByTeamId(Team team) { return team == ALLIANCE ? BG_TEAM_ALLIANCE : BG_TEAM_HORDE; }
         uint32 GetVehicleFaction(uint8 vehicleType) const { return GetCorrectFactionIC(vehicleType); }
         uint32 GetCorrectFactionIC(uint8 vehicleType) const;
+<<<<<<< HEAD
+=======
+
+        // for achievement Mine
+        bool hasAllNodes(int8 team);
+
+        // for achievement Resource Glut
+        bool hasAllResNodes(int8 team);
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 
     private:
         uint32 closeFortressDoorsTimer;

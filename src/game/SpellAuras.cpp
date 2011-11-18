@@ -440,6 +440,7 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
     if (!(spellproto->AttributesEx5 & SPELL_ATTR_EX5_START_PERIODIC_AT_APPLY))
         m_periodicTimer = m_modifier.periodictime;
 
+<<<<<<< HEAD
 // some spells that should also tick at apply
   switch (spellproto->Id)
   {
@@ -459,6 +460,8 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
             m_periodicTimer = 0;
   }
 
+=======
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
     // Calculate CrowdControl damage start value
     if (IsCrowdControlAura(m_modifier.m_auraname))
     {
@@ -2508,6 +2511,9 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         target->CastSpell(target, 54148, true);   //Cast Choose Target
                         target->CastSpell(target, 48331, true);   //Cast Swirl Sword
                         target->CastSpell(target, 54159, true);   //Cast Remove Equipment
+                        return;
+                    case 43885:                             // Headless Horseman - Horseman Laugh, Maniacal
+                        target->PlayDirectSound(11965);     // triggered by spells delaying laugh
                         return;
                     case 50756:                             // Drakos Shpere Passive
                         target->CastSpell(target, 50758, true);
@@ -10941,7 +10947,12 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     // Remove missile barrage
                     if (caster->HasAura(44401))
                         caster->RemoveAurasByCasterSpell(44401, caster->GetObjectGuid());
+<<<<<<< HEAD
                     // Remove arcane blast
+=======
+
+                    // Remove Arcane Blast
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
                     if (caster->HasAura(36032))
                         caster->RemoveAurasByCasterSpell(36032, caster->GetObjectGuid());
                 }
@@ -12020,7 +12031,10 @@ uint32 Aura::CalculateCrowdControlBreakDamage()
         return 0;
 
     // Damage cap for CC effects
+<<<<<<< HEAD
 
+=======
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
     uint32 damageCap = (int32)((float)GetTarget()->GetMaxHealth() * sWorld.getConfig(CONFIG_FLOAT_CROWDCONTROL_HP_BASE));
 
     if (damageCap < 50)
@@ -12069,6 +12083,7 @@ bool Aura::IsAffectedByCrowdControlEffect(uint32 damage)
     m_modifier.m_baseamount -= damage;
     return true;
 }
+<<<<<<< HEAD
 
 void Aura::HandleAuraShareDamage(bool apply, bool Real)
 {
@@ -12104,3 +12119,5 @@ void Aura::HandleAuraShareDamage(bool apply, bool Real)
         }
     }
 }
+=======
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254

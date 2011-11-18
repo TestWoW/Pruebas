@@ -162,7 +162,11 @@ class BattleGroundWS : public BattleGround
         void SetTeamPoint(Team team, uint32 Points = 0) { m_TeamScores[GetTeamIndexByTeamId(team)] = Points; }
         void RemovePoint(Team team, uint32 Points = 1)  { m_TeamScores[GetTeamIndexByTeamId(team)] -= Points; }
     private:
+<<<<<<< HEAD
         //void PickOrReturnFlag(Player* pPlayer, Team forTeam, bool pickedUp, bool fromGround = false);
+=======
+        void PickOrReturnFlag(Player* pPlayer, Team forTeam, bool pickedUp, bool fromGround = false);
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 
         ObjectGuid m_FlagKeepers[BG_TEAMS_COUNT];
 

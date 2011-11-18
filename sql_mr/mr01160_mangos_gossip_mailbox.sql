@@ -1,5 +1,8 @@
 -- mailbox option to pet's menu
+<<<<<<< HEAD
 DELETE FROM gossip_menu_option WHERE option_id = 19;
+=======
+>>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 DELETE FROM gossip_menu_option WHERE menu_id = 10318;
 DELETE FROM gossip_menu_option WHERE menu_id = 33239;
 
