@@ -1174,11 +1174,7 @@ void GameObject::Use(Unit* user)
 
             // TODO: Improve this when more information is available, currently these traps are known that must send the anim (Onyxia/ Heigan Fissures)
             if (GetDisplayId() == 4392 || GetDisplayId() == 4472 || GetDisplayId() == 6785)
-<<<<<<< HEAD
                 SendGameObjectCustomAnim(GetObjectGuid(), 0);
-=======
-                SendGameObjectCustomAnim(GetObjectGuid(),0);
->>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
 
             return;
         }

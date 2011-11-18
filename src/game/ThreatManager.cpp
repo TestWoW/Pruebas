@@ -301,14 +301,15 @@ bool ThreatContainer::IsSecondChoiceTarget(Creature* pAttacker, Unit* pTarget, b
 HostileReference* ThreatContainer::selectNextVictim(Creature* pAttacker, HostileReference* pCurrentVictim)
 {
     HostileReference* pCurrentRef = NULL;
-    bool found = false;
-    bool onlySecondChoiceTargetsFound = false;
-    bool checkedCurrentVictim = false;
+    bool bFound = false;
+    bool bNoPriorityTargetFound = false;
+    bool bCheckedCurrentVictim = false;
+    bool bIsAttackerStationary = pAttacker->IsCombatStationary();
 
     ThreatList::const_iterator lastRef = iThreatList.end();
     lastRef--;
 
-    for (ThreatList::const_iterator iter = iThreatList.begin(); iter != iThreatList.end() && !found;)
+    for(ThreatList::const_iterator iter = iThreatList.begin(); iter != iThreatList.end() && !bFound;)
     {
         pCurrentRef = (*iter);
 
@@ -317,16 +318,14 @@ HostileReference* ThreatContainer::selectNextVictim(Creature* pAttacker, Hostile
 
         MAPLOCK_READ(pTarget, MAP_LOCK_TYPE_DEFAULT);
         // some units are prefered in comparison to others
-        // if (checkThreatArea) consider IsOutOfThreatArea - expected to be only set for pCurrentVictim
-        //     This prevents dropping valid targets due to 1.1 or 1.3 threat rule vs invalid current target
-        if (!onlySecondChoiceTargetsFound && pAttacker->IsSecondChoiceTarget(pTarget, pCurrentRef == pCurrentVictim))
+        if (!bNoPriorityTargetFound && IsSecondChoiceTarget(pAttacker, pTarget, pCurrentRef == pCurrentVictim, bIsAttackerStationary))
         {
             if (iter != lastRef)
                 ++iter;
             else
             {
                 // if we reached to this point, everyone in the threatlist is a second choice target. In such a situation the target with the highest threat should be attacked.
-                onlySecondChoiceTargetsFound = true;
+                bNoPriorityTargetFound = true;
                 iter = iThreatList.begin();
             }
 
@@ -345,49 +344,49 @@ HostileReference* ThreatContainer::selectNextVictim(Creature* pAttacker, Hostile
                 // normal case: pCurrentRef is still valid and most hated
                 if (pCurrentVictim == pCurrentRef)
                 {
-                    found = true;
+                    bFound = true;
                     break;
                 }
 
                 // we found a valid target, but only compare its threat if the currect victim is also a valid target
                 // Additional check to prevent unneeded comparision in case of valid current victim
-                if (!checkedCurrentVictim)
+                if (!bCheckedCurrentVictim)
                 {
                     Unit* pCurrentTarget = pCurrentVictim->getTarget();
                     MANGOS_ASSERT(pCurrentTarget);
-                    if (pAttacker->IsSecondChoiceTarget(pCurrentTarget, true))
+                    if (IsSecondChoiceTarget(pAttacker, pCurrentTarget, true, bIsAttackerStationary))
                     {
                         // CurrentVictim is invalid, so return CurrentRef
-                        found = true;
+                        bFound = true;
                         break;
                     }
-                    checkedCurrentVictim = true;
+                    bCheckedCurrentVictim = true;
                 }
 
                 // list sorted and and we check current target, then this is best case
                 if (pCurrentRef->getThreat() <= 1.1f * pCurrentVictim->getThreat())
                 {
                     pCurrentRef = pCurrentVictim;
-                    found = true;
+                    bFound = true;
                     break;
                 }
 
                 if (pCurrentRef->getThreat() > 1.3f * pCurrentVictim->getThreat() ||
                     (pCurrentRef->getThreat() > 1.1f * pCurrentVictim->getThreat() && pAttacker->CanReachWithMeleeAttack(pTarget)))
                 {                                           // implement 110% threat rule for targets in melee range
-                    found = true;                           // and 130% rule for targets in ranged distances
+                    bFound = true;                          // and 130% rule for targets in ranged distances
                     break;                                  // for selecting alive targets
                 }
             }
             else                                            // select any
             {
-                found = true;
+                bFound = true;
                 break;
             }
         }
         ++iter;
     }
-    if (!found)
+    if (!bFound)
         pCurrentRef = NULL;
 
     return pCurrentRef;

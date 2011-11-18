@@ -39,6 +39,7 @@
 #include "BattleGroundAB.h"
 #include "BattleGroundAV.h"
 #include "BattleGroundEY.h"
+#include "BattleGroundIC.h"
 #include "BattleGroundSA.h"
 #include "BattleGroundWS.h"
 #include "Map.h"
@@ -1870,7 +1871,6 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                         break;
                     }
                     case WS_OBJECTIVE_RETURN_FLAG:       // WS, return a flag
-<<<<<<< HEAD
                     {
                         if (bg->GetTypeID(true) != BATTLEGROUND_WS)
                             continue;
@@ -1881,18 +1881,6 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                     case AV_OBJECTIVE_DEFEND_TOWER:      // AV, defend a tower
                     case AV_OBJECTIVE_DEFEND_GRAVEYARD:  // AV, defend a graveyard
                     {
-=======
-                    {
-                        if (bg->GetTypeID(true) != BATTLEGROUND_WS)
-                            continue;
-                        break;
-                    }
-                    case AV_OBJECTIVE_ASSAULT_TOWER:     // AV, assault a tower
-                    case AV_OBJECTIVE_ASSAULT_GRAVEYARD: // AV, assault a graveyard
-                    case AV_OBJECTIVE_DEFEND_TOWER:      // AV, defend a tower
-                    case AV_OBJECTIVE_DEFEND_GRAVEYARD:  // AV, defend a graveyard
-                    {
->>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
                         if (bg->GetTypeID(true) != BATTLEGROUND_AV)
                             continue;
                         break;

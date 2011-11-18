@@ -2048,9 +2048,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             {
                 // caster included here?
                 FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_ALL);
-
-                if (targetUnitMap.empty())
-                    targetUnitMap.push_back(m_caster);
             }
             else if (IsPositiveSpell(m_spellInfo->Id))
                     targetUnitMap.push_back(m_caster);
@@ -3188,7 +3185,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                                 targetUnitMap.push_back(owner);
                     }
                     break;
-                case SPELL_EFFECT_TELEPORT_UNITS:
                 case SPELL_EFFECT_SUMMON:
                 case SPELL_EFFECT_SUMMON_CHANGE_ITEM:
                 case SPELL_EFFECT_TRANS_DOOR:
@@ -3909,10 +3905,6 @@ void Spell::cast(bool skipCheck)
             handle_immediate();
             m_caster->ProcDamageAndSpell(procTarget, m_procAttacker, 0, PROC_EX_CAST_END, 0, m_attackType, m_spellInfo);
         }
-<<<<<<< HEAD
-=======
-
->>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
     }
 
     m_caster->DecreaseCastCounter();
@@ -5877,11 +5869,6 @@ SpellCastResult Spell::CheckCast(bool strict)
                     if (m_targets.getUnitTarget() && !m_caster->IsFriendlyTo(m_targets.getUnitTarget()) && !m_caster->HasInArc(M_PI_F, m_targets.getUnitTarget()))
                         return SPELL_FAILED_UNIT_NOT_INFRONT;
                 }
-                else if(m_spellInfo->Id == 49576)           // Death Grip
-                {
-                    if(m_caster->m_movementInfo.HasMovementFlag(MovementFlags(MOVEFLAG_FALLING | MOVEFLAG_FALLINGFAR)))
-                        return SPELL_FAILED_MOVING;
-                }
                 else if (m_spellInfo->SpellFamilyName == SPELLFAMILY_SHAMAN && m_spellInfo->SpellIconID == 33) // Fire Nova
                 {
                     // fire totems slot
@@ -6103,11 +6090,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 {
                     // In BattleGround players can use only flags and banners
                     if ( ((Player*)m_caster)->InBattleGround() &&
-<<<<<<< HEAD
                         !((Player*)m_caster)->CanUseBattleGroundObject() && m_spellInfo->Id!= 1842 ) // Disarm Trap can be used)
-=======
-                        !((Player*)m_caster)->CanUseBattleGroundObject() && m_spellInfo->Id!= 1842 ) // Disarm Trap can be used
->>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
                         return SPELL_FAILED_TRY_AGAIN;
 
                     lockId = go->GetGOInfo()->GetLockId();
@@ -6278,12 +6261,6 @@ SpellCastResult Spell::CheckCast(bool strict)
             // no break here!
             case SPELL_EFFECT_TELEPORT_UNITS_FACE_CASTER:
             {
-<<<<<<< HEAD
-=======
-                if (m_caster->hasUnitState(UNIT_STAT_ROOT))
-                    return SPELL_FAILED_ROOTED;
-
->>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
                 // not allow use this effect at battleground until battleground start
                 if (m_caster->GetTypeId() == TYPEID_PLAYER)
                 {
@@ -6300,14 +6277,6 @@ SpellCastResult Spell::CheckCast(bool strict)
             {
                 if (m_targets.getUnitTarget() == m_caster)
                     return SPELL_FAILED_BAD_TARGETS;
-                break;
-            }
-            case SPELL_EFFECT_JUMP:
-            case SPELL_EFFECT_JUMP2:
-            case SPELL_EFFECT_CHARGE2:
-            {
-                if (m_caster->hasUnitState(UNIT_STAT_ROOT))
-                    return SPELL_FAILED_ROOTED;
                 break;
             }
             default:
@@ -8804,7 +8773,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
-<<<<<<< HEAD
         case 69057:                                 // Bone Spike Graveyard (Icecrown Citadel, Lord Marrowgar encounter, 10N)
         case 70826:                                 // Bone Spike Graveyard (Icecrown Citadel, Lord Marrowgar encounter, 25N)
         case 72088:                                 // Bone Spike Graveyard (Icecrown Citadel, Lord Marrowgar encounter, 10H)
@@ -9085,8 +9053,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             targetUnitMap.remove(m_caster);
         }
-=======
->>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
         case 70728: // Exploit Weakness triggered
         case 70840: // Devious Minds triggered
         {
@@ -9106,11 +9072,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
-<<<<<<< HEAD
         case 72378: // Blood Nova (Saurfang)
-=======
-        case 72378: // Blood Nova
->>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
         case 73058:
         {
             UnitList tempTargetUnitMap;

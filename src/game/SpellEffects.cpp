@@ -4524,12 +4524,7 @@ void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
     if (!unitTarget || unitTarget->IsTaxiFlying())
         return;
 
-    // Target dependend on TargetB, if there is none provided, decide dependend on A
-    uint32 targetType = m_spellInfo->EffectImplicitTargetB[eff_idx];
-    if (!targetType)
-        targetType = m_spellInfo->EffectImplicitTargetA[eff_idx];
-
-    switch (targetType)
+    switch (m_spellInfo->EffectImplicitTargetB[eff_idx])
     {
         case TARGET_INNKEEPER_COORDINATES:
         {
@@ -4731,9 +4726,7 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
 
     Aura* aur = m_spellAuraHolder->CreateAura(m_spellInfo, eff_idx, &m_currentBasePoints[eff_idx], m_spellAuraHolder, unitTarget, caster, m_CastItem);
 
-    SpellAuraHolderPtr _holder = aur->GetHolder();
-
-    if (!aur || !_holder)
+    if (!aur)
     {
         sLog.outError("Spell::EffectApplyAura cannot create aura, spell %u effect %u", m_spellInfo->Id, eff_idx);
         return;
@@ -7007,34 +7000,19 @@ void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)
                 // Sunder Armor
                 Aura* sunder = unitTarget->GetAura<SPELL_AURA_MOD_RESISTANCE_PCT, SPELLFAMILY_WARRIOR, CF_WARRIOR_SUNDER_ARMOR>(m_caster->GetObjectGuid());
 
-                uint32 stack = 0;
-                uint32 stackMax = 0;
-
                 // Devastate bonus and sunder armor refresh
                 if (sunder)
                 {
                     sunder->GetHolder()->RefreshHolder();
-                    stack = sunder->GetStackAmount();
-                    stackMax = sunder->GetSpellProto()->StackAmount;
-                    spell_bonus += stack * CalculateDamage(EFFECT_INDEX_2, unitTarget);
-                }
-                else
-                {
-                    SpellEntry const* spellInfo = sSpellStore.LookupEntry(58567);
-                    if (spellInfo)
-                       stackMax = spellInfo->StackAmount;
+                    spell_bonus += sunder->GetStackAmount() * CalculateDamage(EFFECT_INDEX_2, unitTarget);
                 }
 
                 // Devastate causing Sunder Armor Effect
                 // and no need to cast over max stack amount
-                if (!stack || stack < stackMax)
-                {
+                if (!sunder || sunder->GetStackAmount() < sunder->GetSpellProto()->StackAmount)
                     m_caster->CastSpell(unitTarget, 58567, true);
-
-                    // Glyph of Devastate
-                    if (++stack < stackMax && m_caster->GetDummyAura(58388))
-                        m_caster->CastSpell(unitTarget, 58567, true);
-                }
+                    if (m_caster->GetDummyAura(58388))
+                        m_caster->CastSpell (unitTarget, 58567, true);
             }
             break;
         }
@@ -8063,32 +8041,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, 44870, true);
                     break;
                 }
-                case 45141:                                 // Burn
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, 46394, true, NULL, NULL, m_caster->GetObjectGuid());
-                    return;
-                }
-                case 45151:                                 // Burn
-                {
-                    if (!unitTarget || unitTarget->HasAura(46394))
-                        return;
-
-                    // Make the burn effect jump to another friendly target
-                    unitTarget->CastSpell(unitTarget, 46394, true);
-                    return;
-                }
-                case 45185:                                 // Stomp
-                {
-                    if (!unitTarget)
-                        return;
-
-                    // Remove the burn effect
-                    unitTarget->RemoveAurasDueToSpell(46394);
-                    return;
-                }
                 case 45204: // Clone Me!
                 {
                     if (!unitTarget)
@@ -8097,7 +8049,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(m_caster, damage, true);
                     break;
                 }
-<<<<<<< HEAD
                 case 45141:                                 // Burn
                 {
                     if (!unitTarget)
@@ -8124,8 +8075,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->RemoveAurasDueToSpell(46394);
                     return;
                 }
-=======
->>>>>>> 932d80d1a2d67c74edc58b9ad9b6991e69fe7254
                 case 45206:                                 // Copy Off-hand Weapon
                 {
                     if (m_caster->GetTypeId() != TYPEID_UNIT || !unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
@@ -10993,8 +10942,10 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
     if (!unitTarget)
         return;
 
+    //TODO: research more ContactPoint/attack distance.
+    //3.666666 instead of ATTACK_DISTANCE(5.0f) in below seem to give more accurate result.
     float x, y, z;
-    unitTarget->GetContactPoint(m_caster, x, y, z);
+    unitTarget->GetContactPoint(m_caster, x, y, z, 3.666666f);
 
     // Try to normalize Z coord cuz GetContactPoint do nothing with Z axis
     unitTarget->UpdateGroundPositionZ(x, y, z);
@@ -11027,7 +10978,7 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
             ((Creature *)unitTarget)->StopMoving();
     }
     else if (unitTarget && unitTarget != m_caster)
-        unitTarget->GetContactPoint(m_caster, x, y, z);
+        unitTarget->GetContactPoint(m_caster, x, y, z, 3.666666f);
     else
         return;
 
@@ -11150,9 +11101,6 @@ void Spell::EffectSendTaxi(SpellEffectIndex eff_idx)
 void Spell::EffectPlayerPull(SpellEffectIndex eff_idx)
 {
     if (!unitTarget)
-        return;
-
-    if (unitTarget->hasUnitState(UNIT_STAT_ROOT))
         return;
 
     float dist = unitTarget->GetDistance2d(m_caster);
