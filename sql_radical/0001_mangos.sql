@@ -184,16 +184,6 @@ DELETE FROM `gameobject` WHERE `id` = 202188;
 
 UPDATE `creature_template` SET `ScriptName` = 'mob_bone_spike' WHERE `entry` = 36619;
 
---
--- Colocada arma al LK, que no tenía 
--- (EDITADO: Puesto en comentario porque se implementará en el código del boss)
-
--- INSERT INTO `creature_equip_template` (`entry`, `equipentry1`, `equipentry2`, `equipentry3`)
--- VALUES
--- 	(51200, 33475, 0, 0);
-
--- UPDATE `creature_template` SET `equipment_id` = '51200' WHERE `entry` = 36597;
---
 
 -- Recolocados el DK y más NPC's y borrados NPC's de quests bug de diarias de bolsita.
 

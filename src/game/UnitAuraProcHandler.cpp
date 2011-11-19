@@ -3651,19 +3651,29 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
             // Deep Wounds (replace triggered spells to directly apply DoT), dot spell have familyflags
             if (!auraSpellInfo->SpellFamilyFlags.Flags && auraSpellInfo->SpellIconID == 243)
             {
-                float weaponDamage;
-                // DW should benefit of attack power, damage percent mods etc.
-                // TODO: check if using offhand damage is correct and if it should be divided by 2
-                if (haveOffhandWeapon() && getAttackTimer(BASE_ATTACK) > getAttackTimer(OFF_ATTACK))
-                    weaponDamage = (GetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE) + GetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE))/2;
-                else
-                    weaponDamage = (GetFloatValue(UNIT_FIELD_MINDAMAGE) + GetFloatValue(UNIT_FIELD_MAXDAMAGE))/2;
+                float weaponDPS;
+                float attackPower;
+                float weaponSpeed;
+                // If procs on off-hand
+                if ((procFlags & PROC_FLAG_SUCCESSFUL_OFFHAND_HIT))
+                {
+                    weaponDPS = ((GetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE) + GetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE))/2)/(GetAttackTime(OFF_ATTACK)/1000);
+                    weaponSpeed = GetAttackTime(OFF_ATTACK)/1000;
+                    attackPower = GetTotalAttackPowerValue(OFF_ATTACK);
+                }
+                // If procs on main-hand
+                else if (!(procFlags & PROC_FLAG_SUCCESSFUL_OFFHAND_HIT))
+                {
+                    weaponDPS = ((GetFloatValue(UNIT_FIELD_MINDAMAGE) + GetFloatValue(UNIT_FIELD_MAXDAMAGE))/2)/(GetAttackTime(BASE_ATTACK)/1000);
+                    weaponSpeed = GetAttackTime(BASE_ATTACK)/1000;
+                    attackPower = GetTotalAttackPowerValue(BASE_ATTACK);
+                }
 
                 switch (auraSpellInfo->Id)
                 {
-                    case 12834: basepoints[0] = int32(weaponDamage * 16 / 100); break;
-                    case 12849: basepoints[0] = int32(weaponDamage * 32 / 100); break;
-                    case 12867: basepoints[0] = int32(weaponDamage * 48 / 100); break;
+                    case 12834: basepoints[0] = int32(((weaponDPS + attackPower / 14) * weaponSpeed)* 0.16); break;
+                    case 12849: basepoints[0] = int32(((weaponDPS + attackPower / 14) * weaponSpeed)* 0.32); break;
+                    case 12867: basepoints[0] = int32(((weaponDPS + attackPower / 14) * weaponSpeed)* 0.48); break;
                     // Impossible case
                     default:
                         sLog.outError("Unit::HandleProcTriggerSpellAuraProc: DW unknown spell rank %u",auraSpellInfo->Id);
