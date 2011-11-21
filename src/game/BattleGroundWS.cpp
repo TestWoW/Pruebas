@@ -375,7 +375,7 @@ void BattleGroundWS::EventPlayerClickedOnFlag(Player *Source, GameObject* target
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
-    // Achievemen //
+    // Achievement //
     bool fromGround = true;
     ///////////////
 
@@ -420,7 +420,7 @@ void BattleGroundWS::EventPlayerClickedOnFlag(Player *Source, GameObject* target
         fromGround = false;
     }
 
-    // Achievemen //
+    // Achievement //
 
     bool A = Source->GetTeam() == ALLIANCE;
     if (!fromGround)

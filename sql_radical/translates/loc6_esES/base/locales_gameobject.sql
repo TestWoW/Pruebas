@@ -5,6 +5,8 @@
 ALTER TABLE `locales_gameobject` CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
 INSERT IGNORE INTO `locales_gameobject` (`entry`) SELECT `entry` FROM `gameobject_template`;
 
+SET NAMES UTF8;
+
 UPDATE locales_gameobject SET `name_loc6`='Estatua de león antigua' WHERE `entry`='31';
 UPDATE locales_gameobject SET `name_loc6`='Cofre sumergido' WHERE `entry`='32';
 UPDATE locales_gameobject SET `name_loc6`='Cofre cerrado' WHERE `entry`='33';
