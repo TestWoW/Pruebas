@@ -1742,8 +1742,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 69055:                                 // Bone Slice (Icecrown Citadel, Lord Marrowgar, normal)
                 case 70814:                                 // Bone Slice (Icecrown Citadel, Lord Marrowgar, heroic)
                 case 71221:                                 // Gas spore - 25 (Festergut)
-                case 70826:                                 // Bone Spike Graveyard (Icecrown Citadel, Lord Marrowgar encounter, 25N)
-                case 72089:                                 // Bone Spike Graveyard (Icecrown Citadel, Lord Marrowgar encounter, 25H)
                 case 73143:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 25N)
                 case 73145:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 25H)
                 case 72095:                                 // Frozen Orb (Vault of Archavon, Toravon encounter, heroic)
@@ -1840,10 +1838,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         {
             switch(m_spellInfo->Id)
             {
-                case 69057:                                 // Bone Spike Graveyard (Icecrown Citadel, Lord Marrowgar encounter, 10N)
-                case 70826:                                 // Bone Spike Graveyard (Icecrown Citadel, Lord Marrowgar encounter, 25N)
-                case 72088:                                 // Bone Spike Graveyard (Icecrown Citadel, Lord Marrowgar encounter, 10H)
-                case 72089:                                 // Bone Spike Graveyard (Icecrown Citadel, Lord Marrowgar encounter, 25H)
                 case 73142:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 10N)
                 case 73143:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 25N)
                 case 73144:                                 // Bone Spike Graveyard (during Bone Storm) (Icecrown Citadel, Lord Marrowgar encounter, 10H)
@@ -9060,6 +9054,45 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                     }
                 }
             }
+            break;
+        }
+        case 69057: // Lord Marrowgar's Bone Spike Graveyard must affect only players. Tank is excluded too. 10N
+        case 70826: // ----- // ----- 25N
+        case 72088: // ----- // ----- 10H
+        case 72089: // ----- // ----- 25H
+        {
+            UnitList tmpUnitMap, playersUnitMap;
+            FillAreaTargets(tmpUnitMap, DEFAULT_VISIBILITY_INSTANCE, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+
+            if (tmpUnitMap.empty())
+                break;
+
+            for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
+            {
+                if (*itr && (*itr)->GetTypeId() == TYPEID_PLAYER)
+                    playersUnitMap.push_back(*itr);
+            }
+
+            if (!playersUnitMap.empty() && m_caster->getVictim())
+                playersUnitMap.remove(m_caster->getVictim());
+
+            uint8 maxTargets = 1;                           // In normal Bone Spike Graveyard affects one player, in heroic - 3 players.
+            if (m_spellInfo->Id == 70826 || m_spellInfo->Id == 72089)
+                maxTargets = 3;
+
+            for (uint8 i = 0; i < maxTargets; ++i)
+            {
+                if (playersUnitMap.empty())
+                    break;
+
+                UnitList::iterator iter = playersUnitMap.begin();
+                std::advance(iter, urand(0, playersUnitMap.size()-1));
+                if (*iter)
+                    targetUnitMap.push_back(*iter);
+
+                playersUnitMap.remove(*iter);
+            }
+
             break;
         }
         case 72038: // Empowered Shock Vortex (Blood Council)

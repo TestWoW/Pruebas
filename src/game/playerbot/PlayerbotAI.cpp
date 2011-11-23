@@ -588,7 +588,37 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                         return;
                     default:
                         TellMaster("I can't use that.");
+<<<<<<< HEAD
                         sLog.outDebug("[PlayerbotAI]: SMSG_INVENTORY_CHANGE_FAILURE: %u", err);
+=======
+                        DEBUG_LOG ("[PlayerbotAI]: HandleBotOutgoingPacket - SMSG_INVENTORY_CHANGE_FAILURE: %u", err);
+                        return;
+                }
+            }
+        }
+
+        case SMSG_CAST_FAILED:
+        {
+            WorldPacket p(packet);
+            uint8 castCount;
+            uint32 spellId;
+            uint8 result;
+
+            p >> castCount >> spellId >> result;
+
+            if (result != SPELL_CAST_OK)
+            {
+                switch (result)
+                {
+                    case SPELL_FAILED_INTERRUPTED:
+                        //TellMaster("spell interrupted (%u)",result);
+                        //DEBUG_LOG("spell interrupted (%u)",result);
+                        return;
+
+                    default:
+                        //TellMaster("Spell failed (%u)",result);
+                        //DEBUG_LOG ("[PlayerbotAI]: HandleBotOutgoingPacket - SMSG_CAST_FAIL: %u", result);
+>>>>>>> 3c1102b1c0c88419393e1f45bd3030fe0a9e0506
                         return;
                 }
             }
@@ -3589,6 +3619,276 @@ void PlayerbotAI::UseItem(Item *item, uint32 targetFlag, ObjectGuid targetGUID)
         }
     }
 
+<<<<<<< HEAD
+=======
+            WorldObject *wo = m_bot->GetMap()->GetWorldObject(currCreature->GetObjectGuid());
+
+            if (m_bot->GetDistance(wo) > CONTACT_DISTANCE + wo->GetObjectBoundingRadius())
+            {
+                float x, y, z;
+                wo->GetContactPoint(m_bot, x, y, z, 1.0f);
+                m_bot->GetMotionMaster()->MovePoint(wo->GetMapId(), x, y, z);
+                // give time to move to point before trying again
+                SetIgnoreUpdateTime(1);
+            }
+
+            if (m_bot->GetDistance(wo) < INTERACTION_DISTANCE)
+            {
+
+                // DEBUG_LOG("%s is interacting with (%s)",m_bot->GetName(),currCreature->GetCreatureInfo()->Name);
+                GossipMenuItemsMapBounds pMenuItemBounds = sObjectMgr.GetGossipMenuItemsMapBounds(currCreature->GetCreatureInfo()->GossipMenuId);
+
+                // prepares quest menu when true
+                bool canSeeQuests = currCreature->GetCreatureInfo()->GossipMenuId == m_bot->GetDefaultGossipMenuForSource(wo);
+
+                // if canSeeQuests (the default, top level menu) and no menu options exist for this, use options from default options
+                if (pMenuItemBounds.first == pMenuItemBounds.second && canSeeQuests)
+                    pMenuItemBounds = sObjectMgr.GetGossipMenuItemsMapBounds(0);
+
+                for (GossipMenuItemsMap::const_iterator it = pMenuItemBounds.first; it != pMenuItemBounds.second; it++)
+                {
+                    if (!(it->second.npc_option_npcflag & npcflags))
+                        continue;
+
+                    switch (it->second.option_id)
+                    {
+                        case GOSSIP_OPTION_BANKER:
+                        {
+                            // Manage banking actions
+                            if (!m_tasks.empty())
+                                for (std::list<taskPair>::iterator ait = m_tasks.begin(); ait != m_tasks.end(); )
+                                {
+                                    switch (ait->first)
+                                    {
+                                        // withdraw items
+                                        case WITHDRAW:
+                                        {
+                                            // TellMaster("Withdraw items");
+                                            if (!Withdraw(ait->second))
+                                                DEBUG_LOG("Withdraw: Couldn't withdraw (%u)", ait->second);
+                                            break;
+                                        }
+                                        // deposit items
+                                        case DEPOSIT:
+                                        {
+                                            // TellMaster("Deposit items");
+                                            if (!Deposit(ait->second))
+                                                DEBUG_LOG("Deposit: Couldn't deposit (%u)", ait->second);
+                                            break;
+                                        }
+                                        default:
+                                            break;
+                                    }
+                                    ait = m_tasks.erase(ait);
+                                }
+                            BankBalance();
+                            break;
+                        }
+                        case GOSSIP_OPTION_TAXIVENDOR:
+                        case GOSSIP_OPTION_GOSSIP:
+                        case GOSSIP_OPTION_INNKEEPER:
+                        case GOSSIP_OPTION_TRAINER:
+                        case GOSSIP_OPTION_QUESTGIVER:
+                        case GOSSIP_OPTION_VENDOR:
+                        case GOSSIP_OPTION_UNLEARNTALENTS:
+                        {
+                            // Manage questgiver, trainer, innkeeper & vendor actions
+                            if (!m_tasks.empty())
+                                for (std::list<taskPair>::iterator ait = m_tasks.begin(); ait != m_tasks.end(); )
+                                {
+                                    switch (ait->first)
+                                    {
+                                        // reset talents
+                                        case RESET:
+                                        {
+                                            // TellMaster("Reset all talents");
+                                            if (Talent(currCreature))
+                                                InspectUpdate();
+                                            break;
+                                        }
+                                        // take new quests
+                                        case TAKE:
+                                        {
+                                            // TellMaster("Accepting quest");
+                                            if (!AddQuest(ait->second, wo))
+                                                DEBUG_LOG("AddQuest: Couldn't add quest (%u)", ait->second);
+                                            break;
+                                        }
+                                        // list npc quests
+                                        case LIST:
+                                        {
+                                            // TellMaster("Show available npc quests");
+                                            ListQuests(wo);
+                                            break;
+                                        }
+                                        // end quests
+                                        case END:
+                                        {
+                                            // TellMaster("Turn in available quests");
+                                            TurnInQuests(wo);
+                                            break;
+                                        }
+                                        // sell items
+                                        case SELL:
+                                        {
+                                            // TellMaster("Selling items");
+                                            Sell(ait->second);
+                                            break;
+                                        }
+                                        // repair items
+                                        case REPAIR:
+                                        {
+                                            // TellMaster("Repairing items");
+                                            Repair(ait->second, currCreature);
+                                            break;
+                                        }
+                                        default:
+                                            break;
+                                    }
+                                    ait = m_tasks.erase(ait);
+                                }
+                            break;
+                        }
+                        case GOSSIP_OPTION_AUCTIONEER:
+                        {
+                            // Manage auctioneer actions
+                            if (!m_tasks.empty())
+                                for (std::list<taskPair>::iterator ait = m_tasks.begin(); ait != m_tasks.end(); )
+                                {
+                                    switch (ait->first)
+                                    {
+                                        // add new auction item
+                                        case ADD:
+                                        {
+                                            // TellMaster("Creating auction");
+                                            AddAuction(ait->second, currCreature);
+                                            break;
+                                        }
+                                        // cancel active auction
+                                        case REMOVE:
+                                        {
+                                            // TellMaster("Cancelling auction");
+                                            if (!RemoveAuction(ait->second))
+                                                DEBUG_LOG("RemoveAuction: Couldn't remove auction (%u)", ait->second);
+                                            break;
+                                        }
+                                        default:
+                                            break;
+                                    }
+                                    ait = m_tasks.erase(ait);
+                                }
+                            ListAuctions();
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                    m_bot->HandleEmoteCommand(EMOTE_ONESHOT_TALK);
+                }
+            }
+            itr = m_findNPC.erase(itr); // all done lets go home
+            m_bot->GetMotionMaster()->Clear();
+            m_bot->GetMotionMaster()->MoveIdle();
+        }
+    }
+}
+
+bool PlayerbotAI::CanStore()
+{
+    uint32 totalused = 0;
+    // list out items in main backpack
+    for (uint8 slot = INVENTORY_SLOT_ITEM_START; slot < INVENTORY_SLOT_ITEM_END; slot++)
+    {
+        const Item* const pItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+        if (pItem)
+            totalused++;
+    }
+    uint32 totalfree = 16 - totalused;
+    // list out items in other removable backpacks
+    for (uint8 bag = INVENTORY_SLOT_BAG_START; bag < INVENTORY_SLOT_BAG_END; ++bag)
+    {
+        const Bag* const pBag = (Bag *) m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, bag);
+        if (pBag)
+        {
+            ItemPrototype const* pBagProto = pBag->GetProto();
+            if (pBagProto->Class == ITEM_CLASS_CONTAINER && pBagProto->SubClass == ITEM_SUBCLASS_CONTAINER)
+                totalfree =  totalfree + pBag->GetFreeSlots();
+        }
+    }
+    return totalfree;
+}
+
+// use item on self
+void PlayerbotAI::UseItem(Item *item)
+{
+    UseItem(item, TARGET_FLAG_SELF, ObjectGuid());
+}
+
+// use item on equipped item
+void PlayerbotAI::UseItem(Item *item, uint8 targetInventorySlot)
+{
+    if (targetInventorySlot >= EQUIPMENT_SLOT_END)
+        return;
+
+    Item* const targetItem = m_bot->GetItemByPos(INVENTORY_SLOT_BAG_0, targetInventorySlot);
+    if (!targetItem)
+        return;
+
+    UseItem(item, TARGET_FLAG_ITEM, targetItem->GetObjectGuid());
+}
+
+// use item on unit
+void PlayerbotAI::UseItem(Item *item, Unit *target)
+{
+    if (!target)
+        return;
+
+    UseItem(item, TARGET_FLAG_UNIT, target->GetObjectGuid());
+}
+
+// generic item use method
+void PlayerbotAI::UseItem(Item *item, uint32 targetFlag, ObjectGuid targetGUID)
+{
+    if (!item)
+        return;
+
+    uint8 bagIndex = item->GetBagSlot();
+    uint8 slot = item->GetSlot();
+    uint8 cast_count = 1;
+    ObjectGuid item_guid = item->GetObjectGuid();
+    uint32 glyphIndex = 0;
+    uint8 unk_flags = 0;
+
+    if (uint32 questid = item->GetProto()->StartQuest)
+    {
+        std::ostringstream report;
+
+        Quest const* qInfo = sObjectMgr.GetQuestTemplate(questid);
+        if (qInfo)
+        {
+            m_bot->GetMotionMaster()->Clear(true);
+            WorldPacket* const packet = new WorldPacket(CMSG_QUESTGIVER_ACCEPT_QUEST, 8 + 4 + 4);
+            *packet << item_guid;
+            *packet << questid;
+            *packet << uint32(0);
+            m_bot->GetSession()->QueuePacket(packet); // queue the packet to get around race condition
+            report << "|cffffff00Quest taken |r" << qInfo->GetTitle();
+            TellMaster(report.str());
+        }
+        return;
+    }
+
+    uint32 spellId = 0;
+    for (uint8 i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
+    {
+        if (item->GetProto()->Spells[i].SpellId > 0)
+        {
+            spellId = item->GetProto()->Spells[i].SpellId;
+            break;
+        }
+    }
+
+>>>>>>> 3c1102b1c0c88419393e1f45bd3030fe0a9e0506
     WorldPacket *packet = new WorldPacket(CMSG_USE_ITEM, 28);
     *packet << bagIndex << slot << cast_count << spellId << item_guid
             << glyphIndex << unk_flags << targetFlag;
