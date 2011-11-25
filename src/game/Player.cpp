@@ -16214,7 +16214,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             // We are not in BG anymore
             SetBattleGroundId(0, BATTLEGROUND_TYPE_NONE);
             // remove outdated DB data in DB
-            _SaveBGData(true);
+            _SaveBGData();
         }
     }
     else
@@ -16231,11 +16231,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             // We are not in BG anymore
             SetBattleGroundId(0, BATTLEGROUND_TYPE_NONE);
             // remove outdated DB data in DB
-            _SaveBGData(true);
+            _SaveBGData();
         }
-        // Cleanup LFG BG data, if char not in dungeon.
-        else if (!mapEntry->IsDungeon())
-            _SaveBGData(true);
     }
 
     if (transGUID != 0)
@@ -23601,12 +23598,10 @@ void Player::_SaveEquipmentSets()
     }
 }
 
-void Player::_SaveBGData(bool forceClean)
+void Player::_SaveBGData()
 {
-    if (forceClean)
-        m_bgData = BGData();
     // nothing save
-    else if (!m_bgData.m_needSave)
+    if (!m_bgData.m_needSave)
         return;
 
     static SqlStatementID delBGData ;
