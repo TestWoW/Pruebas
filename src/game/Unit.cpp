@@ -786,11 +786,14 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     //Get in CombatState
     if (pVictim != this && damagetype != DOT)
     {
-        SetInCombatWith(pVictim);
-        pVictim->SetInCombatWith(this);
+        if (!spellProto || !(spellProto->AttributesEx & SPELL_ATTR_EX_NO_THREAT))
+        {
+            SetInCombatWith(pVictim);
+            pVictim->SetInCombatWith(this);
 
-        if (Player* attackedPlayer = pVictim->GetCharmerOrOwnerPlayerOrPlayerItself())
-            SetContestedPvP(attackedPlayer);
+            if (Player* attackedPlayer = pVictim->GetCharmerOrOwnerPlayerOrPlayerItself())
+                SetContestedPvP(attackedPlayer);
+        }
     }
 
     // Rage from Damage made (only from direct weapon damage)
@@ -1371,6 +1374,15 @@ void Unit::CastSpell(Unit* Victim, SpellEntry const *spellInfo, bool triggered, 
             originalCaster = triggeredByAura->GetCasterGuid();
 
         triggeredBy = triggeredByAura->GetSpellProto();
+    }
+    else
+    {
+        triggeredByAura = GetTriggeredByClientAura(spellInfo->Id);
+        if (triggeredByAura)
+        {
+            triggered = true;
+            triggeredBy = triggeredByAura->GetSpellProto();
+        }
     }
 
     Spell *spell = new Spell(this, spellInfo, triggered, originalCaster, triggeredBy);
@@ -2986,8 +2998,8 @@ MeleeHitOutcome Unit::RollMeleeOutcomeAgainst (const Unit *pVictim, WeaponAttack
         int32 maxskill = attackerMaxSkillValueForLevel;
         skill = (skill > maxskill) ? maxskill : skill;
 
-        //tmp = (10 + 2*(victimDefenseSkill - skill)) * 100;
-	 tmp = (10 + victimDefenseSkill - skill) * 100;
+        tmp = (10 + victimDefenseSkill - skill) * 100;
+
         tmp = tmp > 4000 ? 4000 : tmp;
         if (roll < (sum += tmp))
         {
@@ -5586,6 +5598,29 @@ Aura* Unit::GetAura(AuraType type, SpellFamily family, ClassFamilyMask const& cl
             (!casterGuid || (*i)->GetCasterGuid() == casterGuid))
             return *i;
 
+    return NULL;
+}
+
+Aura* Unit::GetTriggeredByClientAura(uint32 spellId)
+{
+    if (spellId)
+    {
+        MAPLOCK_READ(this, MAP_LOCK_TYPE_AURAS);
+        AuraList const& auras = GetAurasByType(SPELL_AURA_PERIODIC_TRIGGER_BY_CLIENT);
+        if (!auras.empty())
+        {
+            for (AuraList::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+            {
+                SpellAuraHolderPtr holder = (*itr)->GetHolder();
+                if (!holder || holder->IsDeleted())
+                    continue;
+
+                if (holder->GetCasterGuid() == GetObjectGuid() &&
+                    holder->GetSpellProto()->EffectTriggerSpell[(*itr)->GetEffIndex()] == spellId)
+                    return *itr;
+            }
+        }
+    }
     return NULL;
 }
 
@@ -8777,9 +8812,6 @@ void Unit::Mount(uint32 mount, uint32 spellId, uint32 vehicleId, uint32 creature
         {
             SetVehicleId(vehicleId);
             GetVehicleKit()->Reset();
-
-            // mounts can also have accessories
-            GetVehicleKit()->InstallAllAccessories(creatureEntry);
         }
     }
 }
@@ -10987,14 +11019,28 @@ void Unit::DoPetCastSpell(Player *owner, uint8 cast_count, SpellCastTargets* tar
     if (GetCharmInfo() && GetCharmInfo()->GetGlobalCooldownMgr().HasGlobalCooldown(spellInfo))
         return;
 
-    // do not cast passive and not learned spells
-    if (IsPassiveSpell(spellInfo->Id))
-        return;
 
-    if((GetObjectGuid().IsPet() && !((Pet*)this)->HasSpell(spellInfo->Id)))
-        return;
-    else if ((GetObjectGuid().IsCreatureOrVehicle() && !((Creature*)this)->HasSpell(spellInfo->Id)))
-        return;
+    bool triggered = false;
+    SpellEntry const* triggeredBy = NULL;
+
+    Aura* triggeredByAura = GetTriggeredByClientAura(spellInfo->Id);
+    if (triggeredByAura)
+    {
+        triggered = true;
+        triggeredBy = triggeredByAura->GetSpellProto();
+        cast_count = 0;
+    }
+
+    if (!triggered)
+    {
+        // do not cast passive and not learned spells
+        if (IsPassiveSpell(spellInfo->Id))
+            return;
+        else if((GetObjectGuid().IsPet() && !((Pet*)this)->HasSpell(spellInfo->Id)))
+            return;
+        else if ((GetObjectGuid().IsCreatureOrVehicle() && !((Creature*)this)->HasSpell(spellInfo->Id)))
+            return;
+    }
 
     Creature* pet = dynamic_cast<Creature*>(this);
 
@@ -11007,13 +11053,19 @@ void Unit::DoPetCastSpell(Player *owner, uint8 cast_count, SpellCastTargets* tar
     {
         DEBUG_LOG("DoPetCastSpell: %s guid %u tryed to cast spell %u without target!.",GetObjectGuid().IsPet() ? "Pet" : "Creature",GetObjectGuid().GetCounter(), spellInfo->Id);
     }
+    else if (targets && !unit_target && targets->m_targetMask & TARGET_FLAG_DEST_LOCATION)
+    {
+        DEBUG_LOG("Unit::DoPetCastSpell: %s tryed to cast spell %u with setted dest. location without target. Set unitTarget to caster.",GetObjectGuid().GetString().c_str(), spellInfo->Id);
+//        targets->setUnitTarget((Unit*)pet);
+    }
 
-    Spell* spell = new Spell(this, spellInfo, false);
+
+    Spell *spell = new Spell(this, spellInfo, triggered, GetObjectGuid(), triggeredBy);
     spell->m_cast_count = cast_count;                       // probably pending spell cast
 
     Unit* unit_target2 = spell->m_targets.getUnitTarget();
 
-    SpellCastResult result = spell->CheckPetCast(unit_target);
+    SpellCastResult result = triggered ? SPELL_CAST_OK : spell->CheckPetCast(unit_target);
 
     //auto turn to target unless possessed
     if (result == SPELL_FAILED_UNIT_NOT_INFRONT && !HasAuraType(SPELL_AURA_MOD_POSSESS))
@@ -11069,7 +11121,7 @@ void Unit::DoPetCastSpell(Player *owner, uint8 cast_count, SpellCastTargets* tar
             }
         }
 
-        spell->prepare(&(spell->m_targets));
+        spell->prepare(&(spell->m_targets), triggeredByAura);
     }
     else if (pet)
     {
@@ -11078,7 +11130,7 @@ void Unit::DoPetCastSpell(Player *owner, uint8 cast_count, SpellCastTargets* tar
         else
             SendPetCastFail(spellInfo->Id, result);
 
-        if (owner && !((Creature*)this)->HasSpellCooldown(spellInfo->Id))
+        if (owner && !((Creature*)this)->HasSpellCooldown(spellInfo->Id) && !triggered)
             owner->SendClearCooldown(spellInfo->Id, pet);
 
         spell->finish(false);

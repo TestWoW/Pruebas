@@ -1110,7 +1110,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         if (real_caster && real_caster != unit)
         {
             // can cause back attack (if detected)
-            if (!(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_NO_INITIAL_AGGRO) && !IsPositiveSpell(m_spellInfo->Id) &&
+            if (!(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_NO_INITIAL_AGGRO) && !(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_THREAT) && !IsPositiveSpell(m_spellInfo->Id) &&
                 (m_caster->isVisibleForOrDetect(unit, unit, false) && !m_IsTriggeredSpell))
             {
                 if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
@@ -1331,7 +1331,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
                 unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
             // can cause back attack (if detected), stealth removed at Spell::cast if spell break it
-            if (!(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_NO_INITIAL_AGGRO) && !IsPositiveSpell(m_spellInfo->Id) &&
+            if (!(m_spellInfo->AttributesEx3 & SPELL_ATTR_EX3_NO_INITIAL_AGGRO) && !(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NO_THREAT) && !IsPositiveSpell(m_spellInfo->Id) &&
                 m_caster->isVisibleForOrDetect(unit, unit, false))
             {
                 // use speedup check to avoid re-remove after above lines
@@ -1720,6 +1720,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 55479:                                 // Forced Obedience (Naxxramas - Razovius encounter)
                 case 59870:                                 // Glare of the Tribunal (h) (Halls of Stone)
                 case 62016:                                 // Charge Orb (Thorim)
+                case 62301:                                 // Cosmic Smash (Algalon)
                 case 62488:                                 // Activate Construct (Ulduar - Ignis encounter)
                 case 63018:                                 // Searing Light nonhero
                 case 63024:                                 // Gravity Bomb (XT-002)
@@ -1788,6 +1789,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 60936:                                 // Surge of Power (h) (Malygos)
                 case 61693:                                 // Arcane Storm (Malygos) (N)
                 case 62477:                                 // Icicle (Hodir 25man)
+                case 64598:                                 // Cosmic Smash (Algalon 25man) 
                 case 69055:                                 // Bone Slice (Icecrown Citadel, Lord Marrowgar, normal)
                 case 70814:                                 // Bone Slice (Icecrown Citadel, Lord Marrowgar, heroic)
                 case 71221:                                 // Gas spore - 25 (Festergut)
@@ -2432,6 +2434,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             }
             break;
         }
+        case TARGET_GO_IN_FRONT_OF_CASTER_90:
         case TARGET_OBJECT_AREA_SRC:
         case TARGET_AREAEFFECT_GO_AROUND_DEST:
         {
@@ -2460,7 +2463,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 z = m_targets.m_destZ;
             }
             else
-                break;
+                m_caster->GetPosition(x, y, z);
 
             // It may be possible to fill targets for some spell effects
             // automatically (SPELL_EFFECT_WMO_REPAIR(88) for example) but
@@ -2469,6 +2472,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
 
             SpellScriptTargetBounds bounds = sSpellMgr.GetSpellScriptTargetBounds(m_spellInfo->Id);
             std::list<GameObject*> tempTargetGOList;
+
+            float fSearchDistance = GetSpellMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));
 
             if (bounds.first !=  bounds.second)
             {
@@ -2479,21 +2484,34 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                         // search all GO's with entry, within range of m_destN
                         MaNGOS::GameObjectEntryInPosRangeCheck go_check(*m_caster, i_spellST->second.targetEntry, m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, radius);
                         MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectEntryInPosRangeCheck> checker(tempTargetGOList, go_check);
-                        Cell::VisitGridObjects(m_caster, checker, radius);
+                        Cell::VisitGridObjects(m_caster, checker, radius + fSearchDistance);
                     }
                 }
             }
             else
             {
-                MaNGOS::GameObjectInRangeCheck check(m_caster, x, y, z, radius + 15.0f);
+                MaNGOS::GameObjectInRangeCheck check(m_caster, x, y, z, radius);
                 MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectInRangeCheck> searcher(tempTargetGOList, check);
-                Cell::VisitAllObjects(m_caster, searcher, radius);
+                Cell::VisitAllObjects(m_caster, searcher, radius + fSearchDistance );
             }
 
             if (!tempTargetGOList.empty())
             {
-                for(std::list<GameObject*>::iterator iter = tempTargetGOList.begin(); iter != tempTargetGOList.end(); ++iter)
-                    AddGOTarget(*iter, effIndex);
+                for (std::list<GameObject*>::iterator iter = tempTargetGOList.begin(); iter != tempTargetGOList.end(); ++iter)
+                {
+                    switch (targetMode)
+                    {
+                        case TARGET_GO_IN_FRONT_OF_CASTER_90:
+                            if (m_caster->isInFront(*iter, radius, M_PI_F/2))
+                                AddGOTarget(*iter, effIndex);
+                            break;
+                        case TARGET_OBJECT_AREA_SRC:
+                        case TARGET_AREAEFFECT_GO_AROUND_DEST:
+                        default:
+                            AddGOTarget(*iter, effIndex);
+                            break;
+                    }
+                }
             }
 
             break;
@@ -3886,7 +3904,6 @@ void Spell::cast(bool skipCheck)
     }
 
     // Linked spells (triggered chain)
-    linkedSet.clear();
     linkedSet = sSpellMgr.GetSpellLinked(m_spellInfo->Id, SPELL_LINKED_TYPE_TRIGGERED);
     if (linkedSet.size() > 0)
     {
@@ -6109,7 +6126,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             }
             case SPELL_EFFECT_CHARGE:
             {
-                if (m_caster->hasUnitState(UNIT_STAT_ROOT) && !(m_spellInfo->Id == 3411 && m_caster->HasAura(57499)))
+                if (m_caster->hasUnitState(UNIT_STAT_ROOT))
                 {
                     // Intervene with Warbringer talent
                     if (m_spellInfo->Id == 3411 && m_caster->HasAura(57499))
@@ -6558,7 +6575,7 @@ SpellCastResult Spell::CheckCast(bool strict)
     }
 
     // check LOS for ground targeted spells
-    if (!m_targets.getUnitTarget() && !m_targets.getGOTarget() && !m_targets.getItemTarget())
+    if (!(m_spellInfo->AttributesEx2 & SPELL_ATTR_EX2_IGNORE_LOS) && !m_targets.getUnitTarget() && !m_targets.getGOTarget() && !m_targets.getItemTarget())
     {
         if (m_targets.m_destX && m_targets.m_destY && m_targets.m_destZ && !m_caster->IsWithinLOS(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ))
             return SPELL_FAILED_LINE_OF_SIGHT;
@@ -8779,8 +8796,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 67860:
         {
             m_caster->CastSpell(m_caster, 66181, true);
-            m_targets.setDestination(m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ());
-            SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetB[i], targetUnitMap);
+            FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             break;
         }
         case 67470: // Pursuing Spikes (Check Aura and Summon Spikes) (Trial Of The Crusader - Anub'arak)

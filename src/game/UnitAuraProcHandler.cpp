@@ -80,7 +80,7 @@ pAuraProcHandler AuraProcHandler[TOTAL_AURAS]=
     &Unit::HandleNULLProc,                                  // 45 SPELL_AURA_TRACK_RESOURCES
     &Unit::HandleNULLProc,                                  // 46 SPELL_AURA_46 (used in test spells 54054 and 54058, and spell 48050) (3.0.8a-3.2.2a)
     &Unit::HandleNULLProc,                                  // 47 SPELL_AURA_MOD_PARRY_PERCENT
-    &Unit::HandleNULLProc,                                  // 48 SPELL_AURA_48 spell Napalm (area damage spell with additional delayed damage effect)
+    &Unit::HandleNULLProc,                                  // 48 SPELL_AURA_PERIODIC_TRIGGER_BY_CLIENT (Client periodic trigger spell by self (3 spells in 3.3.5a))
     &Unit::HandleNULLProc,                                  // 49 SPELL_AURA_MOD_DODGE_PERCENT
     &Unit::HandleNULLProc,                                  // 50 SPELL_AURA_MOD_CRITICAL_HEALING_AMOUNT
     &Unit::HandleNULLProc,                                  // 51 SPELL_AURA_MOD_BLOCK_PERCENT
@@ -3404,7 +3404,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
             {
                 if (target == NULL)
                     target = !(procFlag & PROC_FLAG_SUCCESSFUL_POSITIVE_SPELL) && IsPositiveSpell(*itr) ? this : pVictim;
-                CastSpell(this, *itr, true, castItem, triggeredByAura);
+                CastSpell(target, *itr, true, castItem, triggeredByAura);
                 if (cooldown && GetTypeId()==TYPEID_PLAYER)
                     ((Player*)this)->AddSpellCooldown(*itr,0,time(NULL) + cooldown);
             }
@@ -5220,27 +5220,16 @@ SpellAuraProcResult Unit::HandleDamageShieldAuraProc(Unit* pVictim, uint32 damag
 
     uint32 retdamage = triggeredByAura->GetModifier()->m_amount;
 
-    // Thorns
-    if (spellProto && spellProto->IsFitToFamily<SPELLFAMILY_DRUID, CF_DRUID_THORNS>())
-    {
-        Unit::AuraList const& dummyList = GetAurasByType(SPELL_AURA_DUMMY);
-        for(Unit::AuraList::const_iterator iter = dummyList.begin(); iter != dummyList.end(); ++iter)
-        {
-            // Brambles
-            if((*iter)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_DRUID &&
-                (*iter)->GetSpellProto()->SpellIconID == 53)
-                {
-                    damage += uint32(damage * (*iter)->GetModifier()->m_amount / 100);
-                    break;
-                }
-        }
-    }
+    retdamage = SpellDamageBonusDone(pVictim,spellProto,uint32(retdamage),SPELL_DIRECT_DAMAGE);
+    retdamage = pVictim->SpellDamageBonusTaken(this, spellProto, uint32(retdamage),SPELL_DIRECT_DAMAGE);
 
-    int32 DoneAdvertisedBenefit = SpellBaseDamageBonusDone(GetSpellSchoolMask(spellProto));
-    int32 realBenefit = int32(float(DoneAdvertisedBenefit)*3.3f/100.0f);
-    retdamage += realBenefit;
-
-    DealDamageMods(pVictim,retdamage,NULL);
+    uint32 absorb=0;
+    uint32 resist=0;
+    CleanDamage cleanDamage =  CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
+    pVictim->CalculateDamageAbsorbAndResist(this, GetSpellSchoolMask(spellProto), SPELL_DIRECT_DAMAGE, retdamage, &absorb, &resist, !(spellProto->AttributesEx & SPELL_ATTR_EX_CANT_REFLECTED));
+    cleanDamage.absorb += absorb;
+    cleanDamage.damage=retdamage;
+    DealDamageMods(pVictim, retdamage, &absorb);
 
     uint32 targetHealth = pVictim->GetHealth();
     uint32 overkill = retdamage > targetHealth ? retdamage - targetHealth : 0;
@@ -5254,7 +5243,7 @@ SpellAuraProcResult Unit::HandleDamageShieldAuraProc(Unit* pVictim, uint32 damag
     data << uint32(spellProto->SchoolMask);
     SendMessageToSet(&data, true );
 
-    DealDamage(pVictim, retdamage, 0, SPELL_DIRECT_DAMAGE, GetSpellSchoolMask(spellProto), spellProto, true);
+    DealDamage(pVictim, retdamage, &cleanDamage, SPELL_DIRECT_DAMAGE, GetSpellSchoolMask(spellProto), spellProto, true);
 
     return SPELL_AURA_PROC_OK;
 }
