@@ -806,6 +806,9 @@ void Aura::AreaAuraUpdate(uint32 diff)
                 if (!i_target)
                     continue;
 
+                if (i_target->GetTypeId() == TYPEID_PLAYER && ((Player*)i_target)->IsBeingTeleportedFar())
+                    continue;
+
                 if (i_target->IsImmuneToSpell(GetSpellProto()))
                     continue;
                 else
@@ -818,7 +821,7 @@ void Aura::AreaAuraUpdate(uint32 diff)
                         if (!holder || holder->IsDeleted())
                             continue;
 
-                        Aura *aur = holder->GetAuraByEffectIndex(m_effIndex);
+                        Aura* aur = holder->GetAuraByEffectIndex(m_effIndex);
 
                         if (!aur)
                             continue;
