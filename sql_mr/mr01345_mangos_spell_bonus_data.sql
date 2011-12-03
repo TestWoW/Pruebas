@@ -1,6 +1,6 @@
 -- Spell bonus data
 -- Lifebloom
-UPDATE `spell_bonus_data` SET `direct_bonus`= 0.8 WHERE `entry`= 33763;
+UPDATE `spell_bonus_data` SET `direct_bonus`= 0.4 WHERE `entry`= 33763;
 
 DELETE FROM `spell_bonus_data` WHERE entry IN (30451, 51963, 52042, 52752, 54158, 56161, 58621, 64844, 64085);
 INSERT INTO `spell_bonus_data`
