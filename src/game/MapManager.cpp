@@ -164,7 +164,7 @@ bool MapManager::CanPlayerEnter(uint32 mapid, Player* player)
     if(!entry)
         return false;
 
-    const char *mapName = entry->name[player->GetSession()->GetSessionDbcLocale()];
+    /*const char *mapName = entry->name[player->GetSession()->GetSessionDbcLocale()];
 
     if(entry->IsDungeon())
     {
@@ -242,7 +242,7 @@ bool MapManager::CanPlayerEnter(uint32 mapid, Player* player)
             // FIX ME: what about absent normal/heroic mode with specific players limit...
             player->SendTransferAborted(mapid, TRANSFER_ABORT_DIFFICULTY, isRegularTargetMap ? DUNGEON_DIFFICULTY_NORMAL : DUNGEON_DIFFICULTY_HEROIC);
             return false;
-        }
+        }*/
 
         // TODO: move this to a map dependent location
         /*if(i_data && i_data->IsEncounterInProgress())
