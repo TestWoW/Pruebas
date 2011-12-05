@@ -4463,8 +4463,8 @@ float Unit::CheckAuraStackingAndApply(Aura *Aur, UnitMods unitMod, UnitModifierT
                     amount = (float)GetMaxNegativeAuraModifier(Aur->GetModifier()->m_auraname, true);
             }
         }
-        if (amount != 0.0f)
-            HandleStatModifier(unitMod, modifierType, amount, apply);
+	 if (amount != 0.0f)
+           HandleStatModifier(unitMod, modifierType, amount, apply);
 
         if (modifierType == NONSTACKING_VALUE_POS || modifierType == NONSTACKING_VALUE_NEG)
             amount -= current;
