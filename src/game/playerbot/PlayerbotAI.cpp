@@ -2102,6 +2102,8 @@ void PlayerbotAI::GetDuelTarget(Unit* forcedTarget)
 
 void PlayerbotAI::DoNextCombatManeuver()
 {
+    if (!m_bot)
+        return;
     // check for new targets
     if (m_ScenarioType == SCENARIO_DUEL)
         GetDuelTarget(GetMaster());
