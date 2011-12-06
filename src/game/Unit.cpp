@@ -9789,7 +9789,8 @@ bool Unit::SelectHostileTarget()
         {
             if ((caster = (*aura)->GetCaster()) && caster->IsInMap(this) &&
                 caster->isTargetableForAttack() && caster->isInAccessablePlaceFor((Creature*)this) &&
-                (!IsCombatStationary() || CanReachWithMeleeAttack(caster)))
+//                (!IsCombatStationary() || CanReachWithMeleeAttack(caster)) &&
+                !IsSecondChoiceTarget(caster, true))
             {
                 target = caster;
                 break;
@@ -11668,7 +11669,6 @@ bool Unit::IsPolymorphed() const
     return GetSpellSpecific(getTransForm())==SPELL_MAGE_POLYMORPH;
 }
  
-
 bool Unit::IsCrowdControlled() const
 {
     return  HasNegativeAuraType(SPELL_AURA_MOD_CONFUSE) ||
