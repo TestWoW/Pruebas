@@ -1481,10 +1481,9 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 GetInGameTime() { return m_ingametime; }
 
-        void SetInGameTime( uint32 time ) { m_ingametime = time; }
-
-        void AddTimedQuest( uint32 quest_id ) { m_timedquests.insert(quest_id); }
-        void RemoveTimedQuest( uint32 quest_id ) { m_timedquests.erase(quest_id); }
+        void SetInGameTime(uint32 time) { m_ingametime = time; }
+        void AddTimedQuest(uint32 quest_id) { m_timedquests.insert(quest_id); }
+        void RemoveTimedQuest(uint32 quest_id) { m_timedquests.erase(quest_id); }
         void MakeTalentGlyphLink(std::ostringstream &out);
 
         void chompAndTrim(std::string& str);
