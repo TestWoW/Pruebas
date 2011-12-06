@@ -9745,6 +9745,16 @@ void Unit::TauntFadeOut(Unit *taunter)
 
 //======================================================================
 
+bool Unit::IsSecondChoiceTarget(Unit* pTarget, bool checkThreatArea)
+{
+    MANGOS_ASSERT(pTarget && GetTypeId() == TYPEID_UNIT);
+
+    return
+        pTarget->IsImmunedToDamage(GetMeleeDamageSchoolMask()) ||
+        pTarget->hasNegativeAuraWithInterruptFlag(AURA_INTERRUPT_FLAG_DAMAGE) ||
+        checkThreatArea && ((Creature*)this)->IsOutOfThreatArea(pTarget);
+}
+
 bool Unit::SelectHostileTarget()
 {
     //function provides main threat functionality
