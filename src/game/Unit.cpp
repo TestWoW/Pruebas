@@ -2991,7 +2991,6 @@ MeleeHitOutcome Unit::RollMeleeOutcomeAgainst (const Unit *pVictim, WeaponAttack
         skill = (skill > maxskill) ? maxskill : skill;
 
         tmp = (10 + victimDefenseSkill - skill) * 100;
-
         tmp = tmp > 4000 ? 4000 : tmp;
         if (roll < (sum += tmp))
         {
@@ -5532,7 +5531,6 @@ bool Unit::HasAuraType(AuraType auraType) const
 {
     return !GetAurasByType(auraType).empty();
 }
- 
 
 bool Unit::HasNegativeAuraType(AuraType auraType) const
 {
@@ -9692,10 +9690,14 @@ void Unit::TauntApply(Unit* taunter)
     if (target && target == taunter)
         return;
 
-    SetInFront(taunter);
+    // Only attack taunter if this is a valid target
+    if (!hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_DIED) && !IsSecondChoiceTarget(taunter, true))
+    {
+        SetInFront(taunter);
 
-    if (((Creature*)this)->AI())
-        ((Creature*)this)->AI()->AttackStart(taunter);
+        if (((Creature*)this)->AI())
+            ((Creature*)this)->AI()->AttackStart(taunter);
+    }
 
     m_ThreatManager.tauntApply(taunter);
 }
@@ -9754,6 +9756,8 @@ bool Unit::IsSecondChoiceTarget(Unit* pTarget, bool checkThreatArea)
         pTarget->hasNegativeAuraWithInterruptFlag(AURA_INTERRUPT_FLAG_DAMAGE) ||
         checkThreatArea && ((Creature*)this)->IsOutOfThreatArea(pTarget);
 }
+
+//======================================================================
 
 bool Unit::SelectHostileTarget()
 {
