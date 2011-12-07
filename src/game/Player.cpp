@@ -21782,11 +21782,9 @@ void Player::RemoveItemDependentAurasAndCasts( Item * pItem )
     SpellAuraHolderMap& auras = GetSpellAuraHolderMap();
     for(SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); )
     {
-        SpellAuraHolderPtr holder = itr->second;
-
         // skip passive (passive item dependent spells work in another way) and not self applied auras
-        SpellEntry const* spellInfo = holder->GetSpellProto();
-        if (holder->IsPassive() ||  holder->GetCasterGuid() != GetObjectGuid())
+        SpellEntry const* spellInfo = itr->second->GetSpellProto();
+        if (itr->second->IsPassive() ||  itr->second->GetCasterGuid() != GetObjectGuid())
         {
             ++itr;
             continue;
@@ -21795,7 +21793,7 @@ void Player::RemoveItemDependentAurasAndCasts( Item * pItem )
         // Remove spells triggered by equipped item auras
         if (pItem->HasTriggeredByAuraSpell(spellInfo))
         {
-            RemoveAurasDueToSpell(holder->GetId());
+            RemoveAurasDueToSpell(itr->second->GetId());
             itr = auras.begin();
             continue;
         }
@@ -21808,7 +21806,7 @@ void Player::RemoveItemDependentAurasAndCasts( Item * pItem )
         }
 
         // no alt item, remove aura, restart check
-        RemoveAurasDueToSpell(holder->GetId());
+        RemoveAurasDueToSpell(itr->second->GetId());
         itr = auras.begin();
     }
 
