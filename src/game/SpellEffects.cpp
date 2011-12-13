@@ -608,6 +608,20 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         damage *= exp(-distance/(27.5f));
                         break;
                     }
+                    // Vampiric Bite (Queen Lana'thel)
+                    case 70946:
+                    case 71475:
+                    case 71476:
+                    case 71477:
+                    case 71726:
+                    case 71727:
+                    case 71728:
+                    case 71729:
+                    {
+                        // trigger Presence of the Darkfallen check
+                        unitTarget->CastSpell(unitTarget, 71952, true);
+                        break;
+                    }
                     // Mark of the Fallen Champion damage (Saurfang)
                     case 72255:
                     case 72444:
@@ -9635,7 +9649,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (!unitTarget)
                         return;
 
-                    unitTarget->CastSpell(unitTarget, 71447, true);
+                    unitTarget->CastSpell(unitTarget, 71447, true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
                     return;
                 }
                 case 71123:                                 // Decimate
@@ -9708,6 +9722,18 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         return;
 
                     m_caster->CastSpell(unitTarget, 71480, true);
+                    return;
+                }
+                case 71952:                                 // Presence of the Darkfallen (Queen Lana'thel ICC)
+                {
+                    if (!unitTarget)
+                        return;
+
+                    if (m_caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC ||
+                        m_caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
+                    {
+                        unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true);
+                    }
                     return;
                 }
                 case 72034:                                 // Whiteout

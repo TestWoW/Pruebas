@@ -3638,6 +3638,8 @@ void Spell::cast(bool skipCheck)
                 AddPrecastSpell(69832);                    // cast "cluster" before silence and pacify
             else if (m_spellInfo->Id == 58672)             // Impale, damage and loose threat effect (Vault of Archavon, Archavon the Stone Watcher)
                 AddPrecastSpell(m_caster->GetMap()->IsRegularDifficulty() ? 58666 : 60882);
+            else if (m_spellInfo->Id == 71265)             // Swarming Shadows DoT (Queen Lana'thel ICC)
+                AddPrecastSpell(71277);
             break;
         }
         case SPELLFAMILY_MAGE:
@@ -5574,6 +5576,13 @@ SpellCastResult Spell::CheckCast(bool strict)
                     return SPELL_FAILED_CASTER_AURASTATE;
                 if (target->HasAura(61987))                 // Avenging Wrath Marker
                     return SPELL_FAILED_CASTER_AURASTATE;
+            }
+
+            // Vampiric Bite (Lana'thel encounter)
+            if (m_spellInfo->Id == 70946 || m_spellInfo->Id == 71475 ||
+                m_spellInfo->Id == 71476 || m_spellInfo->Id == 71477)
+            {
+                return SPELL_FAILED_BAD_TARGETS;
             }
         }
 
@@ -9395,7 +9404,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 71482:                                 // Bloodbolt Splash 10H
         case 71483:                                 // Bloodbolt Splash 25H
         {
-            FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_FRIENDLY);
+            FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE, GetAffectiveCaster());
             targetUnitMap.remove(m_caster);
             break;
         }
