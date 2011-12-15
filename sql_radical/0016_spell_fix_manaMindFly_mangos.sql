@@ -1,0 +1,1 @@
+DELETE FROM `spell_dbc` WHERE `Id` = 48156; -- Fix Rank 9 Mind fly Must Consume Mana
