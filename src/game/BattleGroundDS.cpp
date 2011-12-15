@@ -142,6 +142,24 @@ void BattleGroundDS::Update(uint32 diff)
         }
         else
             m_uiWaterfall -= diff;
+
+        // CC falling control
+
+        for (BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
+        {
+            Player *plr = sObjectMgr.GetPlayer(itr->first);
+            if (!plr)
+                continue;
+            
+            if(plr->IsCrowdControlled()) 
+            {
+                float x = plr->GetPositionX();
+                float y = plr->GetPositionY();
+                if( ((y > 814.0f && y < 816.5f) || (y < 767.0f && y > 765.0f)) || ((x > 1314.4f && x < 1316.13f) || (x < 1269.21f && x > 1267.3f)) )
+                    plr->StopMoving();
+            }
+        }
+
     }
 }
 
