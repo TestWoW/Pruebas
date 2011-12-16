@@ -1667,6 +1667,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, spell_id, true);
                     return;
                 }
+                case 37473:                                 // Detect Whispers (related to quest 10607 - Whispers of the Raven God_Whispers of the Raven God)
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, damage, true);
+                    break;
+                }
                 case 37674:                                 // Chaos Blast
                 {
                     if (!unitTarget)
@@ -2940,6 +2948,15 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     for(uint32 i = 0; i < random; ++i)
                         m_caster->CastSpell(m_caster, 55528, true);
 
+                    return;
+                }
+                case 55931:                                 // Conjure Flame Sphere
+                {
+                    m_caster->CastSpell(m_caster, 55895, true);
+                    if (m_caster->GetMap()->IsRegularDifficulty())
+                        return;
+                    m_caster->CastSpell(m_caster, 59511, true);
+                    m_caster->CastSpell(m_caster, 59512, true);
                     return;
                 }
                 case 57496:                                 // Volazj - Insanity
@@ -7886,6 +7903,14 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->RemoveAurasAtMechanicImmunity(IMMUNE_TO_ROOT_AND_SNARE_MASK,30918,true);
                     break;
                 }
+                case 37473:                                 // Detect Whispers (related to quest 10607 - Whispers of the Raven God_Whispers of the Raven God)
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, damage, true);
+                    break;
+                }
                 case 38358:                                 // Tidal Surge
                 {
                     if (!unitTarget)
@@ -7991,17 +8016,16 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true, NULL, NULL, unitTarget->GetObjectGuid(), m_spellInfo);
                     return;
                 }
-                case 43375:
-                case 43972:                                // Mixing Blood for Quest 11306
+                case 43375:                                 // Mixing Vrykul Blood
+                case 43972:                                 // Mixing Blood for Quest 11306
                 {
-                    switch(urand(0, 3))
-                    {
-                        case 0 : m_caster->CastSpell(m_caster, 43378, true); break;
-                        case 1 : m_caster->CastSpell(m_caster, 43376, true); break;
-                        case 2 : m_caster->CastSpell(m_caster, 43377, true); break;
-                        case 3 : m_caster->CastSpell(m_caster, 43970, true); break;
-                    }
-                    break;
+                    if (!unitTarget)
+                        return;
+
+                    uint32 triggeredSpell[] = {43376, 43378, 43970, 43377};
+
+                    unitTarget->CastSpell(unitTarget, triggeredSpell[urand(0, 3)], true);
+                    return;
                 }
                 case 44436:                                 // Tricky Treat
                 {
@@ -9184,6 +9208,17 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     unitTarget->CastSpell(m_caster, 62708, true); // Control Vehicle aura
                     m_caster->CastSpell(unitTarget, (m_spellInfo->Id == 62707) ? 62717 : 63477, true); // DoT/Immunity
+                    break;
+                }
+                case 63027:                                 // Proximity Mines for Mimiron Encounter
+                {
+                    if (!unitTarget)
+                        return;
+
+                    for(uint8 i = 0; i < urand(8, 10); ++i)
+                    {
+                        unitTarget->CastSpell(unitTarget, 65347, true);
+                    }
                     break;
                 }
                 case 63795:                                 // Psychosis normal (Ulduar - Yogg Saron)

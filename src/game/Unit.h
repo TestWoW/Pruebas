@@ -84,7 +84,8 @@ enum SpellAuraInterruptFlags
     AURA_INTERRUPT_FLAG_UNK21                       = 0x00200000,   // 21
     AURA_INTERRUPT_FLAG_UNK22                       = 0x00400000,   // 22
     AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT            = 0x00800000,   // 23   removed by entering pvp combat
-    AURA_INTERRUPT_FLAG_DIRECT_DAMAGE               = 0x01000000    // 24   removed by any direct damage
+    AURA_INTERRUPT_FLAG_DIRECT_DAMAGE               = 0x01000000,   // 24   removed by any direct damage
+    AURA_INTERRUPT_FLAG_LANDING                     = 0x02000000,   // 25   removed by hitting the ground
 };
 
 enum SpellModOp
@@ -1463,6 +1464,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void SendSpellNonMeleeDamageLog(Unit *target,uint32 SpellID, uint32 Damage, SpellSchoolMask damageSchoolMask, uint32 AbsorbedDamage, uint32 Resist, bool PhysicalDamage, uint32 Blocked, bool CriticalHit = false);
         void SendPeriodicAuraLog(SpellPeriodicAuraLogInfo *pInfo);
         void SendSpellMiss(Unit *target, uint32 spellID, SpellMissInfo missInfo);
+        void SendSpellDamageResist(Unit* target, uint32 spellId);
+        void SendSpellDamageImmune(Unit* target, uint32 spellId);
 
         void NearTeleportTo(float x, float y, float z, float orientation, bool casting = false);
         void MonsterMoveJump(float x, float y, float z, float o, float speed, float height, bool isKnockBack = false);
