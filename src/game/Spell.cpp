@@ -3991,16 +3991,6 @@ void Spell::cast(bool skipCheck)
 
     m_caster->DecreaseCastCounter();
     SetExecutedCurrently(false);
-
-    // chapuza intervenir
-    /*if(m_targets.getUnitTarget()->HasAura(3411))
-        if(m_spellInfo->DmgClass)
-        {*/
-                //if(/*m_spellInfo->Id != 3411 && */(m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE || m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_RANGED))
-                    if(m_targets.getUnitTarget()->HasAura(3411))m_targets.getUnitTarget()->RemoveAurasDueToSpell(3411);
-
-        //}
-       
 }
 
 void Spell::handle_immediate()
