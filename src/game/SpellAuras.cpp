@@ -10912,21 +10912,6 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     }
                     break;
                 }
-                case 66683:                                 // Massive Crash
-                {
-                    Unit *caster = GetCaster();
-
-                    if (caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL ||
-                        caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL)
-                    {
-                        if (!apply && m_removeMode == AURA_REMOVE_BY_EXPIRE)
-                        {
-                            cast_at_remove = true;
-                            spellId1 = 68667;
-                        }
-                    }
-                    break;
-                }
                 case 69674:                                 // Mutated Infection
                 case 71224:
                 case 73022:
