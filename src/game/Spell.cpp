@@ -3423,10 +3423,6 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
             }
     }
 
-    //Arreglo temporal abstinencia
-    if(  m_spellInfo->SpellFamilyName == SPELLFAMILY_PALADIN && m_targets.getUnitTarget()->HasAura(25771)
-         && m_spellInfo->SpellFamilyFlags.test<CF_PALADIN_HAND_OF_PROTECTION, CF_PALADIN_DIVINE_SHIELD>() )  result = SPELL_FAILED_CASTER_AURASTATE;
-
     if (result != SPELL_CAST_OK && !IsAutoRepeat())          //always cast autorepeat dummy for triggering
     {
         if (triggeredByAura)
