@@ -3332,6 +3332,22 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(unitTarget, 71264, false);
                     break;
                 }
+                case 72261:                                 // Delirious Slash
+                {
+                    if(!unitTarget)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, m_caster->GetMap()->IsRegularDifficulty() ? 72264 : 72265, true);
+                    break;
+                }
+                case 72313:                                 // Bloodbolt Visual
+                {
+                    if(!unitTarget)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, m_caster->GetMap()->IsRegularDifficulty() ? 71446 : 71478, true);
+                    break;
+                }
                 case 72202:                                 // Blade power
                 {
                     if (!unitTarget)
@@ -9467,7 +9483,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                         if (Creature *pSpike = unitTarget->SummonCreature(38711, x, y, z, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 2000))
                         {
-                            unitTarget->EnterVehicle(pSpike->GetVehicleKit(), 0); // enter vehicle
+                            unitTarget->CastSpell(pSpike, 46598, true); // enter vehicle
                             pSpike->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
                         }
                     }
