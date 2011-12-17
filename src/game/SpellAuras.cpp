@@ -653,6 +653,16 @@ void Aura::Update(uint32 diff)
             PeriodicTick();
         }
     }
+    else
+    {
+        if (m_periodicTimer <= 0)
+        {
+            m_periodicTimer = SPELL_SPELL_CHANNEL_UPDATE_INTERVAL;
+            PeriodicCheck();
+        }
+        else
+            m_periodicTimer -= diff;
+    }
 }
 
 void Aura::AreaAuraUpdate(uint32 diff)
@@ -3810,6 +3820,10 @@ void Aura::HandleAuraWaterWalk(bool apply, bool Real)
     if(!Real)
         return;
 
+    // do not remove unit flag if there are more than this auraEffect of that kind on unit on unit
+    if (!apply && GetTarget()->HasAuraType(SPELL_AURA_WATER_WALK))
+        return;
+
     WorldPacket data;
     if (apply)
         data.Initialize(SMSG_MOVE_WATER_WALK, 8+4);
@@ -3825,7 +3839,13 @@ void Aura::HandleAuraFeatherFall(bool apply, bool Real)
     // only at real add/remove aura
     if(!Real)
         return;
+
     Unit *target = GetTarget();
+
+    // do not remove unit flag if there are more than this auraEffect of that kind on unit on unit
+    if (!apply && target->HasAuraType(SPELL_AURA_FEATHER_FALL))
+        return;
+
     WorldPacket data;
     if (apply)
         data.Initialize(SMSG_MOVE_FEATHER_FALL, 8+4);
@@ -3863,6 +3883,10 @@ void Aura::HandleAuraHover(bool apply, bool Real)
 {
     // only at real add/remove aura
     if(!Real)
+        return;
+
+    // do not remove unit flag if there are more than this auraEffect of that kind on unit on unit
+    if (!apply && GetTarget()->HasAuraType(SPELL_AURA_HOVER))
         return;
 
     WorldPacket data;
@@ -6135,10 +6159,13 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
                     {
                         if (target)
                         {
-                            target->CastSpell(target, 49618, true);
-                            target->CastSpell(target, 51270, true);
-                            target->SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
-                            target->SetDeathState(JUST_DIED);
+                            if (Unit *caster = GetCaster())
+                            {
+                                target->CastSpell(target, 49618, true, 0, 0, caster->GetObjectGuid());
+                                target->CastSpell(target, 51270, true);
+                                target->SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
+                                target->SetDeathState(JUST_DIED);
+                            }
                         }
                     }
                     break;
@@ -6147,10 +6174,13 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
                     {
                         if (target)
                         {
-                            target->CastSpell(target, 59809, true);
-                            target->CastSpell(target, 51270, true);
-                            target->SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
-                            target->SetDeathState(JUST_DIED);
+                            if (Unit *caster = GetCaster())
+                            {
+                                target->CastSpell(target, 59809, true, 0, 0, caster->GetObjectGuid());
+                                target->CastSpell(target, 51270, true);
+                                target->SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
+                                target->SetDeathState(JUST_DIED);
+                            }
                         }
                     }
                     break;
@@ -6223,10 +6253,20 @@ void Aura::HandleAuraPeriodicDummy(bool apply, bool Real)
                         caster->CastCustomSpell(target, 63278, 0, &(spell->EffectBasePoints[0]), 0, false, 0, 0, caster->GetObjectGuid() , spell);
                     return;
                 }
+                case 64217:                                 // Overcharged (spell from Emalon adds)
+                {
+                    if (GetHolder()->GetStackAmount() > 11)
+                    {
+                        target->CastSpell(target, 64219, true);
+                        target->DealDamage(target, target->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+                    }
+                    return;
+                }
                 case 73001:                                   // Shadow Prison
                 {
                     if (target)
                         target->CastSpell(target, 72998, true);
+                    return;
                 }
             }
         }
@@ -9621,6 +9661,44 @@ void Aura::PeriodicDummyTick()
     }
 }
 
+void Aura::PeriodicCheck()
+{
+
+    SpellAuraHolderPtr holder = GetHolder();
+    SpellEntry const* spellProto = GetSpellProto();
+
+    if (!holder || !spellProto)
+        return;
+
+    Unit* target = GetTarget();
+    Unit* caster = GetCaster();
+
+    if (!caster || !target)
+        return;
+
+    switch(m_modifier.m_auraname)
+    {
+        case SPELL_AURA_MOD_CONFUSE:
+        case SPELL_AURA_MOD_FEAR:
+        case SPELL_AURA_MOD_STUN:
+        case SPELL_AURA_MOD_ROOT:
+        case SPELL_AURA_TRANSFORM:
+        {
+            if (caster->GetObjectGuid().IsPlayer() && target->GetObjectGuid().IsCreatureOrVehicle())
+            {
+                if (caster->MagicSpellHitResult(target, spellProto) != SPELL_MISS_NONE)
+                {
+                    caster->SendSpellDamageResist(target, spellProto->Id);
+                    target->RemoveAurasDueToSpell(GetId());
+                }
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 void Aura::HandlePreventFleeing(bool apply, bool Real)
 {
     if (!Real)
@@ -9699,9 +9777,6 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
 
     if (apply)
     {
-        if (caster->GetTypeId() == TYPEID_PLAYER)
-            ((Player*)caster)->RemovePet(PET_SAVE_AS_CURRENT);
-
         // TODO: find a way to make this work properly
         // some spells seem like store vehicle seat info in basepoints, but not true for all of them, so... ;/
         int32 seat = -1;
@@ -9731,9 +9806,6 @@ void Aura::HandleAuraControlVehicle(bool apply, bool Real)
 
         if (caster->GetVehicle() == target->GetVehicleKit())
             caster->ExitVehicle();
-
-        if (caster->GetTypeId() == TYPEID_PLAYER)
-            ((Player*)caster)->ResummonPetTemporaryUnSummonedIfAny();
     }
 }
 

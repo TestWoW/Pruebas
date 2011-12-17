@@ -913,6 +913,15 @@ void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
         target.timeDelay = (uint64) floor(dist / m_spellInfo->speed * 1000.0f);
 
     }
+    // Spell catsed on self - mostly TRIGGER_MISSILE code
+    else if (m_spellInfo->speed > 0.0f && affectiveObject && pVictim == affectiveObject)
+    {
+        float dist = 5.0f;
+        if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
+            dist = affectiveObject->GetDistance(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ);
+
+        target.timeDelay = (uint64) floor(dist / m_spellInfo->speed * 1000.0f);
+    }
     else
         target.timeDelay = UI64LIT(0);
 
@@ -1755,7 +1764,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 72091:                                 // Frozen Orb (Vault of Archavon, Toravon encounter, normal)
                 case 72270:                                 // Vile Gas (Rotface, Festergut)
                 case 72271:                                 // Vile Gas (Rotface, Festergut)
-                case 72378:                                 // Blood Nova (Saurfang)
                 case 73022:                                 // Mutated Infection (heroic)
                 case 73023:                                 // Mutated Infection (heroic)
                 case 51146:                                 // Searching Gaze (Halls Of Stone)
@@ -4882,6 +4890,10 @@ void Spell::SendChannelUpdate(uint32 time)
         if (target_guid != m_caster->GetObjectGuid() && target_guid.IsUnit())
             if (Unit* target = ObjectAccessor::GetUnit(*m_caster, target_guid))
                 target->RemoveAurasByCasterSpell(m_spellInfo->Id, m_caster->GetObjectGuid());
+
+        // Only finish channeling when latest channeled spell finishes
+        if (m_caster->GetUInt32Value(UNIT_CHANNEL_SPELL) != m_spellInfo->Id)
+            return;
 
         m_caster->SetChannelObjectGuid(ObjectGuid());
         m_caster->SetUInt32Value(UNIT_CHANNEL_SPELL, 0);
@@ -8811,13 +8823,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             targetUnitMap.remove(m_caster);
             break;
         }
-        case 62589: // Nature's Fury (10 man)
-        case 63571: // Nature's Fury (25 man)
-        {
-            FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
-            targetUnitMap.remove(m_caster); // exclude caster
-            break;
-        }
         case 65044: // Flames
         case 65045: // Flame of demolisher
         {
@@ -9220,20 +9225,25 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 72378: // Blood Nova (Saurfang)
         case 73058:
         {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
-            if (!tempTargetUnitMap.empty())
+
+            UnitList tmpUnitMap, tgtUnitMap;
+            FillAreaTargets(tmpUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+ 
+            if (tmpUnitMap.empty())
+                break;
+ 
+            for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
             {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if (!(*iter)->GetObjectGuid().IsPlayer())
-                        continue;
+                if (*itr && (*itr)->GetObjectGuid().IsPlayerOrPet() && m_caster->GetDistance(*itr) > 8.0f)
+                    tgtUnitMap.push_back(*itr);
+            }
 
-                    if (m_caster->GetDistance(*iter) < 10.0f) // stored in 72379 radius?
-                        continue;
-
-                    targetUnitMap.push_back((*iter));
-                }
+            if (!tgtUnitMap.empty())
+            {
+                UnitList::iterator itr = tgtUnitMap.begin();
+                std::advance(itr, urand(0, tgtUnitMap.size()-1));
+                if (*itr)
+                    targetUnitMap.push_back(*itr);
             }
             break;
         }

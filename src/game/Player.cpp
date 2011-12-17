@@ -2069,7 +2069,7 @@ void Player::RegenerateAll(uint32 diff)
 {
     // Not in combat or they have regeneration
     if (!isInCombat() || HasAuraType(SPELL_AURA_MOD_REGEN_DURING_COMBAT) ||
-        HasAuraType(SPELL_AURA_MOD_HEALTH_REGEN_IN_COMBAT) || IsPolymorphed() )
+        HasAuraType(SPELL_AURA_MOD_HEALTH_REGEN_IN_COMBAT) || IsPolymorphed() || m_baseHealthRegen )
     {
         RegenerateHealth(diff);
         if (!isInCombat() && !HasAuraType(SPELL_AURA_INTERRUPT_REGEN))
@@ -13438,6 +13438,10 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             ((Player*)this)->ApplySpellPowerBonus(enchant_amount, apply);
                             DEBUG_LOG("+ %u SPELL_POWER", enchant_amount);
                             break;
+                        case ITEM_MOD_HEALTH_REGEN:
+                            ((Player*)this)->ApplyHealthRegenBonus(enchant_amount, apply);
+                            DEBUG_LOG("+ %u HEALTH_REGENERATION", enchant_amount);
+                            break;
                         case ITEM_MOD_BLOCK_VALUE:
                             HandleBaseModValue(SHIELD_BLOCK_VALUE, FLAT_MOD, float(enchant_amount), apply);
                             break;
@@ -22924,6 +22928,7 @@ void Player::HandleFall(MovementInfo const& movementInfo)
             DEBUG_LOG("FALLDAMAGE z=%f sz=%f pZ=%f FallTime=%d mZ=%f damage=%d SF=%d" , movementInfo.GetPos()->z, height, GetPositionZ(), movementInfo.GetFallTime(), height, damage, safe_fall);
         }
     }
+    RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_LANDING);     // Remove auras that should be removed at landing
 }
 
 void Player::UpdateAchievementCriteria( AchievementCriteriaTypes type, uint32 miscvalue1/*=0*/, uint32 miscvalue2/*=0*/, Unit *unit/*=NULL*/, uint32 time/*=0*/ )
@@ -23231,6 +23236,7 @@ void Player::UnsummonPetTemporaryIfAny(bool full)
                 else
                     pet->Unsummon(PET_SAVE_NOT_IN_SLOT, this);
             }
+            DEBUG_LOG("Player::UnsummonPetTemporaryIfAny tempusummon pet %s ",(*itr).GetString().c_str());
         }
     }
 
@@ -24374,12 +24380,22 @@ bool Player::CheckTransferPossibility(uint32 mapId)
 
     AreaTrigger const* at = sObjectMgr.GetMapEntranceTrigger(mapId);
     if (!at)
+    {
+        if (targetMapEntry->IsContinent())
+        {
+            if (isGameMaster())
+                return true;
+            if (GetSession()->Expansion() < targetMapEntry->Expansion())
+                return false;
+            return true;
+        }
         return false;
+    }
 
-    return CheckTransferPossibility(at);
+    return CheckTransferPossibility(at, targetMapEntry->IsContinent());
 }
 
-bool Player::CheckTransferPossibility(AreaTrigger const*& at)
+bool Player::CheckTransferPossibility(AreaTrigger const*& at, bool b_onlyMainReq)
 {
     if (!at)
         return false;
@@ -24441,6 +24457,21 @@ bool Player::CheckTransferPossibility(AreaTrigger const*& at)
     AreaLockStatus status = GetAreaTriggerLockStatus(at, GetDifficulty(targetMapEntry->IsRaid()));
 
     DEBUG_LOG("Player::CheckTransferPossibility %s check lock status of map %u (difficulty %u), result is %u", GetObjectGuid().GetString().c_str(), at->target_mapId, GetDifficulty(targetMapEntry->IsRaid()), status);
+
+    if (b_onlyMainReq)
+    {
+        switch (status)
+        {
+            case AREA_LOCKSTATUS_MISSING_ITEM:
+            case AREA_LOCKSTATUS_QUEST_NOT_COMPLETED:
+            case AREA_LOCKSTATUS_INSTANCE_IS_FULL:
+            case AREA_LOCKSTATUS_ZONE_IN_COMBAT:
+            case AREA_LOCKSTATUS_TOO_LOW_LEVEL:
+                return true;
+            default:
+                break;
+        }
+    }
 
     switch (status)
     {
