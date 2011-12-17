@@ -741,7 +741,7 @@ int32 ArenaTeam::WonAgainst(uint32 againstRating)
 {
     // called when the team has won
     // 'chance' calculation - to beat the opponent
-    float chance = GetChanceAgainst(BattleRating, againstRating);
+    float chance = GetChanceAgainst(m_stats.rating, againstRating);
     float K = (m_stats.rating < 1000) ? 48.0f : 32.0f;
     // calculate the rating modification (ELO system with k=32 or k=48 if rating<1000)
     int32 mod = (int32)floor(K* (1.0f - chance));
@@ -758,15 +758,15 @@ int32 ArenaTeam::LostAgainst(uint32 againstRating)
 {
     // called when the team has lost
     //'chance' calculation - to loose to the opponent
-    float chance = GetChanceAgainst(BattleRating, againstRating);
+    float chance = GetChanceAgainst(m_stats.rating, againstRating);
     float K = (m_stats.rating < 1000) ? 48.0f : 32.0f;
     // calculate the rating modification (ELO system with k=32 or k=48 if rating<1000)
     int32 mod = (int32)ceil(K * (0.0f - chance));
     // modify the team stats accordingly
 
-    if(againstRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE) || BattleRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE))
+    if(againstRating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE) || m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE))
         mod = 0;
-    else if (BattleRating <= sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE))
+    else if (m_stats.rating <= sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE))
         mod /= 2;
 
     FinishGame(mod);
