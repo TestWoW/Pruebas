@@ -505,7 +505,16 @@ bool Unit::SetPosition(float x, float y, float z, float orientation, bool telepo
         SetOrientation(orientation);
 
     if ((relocate || turn) && GetVehicleKit())
+    {
+        if (m_movementInfo.HasMovementFlag(MOVEFLAG_ONTRANSPORT))
+        {
+            x += m_movementInfo.GetTransportPos()->x;
+            y += m_movementInfo.GetTransportPos()->y;
+            z += m_movementInfo.GetTransportPos()->z;
+            orientation += m_movementInfo.GetTransportPos()->o;
+        }
         GetVehicleKit()->RelocatePassengers(x, y, z, orientation);
+    }
 
     return relocate || turn;
 }
@@ -519,7 +528,7 @@ void Unit::SendMonsterMoveTransport(WorldObject *transport, SplineType type, Spl
     data << GetPackGUID();
     data << transport->GetPackGUID();
     data << uint8(m_movementInfo.GetTransportSeat());
-    data << uint8(0);                                       // new in 3.1
+    data << uint8(GetTypeId() == TYPEID_PLAYER ? 1 : 0);       // bool, new in 3.1
     data << float(transport->GetPositionX());
     data << float(transport->GetPositionY());
     data << float(transport->GetPositionZ());
@@ -1202,7 +1211,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             }
         }
 
-        if (damage && damagetype != NODAMAGE && pVictim->GetTypeId() == TYPEID_PLAYER)
+        if (damagetype != NODAMAGE && pVictim->GetTypeId() == TYPEID_PLAYER)
         {
             if (damagetype != DOT)
             {
@@ -1218,26 +1227,11 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                         {
                             if (spell->m_spellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_ABORT_ON_DMG) // Always interrupt, even on absorbed.
                                 pVictim->InterruptSpell(CurrentSpellTypes(i));
-                            else
-                            {
-                                // some spells should be considered as DoT, but are triggered spells
-                                // TODO: needs some research, maybe attribute SPELL_ATTR_EX3_UNK25
-                                if (spellProto)
-                                {
-                                    switch (spellProto->Id)
-                                    {
-                                        case 62188:                              // Biting Cold (Hodir)
-                                        case 65722:                              // Slag Pot (Ignis)
-                                        case 65723:                              // Slag Pot (Ignis) (h)
-                                            break;
-                                        default:
-                                            spell->Delayed();
-                                            break;
-                                    }
-                                }
-                            }
+                            else if (damage)
+                                spell->Delayed();
                         }
                     }
+
                 }
             }
 
@@ -12328,17 +12322,11 @@ void Unit::ExitVehicle()
     if(!m_pVehicle)
         return;
 
-    m_pVehicle->RemovePassenger(this);
+    m_pVehicle->RemovePassenger(this, true);
 
     m_pVehicle = NULL;
 
-    float x = GetPositionX();
-    float y = GetPositionY();
-    float z = GetPositionZ() + 2.0f;
-    GetClosePoint(x, y, z, 2.0f);
-    UpdateAllowedPositionZ(x, y, z);
-    MonsterMoveWithSpeed(x, y, z + 0.5f, 28);
-    if (GetTypeId() == TYPEID_PLAYER)
+    if (isAlive() && GetTypeId() == TYPEID_PLAYER)
         ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
 }
 
