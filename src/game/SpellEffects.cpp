@@ -1969,7 +1969,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     }
                     //Spawn
                     m_caster->CastSpell(m_caster, spellId, true);
-                    
+
                     if (!unitTarget) return;
                     //Arcane Prisoner Kill Credit
                     unitTarget->CastSpell(m_caster, 45456, true);
@@ -9527,7 +9527,14 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                             pSpike->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
                         }
                     }
+                    return;
+                }
+                case 67533:                                 // Shoot Air Rifle
+                {
+                    if (!unitTarget)
+                        return;
 
+                    m_caster->CastSpell(unitTarget, 67532, true);
                     return;
                 }
                 case 68861:                                 // Consume Soul (ICC FoS: Bronjahm)
