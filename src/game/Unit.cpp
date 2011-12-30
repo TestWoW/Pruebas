@@ -342,7 +342,7 @@ void Unit::Update( uint32 update_diff, uint32 p_time )
     // WARNING! Order of execution here is important, do not change.
     // Spells must be processed with event system BEFORE they go to _UpdateSpells.
     // Or else we may have some SPELL_STATE_FINISHED spells stalled in pointers, that is bad.
-    m_Events.Update( update_diff );
+    UpdateEvents(update_diff, p_time);
     _UpdateSpells( update_diff );
 
     {
@@ -3089,7 +3089,7 @@ uint32 Unit::CalculateDamage (WeaponAttackType attType, bool normalized)
         std::swap(min_damage,max_damage);
     }
 
-    if (max_damage == 0.0f)
+    if (fabs(max_damage) < M_NULL_F)
         max_damage = 5.0f;
 
     return urand((uint32)min_damage, (uint32)max_damage);
@@ -4405,14 +4405,14 @@ float Unit::GetTotalAuraMultiplierByMiscValueForMask(AuraType auratype, uint32 m
 float Unit::CheckAuraStackingAndApply(Aura* aura, UnitMods unitMod, UnitModifierType modifierType, float amount, bool apply, int32 miscMask, int32 miscValue)
 {
     // not apply values below 1% (rounding errors?)
-    if (!aura || fabs(amount) < 0.009f)
+    if (!aura || fabs(amount) < M_NULL_F)
         return 0.0f;
 
     SpellEntry const *spellProto = aura->GetSpellProto();
 
     if (!aura->IsStacking())
     {
-        bool bIsPositive = amount >= 0.0f;
+        bool bIsPositive = amount >= M_NULL_F;
 
         if (modifierType == TOTAL_VALUE)
             modifierType = bIsPositive ? NONSTACKING_VALUE_POS : NONSTACKING_VALUE_NEG;
@@ -4433,8 +4433,8 @@ float Unit::CheckAuraStackingAndApply(Aura* aura, UnitMods unitMod, UnitModifier
             modifierType = NONSTACKING_PCT_MINOR;
         }
 
-        if (bIsPositive && amount < current ||               // value does not change as a result of applying/removing this aura
-            !bIsPositive && amount > current)
+        if (bIsPositive && amount < (current - M_NULL_F) ||               // value does not change as a result of applying/removing this aura
+            !bIsPositive && amount > (current + M_NULL_F))
         {
             return 0.0f;
         }
@@ -4464,7 +4464,7 @@ float Unit::CheckAuraStackingAndApply(Aura* aura, UnitMods unitMod, UnitModifier
             }
         }
         // not apply values below 1% (rounding errors?)
-        if (fabs(amount) < 0.009f)
+        if (fabs(amount) < M_NULL_F)
             amount = 0.0f;
 
         HandleStatModifier(unitMod, modifierType, amount, apply);
@@ -10265,7 +10265,7 @@ float Unit::GetModifierValue(UnitMods unitMod, UnitModifierType modifierType) co
     }
     else if (modifierType == TOTAL_PCT)
     {
-        if (m_auraModifiersGroup[unitMod][modifierType] > 0.009f)
+        if (m_auraModifiersGroup[unitMod][modifierType] > M_NULL_F)
             retvalue = m_auraModifiersGroup[unitMod][TOTAL_PCT] * ((m_auraModifiersGroup[unitMod][NONSTACKING_PCT] + m_auraModifiersGroup[unitMod][NONSTACKING_PCT_MINOR] + 100.0f) / 100.0f);
     }
     else if(modifierType == TOTAL_VALUE)
@@ -10282,16 +10282,16 @@ float Unit::GetTotalStatValue(Stats stat) const
 {
     UnitMods unitMod = UnitMods(UNIT_MOD_STAT_START + stat);
 
-    if (m_auraModifiersGroup[unitMod][TOTAL_PCT] <= 0.0f)
+    if (m_auraModifiersGroup[unitMod][TOTAL_PCT] <= M_NULL_F)
         return 0.0f;
 
     // value = ((base_value * base_pct) + total_value) * total_pct
-    float value  = m_auraModifiersGroup[unitMod][BASE_VALUE] + GetCreateStat(stat);
+    double value  = m_auraModifiersGroup[unitMod][BASE_VALUE] + GetCreateStat(stat);
     value *= m_auraModifiersGroup[unitMod][BASE_PCT];
     value += (m_auraModifiersGroup[unitMod][TOTAL_VALUE] + m_auraModifiersGroup[unitMod][NONSTACKING_VALUE_POS] + m_auraModifiersGroup[unitMod][NONSTACKING_VALUE_NEG]);
     value *= m_auraModifiersGroup[unitMod][TOTAL_PCT] * ((m_auraModifiersGroup[unitMod][NONSTACKING_PCT] + m_auraModifiersGroup[unitMod][NONSTACKING_PCT_MINOR] + 100.0f) / 100.0f);
 
-    return value;
+    return round_pct(value);
 }
 
 float Unit::GetTotalAuraModValue(UnitMods unitMod) const
@@ -10302,15 +10302,15 @@ float Unit::GetTotalAuraModValue(UnitMods unitMod) const
         return 0.0f;
     }
 
-    if (m_auraModifiersGroup[unitMod][TOTAL_PCT] <= 0.0f)
+    if (m_auraModifiersGroup[unitMod][TOTAL_PCT] <= M_NULL_F)
         return 0.0f;
 
-    float value  = m_auraModifiersGroup[unitMod][BASE_VALUE];
+    double value  = m_auraModifiersGroup[unitMod][BASE_VALUE];
     value *= m_auraModifiersGroup[unitMod][BASE_PCT];
     value += (m_auraModifiersGroup[unitMod][TOTAL_VALUE] + m_auraModifiersGroup[unitMod][NONSTACKING_VALUE_POS] + m_auraModifiersGroup[unitMod][NONSTACKING_VALUE_NEG]);
     value *= m_auraModifiersGroup[unitMod][TOTAL_PCT] * ((m_auraModifiersGroup[unitMod][NONSTACKING_PCT] + m_auraModifiersGroup[unitMod][NONSTACKING_PCT_MINOR] + 100.0f) / 100.0f);
 
-    return value;
+    return round_pct(value);
 }
 
 SpellSchools Unit::GetSpellSchoolByAuraGroup(UnitMods unitMod) const
@@ -10637,7 +10637,7 @@ void Unit::CleanupsBeforeDelete()
         if (GetVehicleKit())
             RemoveVehicleKit();
         InterruptNonMeleeSpells(true);
-        m_Events.KillAllEvents(false);                      // non-delatable (currently casted spells) will not deleted now but it will deleted at call in Map::RemoveAllObjectsInRemoveList
+        KillAllEvents(false);                      // non-delatable (currently casted spells) will not deleted now but it will deleted at call in Map::RemoveAllObjectsInRemoveList
         if (IsInWorld())
             CombatStop();
         ClearComboPointHolders();
@@ -12758,7 +12758,7 @@ private:
 void Unit::ScheduleAINotify(uint32 delay)
 {
     if (!IsAINotifyScheduled())
-        m_Events.AddEvent(new RelocationNotifyEvent(*this), m_Events.CalculateTime(delay));
+        AddEvent(new RelocationNotifyEvent(*this), delay);
 }
 
 void Unit::OnRelocated()
@@ -13083,3 +13083,34 @@ void Unit::SendSpellDamageImmune(Unit* target, uint32 spellId)
     data << uint8(0);                 // bool - log format: 0-default, 1-debug
     SendMessageToSet(&data, true);
 }
+
+EventProcessor* Unit::GetEvents() 
+{
+    return &m_Events;
+}
+
+void Unit::KillAllEvents(bool force)
+{
+    MAPLOCK_WRITE(this, MAP_LOCK_TYPE_DEFAULT);
+    GetEvents()->KillAllEvents(force);
+}
+
+void Unit::AddEvent(BasicEvent* Event, uint64 e_time, bool set_addtime)
+{
+    MAPLOCK_WRITE(this, MAP_LOCK_TYPE_DEFAULT);
+    if (set_addtime)
+        GetEvents()->AddEvent(Event, GetEvents()->CalculateTime(e_time), set_addtime);
+    else
+        GetEvents()->AddEvent(Event, e_time, set_addtime);
+}
+
+void Unit::UpdateEvents(uint32 update_diff, uint32 time)
+{
+    {
+        MAPLOCK_READ(this, MAP_LOCK_TYPE_DEFAULT);
+        GetEvents()->RenewEvents();
+    }
+
+    GetEvents()->Update(update_diff);
+}
+
