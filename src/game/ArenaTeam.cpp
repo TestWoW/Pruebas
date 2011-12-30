@@ -103,7 +103,7 @@ ArenaTeam::~ArenaTeam()
 
 bool ArenaTeam::Create(ObjectGuid captainGuid, ArenaType type, std::string arenaTeamName)
 {
-    if (type == ARENA_TYPE_2v2) return false;
+    //if (type == ARENA_TYPE_2v2) return false;
     if (!IsArenaTypeValid(type))
         return false;
     if (!sObjectMgr.GetPlayer(captainGuid))                 // player not exist
