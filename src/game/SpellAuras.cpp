@@ -1092,13 +1092,17 @@ void Aura::ReapplyAffectedPassiveAuras( Unit* target, bool owner_mode )
 
     {
         MAPLOCK_READ(target,MAP_LOCK_TYPE_AURAS);
-        for (Unit::SpellAuraHolderMap::const_iterator itr = target->GetSpellAuraHolderMap().begin(); itr != target->GetSpellAuraHolderMap().end(); ++itr)
+        Unit::SpellAuraHolderMap const& holderMap = target->GetSpellAuraHolderMap();
+        for (Unit::SpellAuraHolderMap::const_iterator itr = holderMap.begin(); itr != holderMap.end(); ++itr)
         {
+            if (!itr->second || itr->second->IsDeleted())
+                continue;
+
             // permanent passive or permanent area aura
             // passive spells can be affected only by own or owner spell mods)
             if ((itr->second->IsPermanent() && (owner_mode && itr->second->IsPassive() || itr->second->IsAreaAura())) &&
                 // non deleted and not same aura (any with same spell id)
-                !itr->second->IsDeleted() && itr->second->GetId() != GetId() &&
+                itr->second->GetId() != GetId() &&
                 // and affected by aura
                 isAffectedOnSpell(itr->second->GetSpellProto()))
             {
@@ -10220,7 +10224,10 @@ void SpellAuraHolder::AddAura(Aura aura, SpellEffectIndex index)
     {
         AuraStorage::iterator itr = m_aurasStorage.find(index);
         if (itr != m_aurasStorage.end())
+        {
+            MAPLOCK_WRITE(m_target, MAP_LOCK_TYPE_AURAS);
             m_aurasStorage.erase(itr);
+        }
     }
 
     m_aurasStorage.insert(std::make_pair(index,aura));
@@ -10284,7 +10291,6 @@ void SpellAuraHolder::_AddSpellAuraHolder()
     // Lookup free slot
     if (m_target->GetVisibleAurasCount() < MAX_AURAS)
     {
-        MAPLOCK_READ(m_target,MAP_LOCK_TYPE_AURAS);
         Unit::VisibleAuraMap const& visibleAuras = m_target->GetVisibleAuras();
         for(uint8 i = 0; i < MAX_AURAS; ++i)
         {
