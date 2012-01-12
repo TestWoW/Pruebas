@@ -9770,59 +9770,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(m_caster, 69023, true);
                     return;
                 }
-                case 69165:                                 // Inhale Blight (Festergut)
-                {
-                    // TODO: get proper difficulty spell?
-                    SpellAuraHolderPtr holder = m_caster->GetSpellAuraHolder(69166);
-
-                    if (!holder)
-                        holder = m_caster->GetSpellAuraHolder(71912);
-
-                    if (!holder)
-                    {
-                        // first Inhale
-                        m_caster->RemoveAurasDueToSpell(69157);
-                        m_caster->CastSpell(m_caster, 69162, true);
-                    }
-                    else if (holder)
-                    {
-                        if (holder->GetStackAmount() == 1)
-                        {
-                            // second Inhale
-                            m_caster->RemoveAurasDueToSpell(69162);
-                            m_caster->CastSpell(m_caster, 69164, true);
-                        }
-                        else if (holder->GetStackAmount() == 2)
-                        {
-                            // third Inhale
-                            m_caster->RemoveAurasDueToSpell(69164);
-                        }
-                    }
-
-                    return;
-                }
-                case 69195:                                 // Pungent Blight (Festergut)
-                case 71219:
-                case 73031:
-                case 73032:
-                {
-                    m_caster->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
-                    return;
-                }
-                case 69200:                                 // Raging Spirit
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, 69201, true);
-                    return;
-                }
-                case 69298:                                 // Cancel Resistant to Blight (Festergut)
-                {
-                    if (unitTarget)
-                        unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
-                    return;
-                }
                 case 69377:                                 // Fortitude
                 {
                     if (!unitTarget)
@@ -9897,101 +9844,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
-                case 69057:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 70826:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 72088:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 72089:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73142:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73143:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73144:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73145:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                {
-                    if (unitTarget)
-                    {
-                        float x, y, z;
-                        unitTarget->GetPosition(x, y, z);
-
-                        if (Creature *pSpike = unitTarget->SummonCreature(38711, x, y, z, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 2000))
-                        {
-                            unitTarget->CastSpell(pSpike, 46598, true); // enter vehicle
-                            pSpike->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
-                        }
-                    }
-
-                    return;
-                }
-                case 69147:                                 // Coldflame (circle, Lord Marrowgar - Icecrown Citadel)
-                {
-                    m_caster->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
-                    return;
-                }
-                case 69553:                                 // Large Ooze Combine (Rotface)
-                {
-                    // 2 large Oozes, smaller lives and gets 1 more stack, bigger dies
-                    if (unitTarget)
-                    {
-//<<<<<<< HEAD
-                        SpellAuraHolderPtr casterHolder = m_caster->GetSpellAuraHolder(69558);
-                        SpellAuraHolderPtr targetHolder = unitTarget->GetSpellAuraHolder(69558);
-                        uint32 casterStack = 0;
-                        uint32 targetStack = 0;
-                        Unit *pBigger, *pSmaller;
-
-                        if (casterHolder)
-                            casterStack = casterHolder->GetStackAmount();
-                        if (targetHolder)
-                            targetStack = targetHolder->GetStackAmount();
-
-                        // mark which will live and which will die
-                        pBigger = casterStack <= targetStack ? unitTarget : m_caster;
-                        pSmaller = casterStack <= targetStack ? m_caster : unitTarget;
-
-                        pSmaller->CastSpell(pSmaller, 69558, true); // smaller one grows
-                        if (pBigger->GetTypeId() == TYPEID_UNIT)
-                            ((Creature*)pBigger)->ForcedDespawn(0); // bigger one dies
-                        return;
-                    }
-                    return;
-                }
-                case 69558:                                 // Unstable Ooze (Rotface)
-                {
-                    if (unitTarget)
-                    {
-                        if (SpellAuraHolderPtr holder = unitTarget->GetSpellAuraHolder(m_spellInfo->Id))
-                        {
-                            if (holder->GetStackAmount() >= 4)
-                                unitTarget->CastSpell(unitTarget, 69839, true); // Unstable Ooze Explosion
-                        }
-                    }
-                    return;
-                }
-                case 69610:                                 // Large Ooze Buff Combine (Rotface)
-                {
-                    // Large Ooze (m_caster) and Little Ooze (unitTarget)
-                    if (unitTarget)
-                    {
-                        m_caster->CastSpell(m_caster, 69558, true);
-                        if (unitTarget->GetTypeId() == TYPEID_UNIT)
-                            ((Creature*)unitTarget)->ForcedDespawn();
-                    }
-                }
-                case 69782:                                 // Ooze Flood (Rotface)
-                {
-                    // targets Puddle Stalker which casts slime AoE
-                    if (unitTarget)
-                        unitTarget->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), false);
-
-                    return;
-                }
-                case 69795:                                 // Ooze Flood Trigger (Rotface)
-                {
-/*=======
-                        m_caster->CastSpell(unitTarget, 69889, true); // merge
-                        if (m_caster->GetTypeId() == TYPEID_UNIT)
-                            ((Creature*)m_caster)->ForcedDespawn(200);
-                    }
-                    return;
-                }
                 case 69553:                                 // Large Ooze Combine (Rotface)
                 {
                     // 2 large Oozes, smaller lives and gets 1 more stack, bigger dies
@@ -10051,7 +9903,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 }
                 case 69795:                                 // Ooze Flood Trigger (Rotface)
                 {
->>>>>>> 663b277addfbddaa0b867297a766f691ddeccb53*/
                     // unclear: different versions of spell in the rest of effects basepoints
                     m_caster->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
                     return;
@@ -10062,18 +9913,14 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
                     return;
                 }
-                case 69140:                                 // Coldflame (Lord Marrowgar - Icecrown Citadel)
-                {
-                    if (unitTarget)
-                        unitTarget->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
-                    return;
-                }
                 case 70117:                                 // Ice grip (Sindragosa pull effect)
                 {
                     if (!unitTarget)
                         return;
-                    unitTarget->CastSpell(m_caster, 70122 ,true);
-                    m_caster->CastSpell(m_caster, 70123, false);
+                    float fPosX, fPosY, fPosZ;
+                    m_caster->GetPosition(fPosX, fPosY, fPosZ);
+                    m_caster->GetRandomPoint(fPosX, fPosY, fPosZ, m_caster->GetObjectBoundingRadius(), fPosX, fPosY, fPosZ);
+                    unitTarget->NearTeleportTo(fPosX, fPosY, fPosZ+1.0f, -unitTarget->GetOrientation(), false);
                     return;
                 }
                 case 70360:                                 // Eat Ooze (Putricide)
@@ -10117,23 +9964,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (!unitTarget)
                         return;
 
-                    unitTarget->CastSpell(unitTarget, 71447, true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
-                    return;
-                }
-                case 71123:                                 // Decimate
-                {
-                    if (!unitTarget)
-                        return;
-                    if (unitTarget->GetHealthPercent() >= 15)
-                        unitTarget->SetHealthPercent(15);
-                    return;
-                }
-                case 71255:                                 // Choking Gas Bomb
-                {
-                    if (!unitTarget)
-                        return;
-                    m_caster->CastSpell(m_caster, 71275, true);
-                    m_caster->CastSpell(m_caster, 71276, true);
+                    unitTarget->CastSpell(unitTarget, 71447, true);
                     return;
                 }
                 case 71478:                                 // Twilight Bloodbolt 25N

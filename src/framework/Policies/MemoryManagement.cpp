@@ -79,7 +79,7 @@ void operator delete[](void* ptr, const std::nothrow_t&) throw()
 
 #else if PLATFORM == PLATFORM_WINDOWS || defined(USE_FASTMM_MALLOC)
 
-/*#include "../../dep/fastmm/FastMM.h"
+#include "../../dep/fastmm/FastMM.h"
 
 void* operator new(size_t mem_size)
 {
@@ -129,7 +129,7 @@ void operator delete(void* pointer, const std::nothrow_t&) throw()
 void operator delete[](void* pointer, const std::nothrow_t&) throw()
 {
     FastMM_free(pointer);
-}*/
+}
 
 #endif // USE_TBB_MALLOC/ USE_FASTMM_MALLOC
 
