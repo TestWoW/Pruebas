@@ -566,36 +566,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     // Empowered Flare (Blood Council encounter)
                     case 71708:
                     {
-//<<<<<<< HEAD
-                        float distance = unitTarget->GetDistance2d(m_caster);
-                        if (distance > 10 * m_caster->GetObjectScale())
-                            damage = 0;
-                        break;
-                    }
-                    // Mutated Plague
-                    case 72454:
-                    case 72507:
-                    case 72464:
-                    case 72506:
-                    {
-                        if (SpellAuraHolderPtr holder = unitTarget->GetSpellAuraHolder(72672))
-                        {
-                            damage = 0;
-                            for (uint i = 0; i <= holder->GetStackAmount(); i++)
-                                damage += 400 * i * urand(1.01, 1.2);
-                        }
-                        break;
-                    }
-                    // Expunged Gas
-                    case 70701:
-                    {
-                        if (SpellAuraHolderPtr holder = unitTarget->GetSpellAuraHolder(70672))
-                        {
-                            damage = 0;
-                            for (uint i = 0; i <= holder->GetStackAmount(); i++)
-                                damage += 1350 * i * urand(1.01, 1.2);
-                        }
-/*=======
                         // aura doesn't want to proc, so hacked...
                         if (SpellAuraHolderPtr holder = m_caster->GetSpellAuraHolder(71756))
                         {
@@ -605,7 +575,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                                 holder->ModStackAmount(-1);
                         }
 
->>>>>>> 663b277addfbddaa0b867297a766f691ddeccb53*/
                         break;
                     }
                     // Bone Storm
@@ -843,9 +812,8 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                             damage = 0;
                         break;
                     }
+                    break;
                 }
-                break;
-            }
             case SPELLFAMILY_WARRIOR:
             {
                 // Bloodthirst
