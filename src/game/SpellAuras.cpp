@@ -8430,16 +8430,6 @@ void Aura::PeriodicTick()
                         }
                         break;
                     }
-                    case 70672: // Gaseous bloat
-                    {
-                        uint32 stacks = GetStackAmount();
-                        if (SpellAuraHolderPtr holder= target->GetSpellAuraHolder(70672))
-                        {
-                            if (stacks > 1)
-                                holder->SetStackAmount(--stacks);
-                        }
-                        break;
-                    }
                     case 70541:
                     case 73779:
                     case 73780:

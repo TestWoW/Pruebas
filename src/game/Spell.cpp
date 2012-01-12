@@ -1746,7 +1746,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 70882:                                 // Slime Spray Summon Trigger (Rotface)
                 case 70920:                                 // Unbound Plague Search Effect (Putricide)
                 case 71224:                                 // Mutated Infection (Rotface)
-                case 71224:
                 case 71307:                                 // Vile Gas (Rotface, Festergut)
                 case 71908:                                 // Vile Gas (Rotface, Festergut)
                 case 72091:                                 // Frozen Orb (Vault of Archavon, Toravon encounter, normal)
@@ -1784,7 +1783,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 62477:                                 // Icicle (Hodir 25man)
                 case 64598:                                 // Cosmic Smash (Algalon 25man) 
                 case 70814:                                 // Bone Slice (Icecrown Citadel, Lord Marrowgar, heroic)
-                case 71221:                                 // Gas spore - 25 (Festergut)
                 case 72095:                                 // Frozen Orb (Vault of Archavon, Toravon encounter, heroic)
                     unMaxTargets = 3;
                     break;
@@ -1880,7 +1878,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         {
             switch(m_spellInfo->Id)
             {
-                case 69832:                                 // Unstable Ooze Explosion (Rotface)
                 case 69075:                                 // Bone Storm
                 case 69832:                                 // Unstable Ooze Explosion (Rotface)
                 case 70341:                                 // Slime Puddle (Putricide)
@@ -8996,7 +8993,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                         oozesMap.push_back((*iter));
                 }
             }
-//<<<<<<< HEAD
 
             UnitList::iterator i;
 
@@ -9135,146 +9131,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                     {
                         if (!*itr) continue;
 
-/*=======
-
-            UnitList::iterator i;
-
-            // 2 random targets
-            if (!oozesMap.empty())
-            {
-                i = oozesMap.begin();
-                std::advance(i, urand(0, oozesMap.size() - 1));
-
-                // first Ooze Flood
-                targetUnitMap.push_back(*i);
-                oozesMap.remove(*i);
-
-                // now find the second - closest one
-                if (!oozesMap.empty())
-                {
-                    oozesMap.sort(TargetDistanceOrderNear(*i));
-                    i = oozesMap.begin();
-                    targetUnitMap.push_back(*i);
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-        case 69538: // Small Ooze Combine (Rotface)
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->GetEntry() == 36897)
-                        targetUnitMap.push_back((*iter));
-                }
-            }
-
-            targetUnitMap.remove(m_caster);
-
-            if (!targetUnitMap.empty())
-                targetUnitMap.resize(1);
-
-            break;
-        }
-        case 69553: // Large Ooze Combine (Rotface)
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->GetEntry() == 36899)
-                        targetUnitMap.push_back((*iter));
-                }
-            }
-
-            targetUnitMap.remove(m_caster);
-
-            if (!targetUnitMap.empty())
-                targetUnitMap.resize(1);
-
-            break;
-        }
-        case 69610: // Large Ooze Buff Combine (Rotface)
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->GetEntry() == 36897)
-                        targetUnitMap.push_back((*iter));
-                }
-            }
-
-            targetUnitMap.remove(m_caster);
-
-            if (!targetUnitMap.empty())
-                targetUnitMap.resize(1);
-
-            break;
-        }
-        case 69762: // Unchained Magic (Sindragosa)
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->getPowerType() == POWER_MANA)
-                        targetUnitMap.push_back(*iter);
-                }
-            }
-            break;
-        }
-        case 69832: // Unstable Ooze Explosion (Rotface)
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->GetEntry() == 38107)
-                        targetUnitMap.push_back((*iter));
-                }
-            }
-            targetUnitMap.push_back(m_caster);
-            break;
-        }
-        case 69839: // Unstable Ooze Explosion (Rotface)
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_ALL);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->GetObjectGuid().IsPlayer() || (*iter)->GetEntry() == 36899)
-                        targetUnitMap.push_back((*iter));
-                }
-            }
-
-            if (targetUnitMap.size() > 3)
-            {
-                // remove random units from the map
-                while (targetUnitMap.size() > 3)
-                {
-                    uint32 poz = urand(0, targetUnitMap.size()-1);
-                    for (UnitList::iterator itr = targetUnitMap.begin(); itr != targetUnitMap.end(); ++itr, --poz)
-                    {
-                        if (!*itr) continue;
-
->>>>>>> 663b277addfbddaa0b867297a766f691ddeccb53*/
                         if (!poz)
                         {
                             targetUnitMap.erase(itr);
@@ -9307,72 +9163,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             targetUnitMap.remove(m_caster);
             break;
         }
-//<<<<<<< HEAD
-        case 71075: // Invocation of Blood (V) Move
-        case 71079: // Invocation of Blood (K) Move
-        case 71082: // Invocation of Blood (T) Move
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    // target the one with Invocation of Blood aura
-                    if ((*iter)->HasAura(70952) ||
-                        (*iter)->HasAura(70981) ||
-                        (*iter)->HasAura(70982))
-                    {
-                        targetUnitMap.push_back(*iter);
-                        break;
-                    }
-                }
-            }
-            break;
-        }
-        case 71307: // Vile Gas (Festergut)
-        case 71908:
-        case 72270:
-        case 72271:
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->GetEntry() == 38548)
-                        targetUnitMap.push_back(*iter);
-                }
-            }
-            if (!targetUnitMap.empty())
-            {
-                // remove random units from the map
-                while (targetUnitMap.size() > 1)
-                {
-                    uint32 poz = urand(0, targetUnitMap.size()-1);
-                    for (UnitList::iterator itr = targetUnitMap.begin(); itr != targetUnitMap.end(); ++itr, --poz)
-                    {
-                        if (!*itr) continue;
-
-                        if (!poz)
-                        {
-                            targetUnitMap.erase(itr);
-                            break;
-                        }
-                    }
-                }
-            }
-            break;
-        }
-        case 72038: // Empowered Shock Vortex (Blood Council)
-        case 72815:
-        case 72816:
-        case 72817:
-        {
-            FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
-            targetUnitMap.remove(m_caster);
-/*=======
         case 70402: // Mutated Transformation (Putricide)
         case 72511:
         case 72512:
@@ -9411,7 +9201,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                     ++itr;
             }
             break;
->>>>>>> 663b277addfbddaa0b867297a766f691ddeccb53*/
         }
         case 70728: // Exploit Weakness triggered
         case 70840: // Devious Minds triggered
@@ -9432,19 +9221,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
-//<<<<<<< HEAD
-        case 72378: // Blood Nova (Saurfang)
-        case 73058:
-        {
-
-            UnitList tmpUnitMap, tgtUnitMap;
-            FillAreaTargets(tmpUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
- 
-            if (tmpUnitMap.empty())
-                break;
- 
-            for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
-/*=======
         case 70911: // Unbound Plague (Putricide)
         case 72854:
         case 72855:
@@ -9596,41 +9372,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                     targetUnitMap.push_back((*iter));
                 }
             }
-            break;
-        }
-        case 72385:                                     // Boiling Blood
-        case 72441:
-        case 72442:
-        case 72443:
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
-            if (!tempTargetUnitMap.empty())
->>>>>>> 663b277addfbddaa0b867297a766f691ddeccb53*/
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if (!(*iter)->GetObjectGuid().IsPlayer())
-                        continue;
-
-                    if ((*iter) == m_caster->getVictim())
-                        continue;
-
-                    targetUnitMap.push_back((*iter));
-                }
-            }
-
-            if (!targetUnitMap.empty())
-            {
-                UnitList::iterator i = targetUnitMap.begin();
-                Unit *pTmp;
-
-                advance(i, urand(0, targetUnitMap.size() - 1));
-                pTmp = *i;
-                targetUnitMap.clear();
-                targetUnitMap.push_back(pTmp);
-            }
-
             break;
         }
         case 72385:                                     // Boiling Blood
