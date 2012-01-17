@@ -1977,8 +1977,8 @@ void Aura::TriggerSpell()
 
                         if (amount > mana)
                         {
-                            damage = -int32(triggerTarget->GetPower(POWER_MANA));
-                            triggerTarget->RemoveAurasDueToSpell(auraId);
+                            triggerTarget->RemoveAurasDueToSpell(GetId());
+                            amount = mana;
                         }
 
                         triggerTarget->SetHealth(health + amount);
@@ -11200,16 +11200,6 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                              cast_at_remove = true;
                              spellId1 = 69291;
                         }
-                    }
-                    break;
-                }
-                case 69409:                                 // Soul Reaper
-                {
-                    Unit *caster = GetCaster();
-                    if (!apply)
-                    {
-                        cast_at_remove = true;
-                        caster->CastSpell(caster, 69410, true);
                     }
                     break;
                 }

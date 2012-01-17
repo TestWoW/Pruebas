@@ -10192,15 +10192,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
-                case 72429:                                 // Mass Resurrection
-                {
-                    if (!unitTarget)
-                        return;
-
-                    m_caster->CastSpell(unitTarget, 72423, true);
-                    m_caster->CastSpell(unitTarget, 69640, true);
-                    return;
-                }
                 case 74445:                                 // Valkyr Carry (control vehicle)
                 {
                     if(!unitTarget || !m_caster)

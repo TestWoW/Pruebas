@@ -9650,67 +9650,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
-        case 72376:                                     // Raise Dead
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, 300.0f, PUSH_DEST_CENTER, SPELL_TARGETS_ALL);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if (!(*iter)->GetObjectGuid().IsPlayer())
-                        continue;
-
-                    targetUnitMap.push_back((*iter));
-                }
-            }
-            targetUnitMap.remove(m_caster);
-            break;
-        }
-        case 72429:                                     // Mass Resurrection
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_ALL);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if (!(*iter)->GetObjectGuid().IsPlayer())
-                        continue;
-
-                    targetUnitMap.push_back((*iter));
-                }
-            }
-            break;
-        }
-/*      TODO: need be rewrited
-        case 70337:                                 // Necrotic Plague
-        case 70338:
-        case 73785:
-        case 73786:
-        case 73787:
-        case 73789:
-        case 73912:
-        case 73913:
-        case 73914:
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->GetObjectGuid().IsTotem() || !(*iter)->GetEntry() == 36597)            // Exclude totems and Lich King
-                        continue;
-
-                    if (m_caster->GetDistance(*iter) < 15.0f) // custom?
-                        continue;
-
-                    targetUnitMap.push_back((*iter));
-                }
-            }
-        }
-*/
         case 71447:                                 // Bloodbolt Splash 10N
         case 71481:                                 // Bloodbolt Splash 25N
         case 71482:                                 // Bloodbolt Splash 10H
