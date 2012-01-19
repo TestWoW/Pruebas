@@ -2535,19 +2535,14 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 // Sacred Shield (buff)
                 case 58597:
                 {
-<<<<<<< HEAD
-                    triggered_spell_id = 66922;
-=======
->>>>>>> 3c82e40ef045998044e13f763193ce441d858bbb
                     basepoints[0] = int32(damage / GetSpellAuraMaxTicks(triggered_spell_id));
+
                     target = this;
                     break;
                 }
                 // Sacred Shield (talent rank)
                 case 53601:
                 {
-<<<<<<< HEAD
-=======
                     if (procSpell && IsFriendlyTo(pVictim))
                     {
                         if (procSpell->SpellFamilyFlags.test<CF_PALADIN_FLASH_OF_LIGHT>() && (pVictim->HasAura(53569, EFFECT_INDEX_0) || pVictim->HasAura(53576, EFFECT_INDEX_0)))
@@ -2556,22 +2551,8 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                             return SPELL_AURA_PROC_FAILED;
                     }
 
->>>>>>> 3c82e40ef045998044e13f763193ce441d858bbb
                     // triggered_spell_id in spell data
                     target = this;
-                    break;
-                }
-                // Item - Paladin T8 Holy 2P Bonus
-                case 64890:
-                {
-                    triggered_spell_id = 64891;             // Holy Mending
-                    basepoints[0] = int32(triggerAmount * damage / 100) / GetSpellAuraMaxTicks(triggered_spell_id);
-                    break;
-                }
-                // Item - Paladin T10 Holy 2P Bonus
-                case 70755:
-                {
-                    triggered_spell_id = 71166;
                     break;
                 }
                 // Item - Paladin T10 Retribution 2P Bonus
