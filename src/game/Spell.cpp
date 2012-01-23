@@ -6916,6 +6916,9 @@ SpellCastResult Spell::CheckRange(bool strict)
     Unit *target = m_targets.getUnitTarget();
     GameObject *pGoTarget = m_targets.getGOTarget();
 
+    //add radius of caster and ~5 yds "give" for non stricred (landing) check
+    float range_mod = strict ? 1.25f : 6.25;
+
     // special range cases
     switch(m_spellInfo->rangeIndex)
     {
@@ -6936,7 +6939,7 @@ SpellCastResult Spell::CheckRange(bool strict)
                     (m_spellInfo->FacingCasterFlags & SPELL_FACING_FLAG_INFRONT) && !m_caster->HasInArc(M_PI_F, target))
                     return SPELL_FAILED_UNIT_NOT_INFRONT;
 
-                float range_mod = strict ? 0.0f : 5.0f;
+                //float range_mod = strict ? 0.0f : 5.0f;
                 float base = ATTACK_DISTANCE;
                 if (Player* modOwner = m_caster->GetSpellModOwner())
                     range_mod += modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RANGE, base, this);
@@ -6949,7 +6952,7 @@ SpellCastResult Spell::CheckRange(bool strict)
     }
 
     //add radius of caster and ~5 yds "give" for non stricred (landing) check
-    float range_mod = strict ? 1.25f : 6.25;
+   // float range_mod = strict ? 1.25f : 6.25;
 
     SpellRangeEntry const* srange = sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex);
     bool friendly = target ? target->IsFriendlyTo(m_caster) : false;
