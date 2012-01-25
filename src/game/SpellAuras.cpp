@@ -38,7 +38,6 @@
 #include "Creature.h"
 #include "Formulas.h"
 #include "BattleGround.h"
-#include "WorldPvP/WorldPvPMgr.h"
 #include "CreatureAI.h"
 #include "ScriptMgr.h"
 #include "Util.h"
@@ -5860,12 +5859,8 @@ void Aura::HandleAuraModEffectImmunity(bool apply, bool /*Real*/)
     {
         if ( BattleGround *bg = ((Player*)target)->GetBattleGround() )
             bg->EventPlayerDroppedFlag(((Player*)target));
-        else
-        {
-            sWorldPvPMgr.HandleDropFlag((Player*)target, GetSpellProto()->Id);
-            if (InstanceData* mapInstance = ((Player*)target)->GetInstanceData())
-                mapInstance->OnPlayerDroppedFlag((Player*)target, GetSpellProto()->Id);
-        }
+        else if (InstanceData* mapInstance = ((Player*)target)->GetInstanceData())
+            mapInstance->OnPlayerDroppedFlag((Player*)target, GetSpellProto()->Id);
     }
 
     target->ApplySpellImmune(GetId(), IMMUNITY_EFFECT, m_modifier.m_miscvalue, apply);

@@ -50,7 +50,6 @@
 #include "Policies/SingletonImp.h"
 #include "BattleGroundMgr.h"
 #include "Language.h"
-#include "WorldPvP/WorldPvPMgr.h"
 #include "TemporarySummon.h"
 #include "VMapFactory.h"
 #include "GameEventMgr.h"
@@ -1520,10 +1519,6 @@ void World::SetInitialWorldSettings()
     sBattleGroundMgr.CreateInitialBattleGrounds();
     sBattleGroundMgr.InitAutomaticArenaPointDistribution();
 
-    ///- Initialize World PvP
-    sLog.outString( "Starting World PvP System" );
-    sWorldPvPMgr.InitWorldPvP();
-
     //Not sure if this can be moved up in the sequence (with static data loading) as it uses MapManager
     sLog.outString( "Loading Transports..." );
     sMapMgr.LoadTransports();
@@ -1703,7 +1698,6 @@ void World::Update(uint32 diff)
     ///- Update objects (maps, transport, creatures,...)
     sMapMgr.Update(diff);
     sBattleGroundMgr.Update(diff);
-    sWorldPvPMgr.Update(diff);
 
     ///- Delete all characters which have been deleted X days before
     if (m_timers[WUPDATE_DELETECHARS].Passed())
