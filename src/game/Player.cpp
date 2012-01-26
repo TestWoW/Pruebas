@@ -8787,10 +8787,7 @@ void Player::SendUpdateWorldState(uint32 Field, uint32 Value)
     WorldPacket data(SMSG_UPDATE_WORLD_STATE, 8);
     data << Field;
     data << Value;
-
-    // Tempfix before WorldStateMgr implementing
-    if (IsInWorld() && GetSession())
-        GetSession()->SendPacket(&data);
+    GetSession()->SendPacket(&data);
 }
 
 static WorldStatePair AV_world_states[] =
@@ -20887,9 +20884,6 @@ void Player::LeaveBattleground(bool teleportToEntryPoint)
                 CastSpell(this, 26013, true);               // Deserter
             }
         }
-        // Prevent more execute BG update codes
-        if (bg->isBattleGround() && bg->GetStatus() == STATUS_IN_PROGRESS && !bg->GetPlayersSize())
-            bg->SetStatus(STATUS_WAIT_LEAVE);
     }
 }
 

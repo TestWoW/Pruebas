@@ -1772,14 +1772,6 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     ((Creature*)unitTarget)->ForcedDespawn();
                     return;
                 }
-                case 32300:                                 // Focus Fire
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, unitTarget->GetMap()->IsRegularDifficulty() ? 32302 : 38382, true);
-                    return;
-                }
                 case 33060:                                 // Make a Wish
                 {
                     if (m_caster->GetTypeId()!=TYPEID_PLAYER)
@@ -8191,15 +8183,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (!unitTarget)
                         return;
 
-                    // Cast Focus fire on caster
-                    unitTarget->CastSpell(m_caster, 32300, true);
-                    return;
-                }
-                case 38358:                                 // Tidal Surge
-                {
-                    if (!unitTarget)
-                        return;
-
                     unitTarget->CastSpell(unitTarget, 38353, true, NULL, NULL, m_caster->GetObjectGuid());
                     return;
                 }
@@ -9982,12 +9965,14 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
                     return;
                 }
-                case 70117:                                 // Icy grip (Sindragosa pull effect)
+                case 70117:                                 // Ice grip (Sindragosa pull effect)
                 {
-                    if (unitTarget)
-                        unitTarget->CastSpell(m_caster, 70122, true);
-
-                    m_caster->CastSpell(m_caster, 70123, false); // trigger Blistering Cold
+                    if (!unitTarget)
+                        return;
+                    float fPosX, fPosY, fPosZ;
+                    m_caster->GetPosition(fPosX, fPosY, fPosZ);
+                    m_caster->GetRandomPoint(fPosX, fPosY, fPosZ, m_caster->GetObjectBoundingRadius(), fPosX, fPosY, fPosZ);
+                    unitTarget->NearTeleportTo(fPosX, fPosY, fPosZ+1.0f, -unitTarget->GetOrientation(), false);
                     return;
                 }
                 case 70360:                                 // Eat Ooze (Putricide)
