@@ -926,22 +926,6 @@ typedef std::pair<SkillLineAbilityMap::const_iterator,SkillLineAbilityMap::const
 typedef std::multimap<uint32, SkillRaceClassInfoEntry const*> SkillRaceClassInfoMap;
 typedef std::pair<SkillRaceClassInfoMap::const_iterator,SkillRaceClassInfoMap::const_iterator> SkillRaceClassInfoMapBounds;
 
-struct SkillDiscoveryEntry
-{
-    uint32  spellId;                                        // discavered spell
-    uint32  reqSkillValue;                                  // skill level limitation
-    float   chance;                                         // chance
-
-    SkillDiscoveryEntry()
-        : spellId(0), reqSkillValue(0), chance(0) {}
-
-    SkillDiscoveryEntry(uint32 _spellId, uint32 req_skill_val, float _chance)
-        : spellId(_spellId), reqSkillValue(req_skill_val), chance(_chance) {}
-};
-
-typedef std::list<SkillDiscoveryEntry> SkillDiscoveryList;
-typedef UNORDERED_MAP<int32, SkillDiscoveryList> SkillDiscoveryMap;
-
 typedef std::multimap<uint32, uint32> PetLevelupSpellSet;
 typedef std::map<uint32, PetLevelupSpellSet> PetLevelupSpellMap;
 
@@ -1287,9 +1271,6 @@ class SpellMgr
 
         SpellLinkedSet GetSpellLinked(uint32 spell_id, SpellLinkedType type) const;
 
-        uint32 GetSkillDiscoverySpell(uint32 skillId, uint32 spellId, Player* player);
-        uint32 GetExplicitDiscoverySpell(uint32 spellId, Player* player);
-
     // Modifiers
     public:
         static SpellMgr& Instance();
@@ -1314,7 +1295,6 @@ class SpellMgr
         void LoadPetLevelupSpellMap();
         void LoadPetDefaultSpells();
         void LoadSpellAreas();
-        void LoadSkillDiscoveryTable();
 
     private:
         bool LoadPetDefaultSpells_helper(CreatureInfo const* cInfo, PetDefaultSpellsEntry& petDefSpells);
@@ -1343,7 +1323,6 @@ class SpellMgr
         SpellAreaForQuestMap mSpellAreaForQuestEndMap;
         SpellAreaForAuraMap  mSpellAreaForAuraMap;
         SpellAreaForAreaMap  mSpellAreaForAreaMap;
-        SkillDiscoveryMap    mSkillDiscoveryStore;
 };
 
 #define sSpellMgr SpellMgr::Instance()

@@ -53,6 +53,7 @@
 #include "Util.h"
 #include "TemporarySummon.h"
 #include "ScriptMgr.h"
+#include "SkillDiscovery.h"
 #include "Formulas.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
@@ -9393,7 +9394,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         return;
 
                     // learn random explicit discovery recipe (if any)
-                    if (uint32 discoveredSpell = sSpellMgr.GetExplicitDiscoverySpell(m_spellInfo->Id, (Player*)m_caster))
+                    if (uint32 discoveredSpell = GetExplicitDiscoverySpell(m_spellInfo->Id, (Player*)m_caster))
                         ((Player*)m_caster)->learnSpell(discoveredSpell, false);
                     return;
                 }
