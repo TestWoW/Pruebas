@@ -26,7 +26,6 @@
 #include "ObjectMgr.h"
 #include "SpellMgr.h"
 #include "Player.h"
-#include "SkillExtraItems.h"
 #include "Unit.h"
 #include "Spell.h"
 #include "DynamicObject.h"
@@ -47,13 +46,13 @@
 #include "BattleGroundEY.h"
 #include "BattleGroundWS.h"
 #include "BattleGroundSA.h"
+#include "WorldPvP/WorldPvPMgr.h"
 #include "Language.h"
 #include "SocialMgr.h"
 #include "VMapFactory.h"
 #include "Util.h"
 #include "TemporarySummon.h"
 #include "ScriptMgr.h"
-#include "SkillDiscovery.h"
 #include "Formulas.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
@@ -1770,6 +1769,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                     ((Player*)m_caster)->KilledMonsterCredit(unitTarget->GetEntry(), unitTarget->GetObjectGuid());
                     ((Creature*)unitTarget)->ForcedDespawn();
+                    return;
+                }
+                case 32300:                                 // Focus Fire
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, unitTarget->GetMap()->IsRegularDifficulty() ? 32302 : 38382, true);
                     return;
                 }
                 case 33060:                                 // Make a Wish
@@ -5459,7 +5466,7 @@ void Spell::DoCreateItem(SpellEffectIndex eff_idx, uint32 itemtype)
     // the maximum number of created additional items
     uint8 additionalMaxNum=0;
     // get the chance and maximum number for creating extra items
-    if ( canCreateExtraItems(player, m_spellInfo->Id, additionalCreateChance, additionalMaxNum) )
+    if (sSpellMgr.CanCreateExtraItems(player, m_spellInfo->Id, additionalCreateChance, additionalMaxNum) )
     {
         // roll with this chance till we roll not to create or we create the max num
         while ( roll_chance_f(additionalCreateChance) && items_count<=additionalMaxNum )
@@ -5802,6 +5809,14 @@ void Spell::EffectOpenLock(SpellEffectIndex eff_idx)
                 return;
             }
         }
+        else if(goInfo->type == GAMEOBJECT_TYPE_GOOBER)
+        {
+            // Check if object is handled by outdoor pvp
+            // GameObject is handling some events related to world battleground events
+            if (sWorldPvPMgr.HandleObjectUse(player, gameObjTarget))
+                return;
+        }
+
         lockId = goInfo->GetLockId();
         guid = gameObjTarget->GetObjectGuid();
     }
@@ -8183,6 +8198,15 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (!unitTarget)
                         return;
 
+                    // Cast Focus fire on caster
+                    unitTarget->CastSpell(m_caster, 32300, true);
+                    return;
+                }
+                case 38358:                                 // Tidal Surge
+                {
+                    if (!unitTarget)
+                        return;
+
                     unitTarget->CastSpell(unitTarget, 38353, true, NULL, NULL, m_caster->GetObjectGuid());
                     return;
                 }
@@ -9377,7 +9401,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         return;
 
                     // learn random explicit discovery recipe (if any)
-                    if (uint32 discoveredSpell = GetExplicitDiscoverySpell(m_spellInfo->Id, (Player*)m_caster))
+                    if (uint32 discoveredSpell = sSpellMgr.GetExplicitDiscoverySpell(m_spellInfo->Id, (Player*)m_caster))
                         ((Player*)m_caster)->learnSpell(discoveredSpell, false);
                     return;
                 }
@@ -9965,14 +9989,12 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
                     return;
                 }
-                case 70117:                                 // Ice grip (Sindragosa pull effect)
+                case 70117:                                 // Icy grip (Sindragosa pull effect)
                 {
-                    if (!unitTarget)
-                        return;
-                    float fPosX, fPosY, fPosZ;
-                    m_caster->GetPosition(fPosX, fPosY, fPosZ);
-                    m_caster->GetRandomPoint(fPosX, fPosY, fPosZ, m_caster->GetObjectBoundingRadius(), fPosX, fPosY, fPosZ);
-                    unitTarget->NearTeleportTo(fPosX, fPosY, fPosZ+1.0f, -unitTarget->GetOrientation(), false);
+                    if (unitTarget)
+                        unitTarget->CastSpell(m_caster, 70122, true);
+
+                    m_caster->CastSpell(m_caster, 70123, false); // trigger Blistering Cold
                     return;
                 }
                 case 70360:                                 // Eat Ooze (Putricide)
