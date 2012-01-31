@@ -360,6 +360,7 @@ Spell::Spell( Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid o
     m_executedCurrently = false;
     m_delayStart = 0;
     m_delayAtDamageCount = 0;
+    m_damage = 0;
 
     m_applyMultiplierMask = 0;
 
@@ -1293,6 +1294,20 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
 
     Unit* realCaster = GetAffectiveCaster();
 
+    // Recheck effect immune (only for delayed spells)
+    if (m_spellInfo->speed)
+    {
+        for(int effectNumber = 0; effectNumber < MAX_EFFECT_INDEX; ++effectNumber)
+        {
+            if (effectMask & (1 << effectNumber))
+            {
+                // don't handle effect to which target is immuned
+                if (unit->IsImmuneToSpellEffect(m_spellInfo, SpellEffectIndex(effectNumber)))
+                    effectMask &= ~(1 << effectNumber);
+            }
+        }
+    }
+
     // Recheck immune (only for delayed spells)
     if (m_spellInfo->speed && (
         (IsSpellCauseDamage(m_spellInfo) && unit->IsImmunedToDamage(GetSpellSchoolMask(m_spellInfo))) ||
@@ -1960,13 +1975,15 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         unMaxTargets += (*m)->GetModifier()->m_amount;
     }
 
-    switch(targetMode)
+    switch (targetMode)
     {
         case TARGET_RANDOM_NEARBY_LOC:
-            radius *= sqrtf(rand_norm_f()); // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
-                                         // no 'break' expected since we use code in case TARGET_RANDOM_CIRCUMFERENCE_POINT!!!
+            // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
+            radius *= sqrtf(rand_norm_f());
+            // no 'break' expected since we use code in case TARGET_RANDOM_CIRCUMFERENCE_POINT!!!
         case TARGET_RANDOM_CIRCUMFERENCE_POINT:
         {
+            // Get a random point AT the circumference
             float angle = 2.0f * M_PI_F * rand_norm_f();
             float dest_x, dest_y, dest_z;
             m_caster->GetClosePoint(dest_x, dest_y, dest_z, 0.0f, radius, angle);
@@ -1978,26 +1995,23 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         case TARGET_91:
         case TARGET_RANDOM_NEARBY_DEST:
         {
-            radius *= sqrtf(rand_norm_f()); // Get a random point in circle. Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
-            float angle = 2.0f * M_PI_F * rand_norm_f();
-            float dest_x = m_targets.m_destX + cos(angle) * radius;
-            float dest_y = m_targets.m_destY + sin(angle) * radius;
-            float dest_z = m_targets.m_destZ;
-            m_caster->UpdateGroundPositionZ(dest_x, dest_y, dest_z);
-            m_targets.setDestination(dest_x, dest_y, dest_z);
-
-            if (targetMode == TARGET_RANDOM_NEARBY_DEST && radius > 0.0f)
+            // Get a random point IN the CIRCEL around current M_TARGETS COORDINATES(!).
+            if (radius > 0.0f)
             {
-                // caster included here?
-                FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_ALL);
-
-                if (targetUnitMap.empty())
-                    targetUnitMap.push_back(m_caster);
+                // Use sqrt(rand) to correct distribution when converting polar to Cartesian coordinates.
+                radius *= sqrtf(rand_norm_f());
+                float angle = 2.0f * M_PI_F * rand_norm_f();
+                float dest_x = m_targets.m_destX + cos(angle) * radius;
+                float dest_y = m_targets.m_destY + sin(angle) * radius;
+                float dest_z = m_caster->GetPositionZ();
+                m_caster->UpdateGroundPositionZ(dest_x, dest_y, dest_z);
+                m_targets.setDestination(dest_x, dest_y, dest_z);
             }
-            else if (IsPositiveSpell(m_spellInfo->Id))
-                    targetUnitMap.push_back(m_caster);
+
             // This targetMode is often used as 'last' implicitTarget for positive spells, that just require coordinates
             // and no unitTarget (e.g. summon effects). As MaNGOS always needs a unitTarget we add just the caster here.
+            if (IsPositiveSpell(m_spellInfo))
+                targetUnitMap.push_back(m_caster);
 
             // Prevent multiple summons
             if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_SUMMON || m_spellInfo->Effect[effIndex] == SPELL_EFFECT_SUMMON_OBJECT_WILD)
@@ -6370,6 +6384,13 @@ SpellCastResult Spell::CheckCast(bool strict)
             // no break here!
             case SPELL_EFFECT_TELEPORT_UNITS_FACE_CASTER:
             {
+                // Blink has leap first and then removing of auras with root effect
+                // need further research with this
+                if (m_spellInfo->Effect[i] != SPELL_EFFECT_LEAP)
+                {
+                    if (m_caster->hasUnitState(UNIT_STAT_ROOT))
+                        return SPELL_FAILED_ROOTED;
+                }
                 // not allow use this effect at battleground until battleground start
                 if (m_caster->GetTypeId() == TYPEID_PLAYER)
                 {
@@ -6583,6 +6604,19 @@ SpellCastResult Spell::CheckCast(bool strict)
             default:
                 break;
         }
+    }
+
+    // and some hacks, as always
+    switch(m_spellInfo->Id)
+    {
+        // spells that dont have direct effects listed above
+        // maybe should check triggered/linked spells?
+        // but not all are implemented in this way
+        case 36554: // Shadowstep
+        case 51690: // Killing Spree
+            if (m_caster->hasUnitState(UNIT_STAT_ROOT))
+                return SPELL_FAILED_ROOTED;
+            break;
     }
 
     // check trade slot case (last, for allow catch any another cast problems)
@@ -8459,6 +8493,13 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
     // Resulting effect depends on spell that we want to cast
     switch (m_spellInfo->Id)
     {
+        case 19185: // Entrapment
+        case 64803:
+        case 64804:
+        {
+            FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            break;
+        }
         case 28374: // Decimate - Gluth encounter
         {
             FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_ALL);
@@ -8885,7 +8926,22 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
-        case 68921: case 69049: // Soulstorm (Forge of Souls - Bronjahm)
+        case 68508: // Crushing Leap (IoC bosses)
+        {
+            UnitList tmpUnitMap;
+            FillAreaTargets(tmpUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            if (!tmpUnitMap.empty())
+            {
+                for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
+                {
+                    if (*itr && (*itr)->GetTypeId() == TYPEID_PLAYER && !(*itr)->m_movementInfo.HasMovementFlag(MovementFlags(MOVEFLAG_FALLING)))
+                        targetUnitMap.push_back(*itr);
+                }
+            }
+            break;
+        }
+        case 68921: // Soulstorm (Forge of Souls - Bronjahm)
+        case 69049:
         {
             UnitList tmpUnitMap;
             FillAreaTargets(tmpUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
@@ -9233,6 +9289,22 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
 
             break;
         }
+        case 70117: // Icy grip (Sindragosa encounter)
+        {
+            UnitList tempTargetUnitMap;
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            if (!tempTargetUnitMap.empty())
+            {
+                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
+                {
+                    if (!(*iter)->GetCharmerOrOwnerPlayerOrPlayerItself())
+                        continue;
+
+                    targetUnitMap.push_back((*iter));
+                }
+            }
+            break;
+        }
         case 70346: // Slime Puddle
         case 72868:
         case 72869:
@@ -9330,6 +9402,27 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                             targetUnitMap.erase(itr);
                             break;
                         }
+                    }
+                }
+            }
+            break;
+        }
+        case 70572: // Grip of Agony
+        {
+            UnitList tempTargetUnitMap;
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
+            for (UnitList::iterator itr = tempTargetUnitMap.begin(); itr != tempTargetUnitMap.end(); ++itr)
+            {
+                if (*itr && (*itr)->GetTypeId() == TYPEID_UNIT)
+                {
+                    switch ((*itr)->GetEntry())
+                    {
+                        case 37187: // Overlord Saurfang
+                        case 37920: // Korkron Reaver
+                        case 37200: // Muradin
+                        case 37902: // Alliance Mason
+                            targetUnitMap.push_back(*itr);
+                            break;
                     }
                 }
             }

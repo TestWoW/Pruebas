@@ -42,6 +42,7 @@
 #include "Vehicle.h"
 #include "BattleGround.h"
 #include "InstanceData.h"
+#include "WorldPvP/WorldPvP.h"
 #include "MapPersistentStateMgr.h"
 #include "GridNotifiersImpl.h"
 #include "CellImpl.h"
@@ -975,6 +976,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         if (GetTypeId() == TYPEID_UNIT && ((Creature*)this)->AI())
             ((Creature*)this)->AI()->KilledUnit(pVictim);
 
+        // Call World pvp scripts for player kill
+        if (pVictim->GetTypeId() == TYPEID_PLAYER && GetTypeId() == TYPEID_PLAYER)
+            sWorldPvPMgr.HandlePlayerKill((Player*)this, pVictim);
+
         // Call AI OwnerKilledUnit (for any current summoned minipet/guardian/protector)
         PetOwnerKilledUnit(pVictim);
 
@@ -1043,6 +1048,9 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             if (InstanceData* mapInstance = cVictim->GetInstanceData())
                 mapInstance->OnCreatureDeath(cVictim);
 
+            if (m_zoneScript = sWorldPvPMgr.GetZoneScript(GetZoneId()))
+                m_zoneScript->OnCreatureDeath(((Creature*)cVictim));
+
             if (cVictim->IsLinkingEventTrigger())
                 cVictim->GetMap()->GetCreatureLinkingHolder()->DoCreatureLinkingEvent(LINKING_EVENT_DIE, cVictim);
 
@@ -1104,6 +1112,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             he->CombatStopWithPets(true);
 
             he->DuelComplete(DUEL_INTERUPTED);
+        }
+
+        // handle player kill in outdoor pvp
+        if (player_tap && this != pVictim)
+        {
+            if (WorldPvP* pWorldBg = player_tap->GetWorldPvP())
+                pWorldBg->HandlePlayerKillInsideArea(player_tap, pVictim);
         }
 
         // battleground things (do this at the end, so the death state flag will be properly set to handle in the bg->handlekill)
@@ -5041,6 +5056,23 @@ void Unit::RemoveAurasDueToSpellBySteal(uint32 spellId, ObjectGuid casterGuid, U
     new_holder->SetAuraMaxDuration(new_max_dur);
     new_holder->SetAuraDuration(new_max_dur);
 
+    // some specific events after stealing aura
+    // Lifebloom
+    if (spellProto->SpellFamilyName == SPELLFAMILY_DRUID && spellProto->SpellFamilyFlags.test<CF_DRUID_LIFEBLOOM>())
+    {
+        if (Aura* dotAura = GetAura<SPELL_AURA_DUMMY, SPELLFAMILY_DRUID, CF_DRUID_LIFEBLOOM>(casterGuid))
+        {
+            int32 amount = dotAura->GetModifier()->m_amount;
+            CastCustomSpell(this, 33778, &amount, NULL, NULL, true, NULL, dotAura, casterGuid);
+
+            if (Unit* caster = dotAura->GetCaster())
+            {
+                int32 returnmana = (spellProto->ManaCostPercentage * caster->GetCreateMana() / 100) * dotAura->GetStackAmount() / 2;
+                caster->CastCustomSpell(caster, 64372, &returnmana, NULL, NULL, true, NULL, dotAura, casterGuid);
+            }
+        }
+    }
+
     for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
     {
         Aura *aur = holder->GetAuraByEffectIndex(SpellEffectIndex(i));
@@ -6245,20 +6277,20 @@ bool Unit::IsHostileTo(Unit const* unit) const
     }
 
     // faction base cases
-    FactionTemplateEntry const*tester_faction = tester->getFactionTemplateEntry();
-    FactionTemplateEntry const*target_faction = target->getFactionTemplateEntry();
-    if(!tester_faction || !target_faction)
+    FactionTemplateEntry const* tester_faction = tester->getFactionTemplateEntry();
+    FactionTemplateEntry const* target_faction = target->getFactionTemplateEntry();
+    if (!tester_faction || !target_faction)
         return false;
 
     if (target->isAttackingPlayer() && tester->IsContestedGuard())
         return true;
 
     // PvC forced reaction and reputation case
-    if (tester->GetTypeId()==TYPEID_PLAYER)
+    if (tester->GetTypeId() == TYPEID_PLAYER)
     {
-        // forced reaction
         if (target_faction->faction)
         {
+            // forced reaction
             if (ReputationRank const* force =((Player*)tester)->GetReputationMgr().GetForcedRankIfAny(target_faction))
                 return *force <= REP_HOSTILE;
 
@@ -6269,17 +6301,17 @@ bool Unit::IsHostileTo(Unit const* unit) const
         }
     }
     // CvP forced reaction and reputation case
-    else if (target->GetTypeId()==TYPEID_PLAYER)
+    else if (target->GetTypeId() == TYPEID_PLAYER)
     {
-        // forced reaction
         if (tester_faction->faction)
         {
+            // forced reaction
             if (ReputationRank const* force = ((Player*)target)->GetReputationMgr().GetForcedRankIfAny(tester_faction))
                 return *force <= REP_HOSTILE;
 
             // apply reputation state
             FactionEntry const* raw_tester_faction = sFactionStore.LookupEntry(tester_faction->faction);
-            if (raw_tester_faction && raw_tester_faction->reputationListID >=0 )
+            if (raw_tester_faction && raw_tester_faction->reputationListID >= 0)
                 return ((Player const*)target)->GetReputationMgr().GetRank(raw_tester_faction) <= REP_HOSTILE;
         }
     }
@@ -6362,18 +6394,18 @@ bool Unit::IsFriendlyTo(Unit const* unit) const
     // faction base cases
     FactionTemplateEntry const*tester_faction = tester->getFactionTemplateEntry();
     FactionTemplateEntry const*target_faction = target->getFactionTemplateEntry();
-    if(!tester_faction || !target_faction)
+    if (!tester_faction || !target_faction)
         return false;
 
     if (target->isAttackingPlayer() && tester->IsContestedGuard())
         return false;
 
     // PvC forced reaction and reputation case
-    if (tester->GetTypeId()==TYPEID_PLAYER)
+    if (tester->GetTypeId() == TYPEID_PLAYER)
     {
-        // forced reaction
         if (target_faction->faction)
         {
+            // forced reaction
             if (ReputationRank const* force =((Player*)tester)->GetReputationMgr().GetForcedRankIfAny(target_faction))
                 return *force >= REP_FRIENDLY;
 
@@ -6384,11 +6416,11 @@ bool Unit::IsFriendlyTo(Unit const* unit) const
         }
     }
     // CvP forced reaction and reputation case
-    else if (target->GetTypeId()==TYPEID_PLAYER)
+    else if (target->GetTypeId() == TYPEID_PLAYER)
     {
-        // forced reaction
         if (tester_faction->faction)
         {
+            // forced reaction
             if (ReputationRank const* force =((Player*)target)->GetReputationMgr().GetForcedRankIfAny(tester_faction))
                 return *force >= REP_FRIENDLY;
 
@@ -7417,6 +7449,17 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
      // Custom scripted damage
     switch(spellProto->SpellFamilyName)
     {
+        case SPELLFAMILY_GENERIC:
+        {
+            switch(spellProto->Id)
+            {
+                case 71341: // Pact of the Darkfallen (Lanathel)
+                    // dont get any damage done mods
+                    DoneTotalMod = 1.0f;
+                    break;
+            }
+            break;
+        }
         case SPELLFAMILY_MAGE:
         {
             // Ice Lance
@@ -7888,7 +7931,11 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                         else if (spellProto->Category == 19)
                         {
                             if (pVictim->GetCreatureTypeMask() & CREATURE_TYPEMASK_DEMON_OR_UNDEAD)
-                                return true;
+                            {
+                                // don't override auras that prevent critical strikes taken
+                                if (crit_chance > -100.0f)
+                                    return true;
+                            }
                         }
                         break;
                     case SPELLFAMILY_SHAMAN:
@@ -7897,7 +7944,11 @@ bool Unit::IsSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                         {
                             // Flame Shock
                             if (pVictim->GetAura<SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_SHAMAN, CF_SHAMAN_FLAME_SHOCK>(GetObjectGuid()))
-                                return true;
+                            {
+                                // don't override auras that prevent critical strikes taken
+                                if (crit_chance > -100.0f)
+                                    return true;
+                            }
                         }
                         break;
                 }
@@ -8261,6 +8312,12 @@ bool Unit::IsImmuneToSpell(SpellEntry const* spellInfo)
     //TODO add spellEffect immunity checks!, player with flag in bg is immune to immunity buffs from other friendly players!
     //SpellImmuneList const& dispelList = m_spellImmune[IMMUNITY_EFFECT];
 
+    for (int i = 0; i < MAX_EFFECT_INDEX; ++i)
+    {
+        if (!IsImmuneToSpellEffect(spellInfo, SpellEffectIndex(i)))
+            return false;
+    }
+
     SpellImmuneList const& dispelList = m_spellImmune[IMMUNITY_DISPEL];
     for(SpellImmuneList::const_iterator itr = dispelList.begin(); itr != dispelList.end(); ++itr)
         if (itr->type == spellInfo->Dispel)
@@ -8302,6 +8359,9 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
 {
     if (!spellInfo)
         return false;
+
+    if (spellInfo->Effect[index] == SPELL_EFFECT_NONE)
+        return true;
 
     // in case of trigger spells, check not current spell, but triggered (/dev/rsa)
     if (spellInfo->Effect[index] == SPELL_EFFECT_TRIGGER_SPELL)
@@ -12186,47 +12246,79 @@ void Unit::RemovePetAura(PetAura const* petSpell)
 
 void Unit::RemoveAurasAtMechanicImmunity(uint32 mechMask, uint32 exceptSpellId, bool non_positive /*= false*/)
 {
-    Unit::SpellAuraHolderMap& auras = GetSpellAuraHolderMap();
-    for(Unit::SpellAuraHolderMap::iterator iter = auras.begin(); iter != auras.end();)
-    {
-        SpellEntry const *spell = iter->second->GetSpellProto();
-        if (spell->Id == exceptSpellId)
-            ++iter;
-        else if (non_positive && iter->second->IsPositive())
-            ++iter;
-        else if (spell->Attributes & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY)
-            ++iter;
-        else if (iter->second->HasMechanicMask(mechMask))
-        {
-            RemoveAurasDueToSpell(spell->Id);
 
-            if (auras.empty())
-                break;
-            else
-                iter = auras.begin();
-         }
-        else
-            ++iter;
+    SpellIdSet         spellsToRemove;
+    std::set<Aura*>    aurasToRemove;
+
+    {
+        MAPLOCK_READ(this,MAP_LOCK_TYPE_AURAS);
+        SpellAuraHolderMap const& holders = GetSpellAuraHolderMap();
+
+        for (SpellAuraHolderMap::const_iterator iter = holders.begin(); iter != holders.end(); ++iter)
+        {
+            if (!iter->second ||
+                iter->second->IsDeleted() ||
+                iter->second->IsEmptyHolder() ||
+                iter->second->GetId() == exceptSpellId ||
+                iter->second->GetSpellProto()->Attributes & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY ||
+                non_positive && iter->second->IsPositive())
+                continue;
+
+            if (iter->second->HasMechanicMask(mechMask))
+            {
+                bool removedSingleAura = false;
+
+                for (int32 i = 0; i < MAX_EFFECT_INDEX; i++)
+                {
+
+                    if ((1 << (iter->second->GetSpellProto()->EffectMechanic[SpellEffectIndex(i)] - 1)) & mechMask)
+                    {
+                        // even if aura already deleted, assuming that not delete all holder
+                        removedSingleAura = true;
+
+                        Aura* aura = iter->second->GetAuraByEffectIndex(SpellEffectIndex(i));
+                        if (aura && !aura->IsDeleted())
+                            aurasToRemove.insert(aura);
+                    }
+                }
+
+                if (!removedSingleAura)
+                    spellsToRemove.insert(iter->second->GetId());
+
+            }
+        }
+    }
+
+    if (!aurasToRemove.empty())
+    {
+        for (std::set<Aura*>::const_iterator i = aurasToRemove.begin(); i != aurasToRemove.end(); ++i)
+            if (Aura* aura = *i)
+                if (!aura->IsDeleted())
+                    RemoveAura(*i);
+    }
+
+    if (!spellsToRemove.empty())
+    {
+        for (SpellIdSet::const_iterator i = spellsToRemove.begin(); i != spellsToRemove.end(); ++i)
+            RemoveAurasDueToSpell(*i);
     }
 }
 
 void Unit::RemoveAurasBySpellMechanic(uint32 mechMask)
 {
-    Unit::SpellAuraHolderMap& auras = GetSpellAuraHolderMap();
-    for(Unit::SpellAuraHolderMap::iterator iter = auras.begin(); iter != auras.end();)
+    Unit::SpellAuraHolderMap& holders = GetSpellAuraHolderMap();
+    for(Unit::SpellAuraHolderMap::iterator iter = holders.begin(); iter != holders.end();)
     {
-        SpellEntry const *spell = iter->second->GetSpellProto();
-
-        if (!iter->second->IsPositive())
+        if (!iter->second || iter->second->IsDeleted() || !iter->second->IsPositive())
             ++iter;
-
-        else if (spell->Mechanic & mechMask)
+        else if (iter->second->GetSpellProto()->Mechanic & mechMask)
         {
-            RemoveAurasDueToSpell(spell->Id);
-            if (auras.empty())
+            RemoveAurasDueToSpell(iter->second->GetId());
+
+            if (holders.empty())
                 break;
             else
-                iter = auras.begin();
+                iter = holders.begin();
         }
         else
             ++iter;
@@ -12664,9 +12756,10 @@ void Unit::CleanupDeletedHolders(bool force)
     {
         for (SpellAuraHolderSet::iterator iter = m_deletedHolders.begin(); iter != m_deletedHolders.end();)
         {
-            if ((*iter) && !(*iter)->IsInUse())
+            if ((*iter) && (!(*iter)->IsInUse() || GetTypeId() != TYPEID_PLAYER))
             {
-                m_deletedHolders.erase(*iter++);
+                m_deletedHolders.erase(*iter);
+                iter = m_deletedHolders.begin();
             }
             else
                 ++iter;
