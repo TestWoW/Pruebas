@@ -404,10 +404,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             {
                 Player* const bot = it->second;
 
-                if (!m_master || !m_master->GetMap())
-                    return;
-
-                GameObject* obj = m_master->GetMap()->GetGameObject(objGUID);
+                GameObject *obj = m_master->GetMap()->GetGameObject(objGUID);
                 if (!obj)
                     return;
 

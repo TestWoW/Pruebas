@@ -220,8 +220,7 @@ public:
     float GetWaterLevel(float x, float y, float z, float* pGround = NULL) const;
     float GetWaterOrGroundLevel(float x, float y, float z, float* pGround = NULL, bool swim = false) const;
     bool IsInWater(float x, float y, float z, GridMapLiquidData *data = 0, float min_depth = 2.0f) const;
-    bool IsAboveWater(float x, float y, float z, float* pWaterZ = NULL) const;
-    bool IsUnderWater(float x, float y, float z, float* pWaterZ = NULL) const;
+    bool IsUnderWater(float x, float y, float z) const;
 
     GridMapLiquidStatus getLiquidStatus(float x, float y, float z, uint8 ReqLiquidType, GridMapLiquidData *data = 0) const;
 
@@ -237,7 +236,7 @@ public:
 
     bool IsNextZcoordOK(float x, float y, float oldZ, float maxDiff = 5.0f) const;
     bool CheckPath(float srcX, float srcY, float srcZ, float& dstX, float& dstY, float& dstZ) const;
-    bool CheckPathAccurate(float srcX, float srcY, float srcZ, float& dstX, float& dstY, float& dstZ, Unit* mover = NULL, bool onlyLOS = false) const;
+    bool CheckPathAccurate(float srcX, float srcY, float srcZ, float& dstX, float& dstY, float& dstZ, Unit* mover = NULL ) const;
 
     //this method should be used only by TerrainManager
     //to cleanup unreferenced GridMap objects - they are too heavy

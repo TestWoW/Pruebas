@@ -138,19 +138,7 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
     if (owner.IsNonMeleeSpellCasted(false, false,  true))
     {
         if (!owner.IsStopped())
-        {
-            // some spells should be able to be cast while moving
-            // maybe some attribute? here, check the entry of creatures useing these spells
-            switch(owner.GetEntry())
-            {
-                case 36633: // Ice Sphere (Lich King)
-                case 37562: // Volatile Ooze and Gas Cloud (Putricide)
-                case 37697:
-                    break;
-                default:
-                    owner.StopMoving();
-            }
-        }
+            owner.StopMoving();
         return true;
     }
 

@@ -81,7 +81,6 @@ AntiCheat::AntiCheat(Player* player)
     m_currentDeltaZ       = 0.0f;
     m_lastfalltime        = 0;
     m_lastfallz           = 0.0f;
-    m_currentTimeSkipped  = 0;
     //
     m_immuneTime          = WorldTimer::getMSTime();
     m_lastClientTime      = WorldTimer::getMSTime();
