@@ -8082,67 +8082,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->SummonCreature(16474, unitTarget->GetPositionX(), unitTarget->GetPositionY(), unitTarget->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN, 30000);
                     return;
                 }
-<<<<<<< HEAD
-                case 29126:                                 // Cleansing Flames Darnassus
-                {
-                    if (!unitTarget)
-                        return;
-                    unitTarget->CastSpell(unitTarget, 29099, true); // Create Flame of Darnassus
-                    break;
-                }
-                case 29135:                                 // Cleansing Flames Ironforge
-                {
-                    if (!unitTarget)
-                        return;
-                    unitTarget->CastSpell(unitTarget, 29102, true); // Create Flame of Ironforge
-                    break;
-                }
-                case 29136:                                 // Cleansing Flames Orgrimmar
-                {
-                    if (!unitTarget)
-                        return;
-                    unitTarget->CastSpell(unitTarget, 29130, true); // Create Flame of Orgrimmar
-                    break;
-                }
-                case 29137:                                 // Cleansing Flames Stormwind
-                {
-                    if (!unitTarget)
-                        return;
-                    unitTarget->CastSpell(unitTarget, 29101, true); // Create Flame of Stormwind
-                    break;
-                }
-                case 29138:                                 // Cleansing Flames Thunder Bluff
-                {
-                    if (!unitTarget)
-                        return;
-                    unitTarget->CastSpell(unitTarget, 29132, true); // Create Flame of Thunder Bluff
-                    break;
-                }
-                case 29139:                                 // Cleansing Flames Undercity
-                {
-                    if (!unitTarget)
-                        return;
-                    unitTarget->CastSpell(unitTarget, 29133, true); // Create Flame of The Undercity
-                    break;
-                }
-                case 29395:                                 // Break Kaliri Egg
-                {
-                    uint32 creature_id = 0;
-                    uint32 rand = urand(0, 99);
-
-                    if (rand < 10)
-                        creature_id = 17034;
-                    else if (rand < 60)
-                        creature_id = 17035;
-                    else
-                        creature_id = 17039;
-
-                    if (WorldObject* pSource = GetAffectiveCasterObject())
-                        pSource->SummonCreature(creature_id, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 120*IN_MILLISECONDS);
-                    return;
-                }
-=======
->>>>>>> 4da4404... [11883] Implement spells 32300, 32301
                 case 29830:                                 // Mirren's Drinking Hat
                 {
                     uint32 item = 0;
@@ -8173,7 +8112,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->RemoveAurasAtMechanicImmunity(IMMUNE_TO_ROOT_AND_SNARE_MASK,30918,true);
                     break;
                 }
-<<<<<<< HEAD
                 case 37473:                                 // Detect Whispers (related to quest 10607 - Whispers of the Raven God_Whispers of the Raven God)
                 {
                     if (!unitTarget)
@@ -8183,9 +8121,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     break;
                 }
                 case 32301:                                 // Ping Shirrak
-=======
-                case 38358:                                 // Tidal Surge
->>>>>>> 4da4404... [11883] Implement spells 32300, 32301
                 {
                     if (!unitTarget)
                         return;
@@ -8826,28 +8761,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(m_caster, m_spellInfo->Id == 49380 ? 49381 : 59805, true, NULL, NULL, m_caster->GetObjectGuid());
                     return;
                 }
-<<<<<<< HEAD
-                case 49405:                                 //Invader Taunt Trigger
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(eff_idx), true);
-                    return;
-                }
-                case 48590:                                 // Avenging Spirits (summon Avenging Spirit Summoners)
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, 48586, true);
-                    unitTarget->CastSpell(unitTarget, 48587, true);
-                    unitTarget->CastSpell(unitTarget, 48588, true);
-                    unitTarget->CastSpell(unitTarget, 48589, true);
-                    return;
-                }
-=======
->>>>>>> 85199e6... [11881] Implement ScriptEffect of spell 49405
                 case 50217:                                 // The Cleansing: Script Effect Player Cast Mirror Image
                 {
                     // Summon Your Inner Turmoil
