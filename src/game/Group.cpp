@@ -1210,7 +1210,7 @@ bool Group::_addMember(ObjectGuid guid, const char* name, uint8 group, GroupFlag
     if (!guid || !guid.IsPlayer())
         return false;
 
-    Player *player = sObjectMgr.GetPlayer(guid);
+    Player* player = sObjectMgr.GetPlayer(guid);
 
     MemberSlot member;
     member.guid      = guid;
