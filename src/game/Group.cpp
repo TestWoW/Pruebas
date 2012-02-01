@@ -1216,13 +1216,12 @@ bool Group::_addMember(ObjectGuid guid, const char* name, uint8 group, GroupFlag
     member.guid      = guid;
     member.name      = name;
     member.group     = group;
-<<<<<<< HEAD
+
     member.flags     = flags;
     member.roles     = roles;
     member.lastMap   = player->GetMapId();
-=======
+
     member.assistant = isAssistant;
->>>>>>> parent of d415433... [11898] Prevent resetting instances while offline players are in it
     m_memberSlots.push_back(member);
 
     SubGroupCounterIncrease(group);
