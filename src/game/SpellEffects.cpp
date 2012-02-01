@@ -4609,6 +4609,7 @@ void Spell::EffectTriggerSpell(SpellEffectIndex effIndex)
                 if (!holder->IsPositive() &&
                     !holder->IsPassive() &&
                     !holder->IsDeathPersistent() &&
+                    holder->second->GetSpellProto()->Id != 6788 &&
                     (GetSpellSchoolMask(holder->GetSpellProto()) & SPELL_SCHOOL_MASK_NORMAL) == 0)
                 {
                     toRemoveSpellList.insert(holder->GetId());
