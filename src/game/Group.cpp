@@ -1221,7 +1221,7 @@ bool Group::_addMember(ObjectGuid guid, const char* name, uint8 group, GroupFlag
     member.roles     = roles;
     member.lastMap   = player->GetMapId();
 
-    member.assistant = isAssistant;
+    //member.assistant = isAssistant;
     m_memberSlots.push_back(member);
 
     SubGroupCounterIncrease(group);
