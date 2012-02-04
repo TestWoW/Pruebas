@@ -676,7 +676,7 @@ uint32 Unit::DealDamage(Unit* pVictim, uint32 damage, DamageInfo* damageInfo, Da
 {
     // wrapper for old method of damage calculation (mostly for scripts)
     if (!damageInfo)
-        damageInfo = &DamageInfo(this, pVictim, spellProto);
+        //damageInfo = &DamageInfo(this, pVictim, spellProto);
 
     damageInfo->cleanDamage = damageInfo->damage;
     damageInfo->damage      = damage;
