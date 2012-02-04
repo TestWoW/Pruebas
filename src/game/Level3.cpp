@@ -3895,13 +3895,7 @@ bool ChatHandler::HandleDamageCommand(char* args)
     {
         m_session->GetPlayer()->DealDamage(target, damage, NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
         if (target != m_session->GetPlayer())
-        {
-            DamageInfo damageInfo  = DamageInfo(m_session->GetPlayer(), target);
-            damageInfo.damage      = damage;
-            damageInfo.HitInfo     = HITINFO_NORMALSWING2;
-            damageInfo.TargetState = VICTIMSTATE_NORMAL;
-            m_session->GetPlayer()->SendAttackStateUpdate(&damageInfo);
-        }
+            m_session->GetPlayer()->SendAttackStateUpdate (HITINFO_NORMALSWING2, target, 1, SPELL_SCHOOL_MASK_NORMAL, damage, 0, 0, VICTIMSTATE_NORMAL, 0);
         return true;
     }
 
@@ -3911,11 +3905,6 @@ bool ChatHandler::HandleDamageCommand(char* args)
 
     if(school >= MAX_SPELL_SCHOOL)
         return false;
-
-    // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
-    uint32 spellid = ExtractSpellIdFromLink(&args);
-    if (!spellid || !sSpellStore.LookupEntry(spellid))
-        spellid = 0;
 
     SpellSchoolMask schoolmask = SpellSchoolMask(1 << school);
 
@@ -3937,18 +3926,16 @@ bool ChatHandler::HandleDamageCommand(char* args)
 
         m_session->GetPlayer()->DealDamageMods(target,damage,&absorb);
         m_session->GetPlayer()->DealDamage(target, damage, NULL, DIRECT_DAMAGE, schoolmask, NULL, false);
-        DamageInfo damageInfo  = DamageInfo(m_session->GetPlayer(), target, spellid);
-        damageInfo.damage      = damage;
-        damageInfo.absorb      = absorb;
-        damageInfo.resist      = resist;
-        damageInfo.HitInfo     = HITINFO_NORMALSWING2;
-        damageInfo.TargetState = VICTIMSTATE_NORMAL;
-        m_session->GetPlayer()->SendAttackStateUpdate(&damageInfo);
+        m_session->GetPlayer()->SendAttackStateUpdate (HITINFO_NORMALSWING2, target, 1, schoolmask, damage, absorb, resist, VICTIMSTATE_NORMAL, 0);
         return true;
     }
 
     // non-melee damage
 
+    // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+    uint32 spellid = ExtractSpellIdFromLink(&args);
+    if (!spellid || !sSpellStore.LookupEntry(spellid))
+        return false;
 
     m_session->GetPlayer()->SpellNonMeleeDamageLog(target, spellid, damage);
     return true;
