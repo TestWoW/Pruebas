@@ -4491,6 +4491,9 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
             // Slow
             else if (spellproto->Id == 31589)
                 return DIMINISHING_LIMITONLY;
+            // Charge
+            else if (spellproto->Id == 7922)
+                return DIMINISHING_CHARGE;
             break;
         case SPELLFAMILY_ROGUE:
         {
@@ -4502,6 +4505,9 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
                 return DIMINISHING_CHEAPSHOT_POUNCE;
             // Crippling poison - Limit to 10 seconds in PvP (No SpellFamilyFlags)
             else if (spellproto->SpellIconID == 163)
+                return DIMINISHING_LIMITONLY;
+            // Wound poison - Limit to 10 seconds in PvP (No SpellFamilyFlags)
+            else if (spellproto->SpellIconID == 1496)
                 return DIMINISHING_LIMITONLY;
             break;
         }
@@ -4674,6 +4680,7 @@ bool IsDiminishingReturnsGroupDurationLimited(DiminishingGroup group)
         case DIMINISHING_CYCLONE:
         case DIMINISHING_BANISH:
         case DIMINISHING_LIMITONLY:
+        case DIMINISHING_CHARGE:
             return true;
         default:
             return false;
@@ -4688,6 +4695,7 @@ DiminishingReturnsType GetDiminishingReturnsGroupType(DiminishingGroup group)
         case DIMINISHING_CYCLONE:
         case DIMINISHING_TRIGGER_STUN:
         case DIMINISHING_CONTROL_STUN:
+        case DIMINISHING_CHARGE:
             return DRTYPE_ALL;
         case DIMINISHING_CONTROL_ROOT:
         case DIMINISHING_TRIGGER_ROOT:

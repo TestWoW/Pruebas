@@ -775,8 +775,9 @@ void MapPersistentStateManager::RemovePersistentState(uint32 mapId, uint32 insta
                 if (time_t resettime = ((DungeonPersistentState*)itr->second)->GetResetTimeForDB())
                 {
                     CharacterDatabase.PExecute("UPDATE instance SET resettime = '"UI64FMTD"' WHERE id = '%u'", (uint64)resettime, instanceId);
-		      sLog.outDetail("MapPersistentStateManager::RemovePersistentState map %u instance %u difficulty %u reset time setted to %u", mapId, instanceId, itr->second->GetDifficulty(), (uint64)resettime);
+		    sLog.outDetail("MapPersistentStateManager::RemovePersistentState map %u instance %u difficulty %u reset time setted to %u", mapId, instanceId, itr->second->GetDifficulty(), (uint64)resettime);
                 }
+
             _ResetSave(m_instanceSaveByInstanceId, itr);
         }
     }
