@@ -842,15 +842,11 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             if (BattleGround *bg = killer->GetBattleGround())
             {
                 // FIXME: kept by compatibility. don't know in BG if the restriction apply.
-<<<<<<< HEAD
-                bg->UpdatePlayerScore(killer, SCORE_DAMAGE_DONE, damageInfo->damage);
+                bg->UpdatePlayerScore(killer, SCORE_DAMAGE_DONE, damage);
                 /** World of Warcraft Armory **/
                 if (BattleGround *bgV = ((Player*)pVictim)->GetBattleGround())
                     bgV->UpdatePlayerScore(((Player*)pVictim), SCORE_DAMAGE_TAKEN, damageInfo->damage);
                 /** World of Warcraft Armory **/
-=======
-                bg->UpdatePlayerScore(killer, SCORE_DAMAGE_DONE, damage);
->>>>>>> parent of c4ca90f... [mr1681] implement and use unified structure DamageInfo instead of deprecated - struct CleanDamage - struct CalcDamageInfo - struct SpellNonMeleeDamage and plain uint32 damage in some cases. some unification in code.
             }
         }
 
