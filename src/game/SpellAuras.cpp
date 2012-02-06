@@ -8582,26 +8582,29 @@ void Aura::PeriodicTick()
                     break;
             }
 
-            DamageInfo damageInfo = DamageInfo(pCaster, target, spellProto);
-
-            damageInfo.CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL);
+            uint32 absorb = 0;
+            uint32 resist = 0;
+            DamageInfo cleanDamage = DamageInfo(0);
+            cleanDamage.CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
 
             // ignore non positive values (can be result apply spellmods to aura damage
             uint32 amount = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
 
+            uint32 pdamage;
+
             if (m_modifier.m_auraname == SPELL_AURA_PERIODIC_DAMAGE)
-                damageInfo.damage = amount;
+                pdamage = amount;
             else
-                damageInfo.damage = uint32(target->GetMaxHealth()*amount/100);
+                pdamage = uint32(target->GetMaxHealth()*amount/100);
 
             // SpellDamageBonus for magic spells
             if (spellProto->DmgClass == SPELL_DAMAGE_CLASS_NONE || spellProto->DmgClass == SPELL_DAMAGE_CLASS_MAGIC)
-                damageInfo.damage = target->SpellDamageBonusTaken(pCaster, spellProto, damageInfo.damage, DOT, GetStackAmount());
+                pdamage = target->SpellDamageBonusTaken(pCaster, spellProto, pdamage, DOT, GetStackAmount());
             // MeleeDamagebonus for weapon based spells
             else
             {
-                damageInfo.attackType = GetWeaponAttackType(spellProto);
-                damageInfo.damage = target->MeleeDamageBonusTaken(pCaster, damageInfo.damage, damageInfo.attackType, spellProto, DOT, GetStackAmount());
+                WeaponAttackType attackType = GetWeaponAttackType(spellProto);
+                pdamage = target->MeleeDamageBonusTaken(pCaster, pdamage, attackType, spellProto, DOT, GetStackAmount());
             }
 
             // Calculate armor mitigation if it is a physical spell
@@ -8609,9 +8612,9 @@ void Aura::PeriodicTick()
             if (GetSpellSchoolMask(spellProto) & SPELL_SCHOOL_MASK_NORMAL &&
                 GetEffectMechanic(spellProto, m_effIndex) != MECHANIC_BLEED)
             {
-                uint32 pdamageReductedArmor = pCaster->CalcArmorReducedDamage(target, damageInfo.damage);
-                damageInfo.cleanDamage += damageInfo.damage - pdamageReductedArmor;
-                damageInfo.damage = pdamageReductedArmor;
+                uint32 pdamageReductedArmor = pCaster->CalcArmorReducedDamage(target, pdamage);
+                cleanDamage.damage += pdamage - pdamageReductedArmor;
+                pdamage = pdamageReductedArmor;
             }
 
             // Curse of Agony damage-per-tick calculation
@@ -8619,61 +8622,62 @@ void Aura::PeriodicTick()
             {
                 // 1..4 ticks, 1/2 from normal tick damage
                 if (GetAuraTicks() <= 4)
-                    damageInfo.damage = damageInfo.damage/2;
+                    pdamage = pdamage/2;
                 // 9..12 ticks, 3/2 from normal tick damage
                 else if (GetAuraTicks() >= 9)
-                    damageInfo.damage += (damageInfo.damage + 1) / 2;       // +1 prevent 0.5 damage possible lost at 1..4 ticks
+                    pdamage += (pdamage + 1) / 2;       // +1 prevent 0.5 damage possible lost at 1..4 ticks
                 // 5..8 ticks have normal tick damage
             }
 
             // This method can modify pdamage
-            bool isCrit = IsCritFromAbilityAura(pCaster, damageInfo.damage);
+            bool isCrit = IsCritFromAbilityAura(pCaster, pdamage);
 
             // send critical in hit info for threat calculation
             if (isCrit)
             {
-                damageInfo.hitOutCome = MELEE_HIT_CRIT;
+                cleanDamage.hitOutCome = MELEE_HIT_CRIT;
                 // Resilience - reduce crit damage
-                damageInfo.damage -= target->GetSpellCritDamageReduction(damageInfo.damage);
+                pdamage -= target->GetSpellCritDamageReduction(pdamage);
             }
 
             // only from players
             // FIXME: need use SpellDamageBonus instead?
             if (pCaster->GetTypeId() == TYPEID_PLAYER)
-                damageInfo.damage -= target->GetSpellDamageReduction(damageInfo.damage);
+                pdamage -= target->GetSpellDamageReduction(pdamage);
 
             if (GetSpellProto()->Id == 50344) // Dream Funnel Oculus drake spell
-                damageInfo.damage = uint32(pCaster->GetMaxHealth()*0.05f);
+                pdamage = uint32(pCaster->GetMaxHealth()*0.05f);
 
-            target->CalculateDamageAbsorbAndResist(pCaster, damageInfo.SchoolMask(), DOT, damageInfo.damage, &damageInfo.absorb, &damageInfo.resist, !(GetSpellProto()->AttributesEx & SPELL_ATTR_EX_CANT_REFLECTED));
+            target->CalculateDamageAbsorbAndResist(pCaster, GetSpellSchoolMask(spellProto), DOT, pdamage, &absorb, &resist, !(GetSpellProto()->AttributesEx & SPELL_ATTR_EX_CANT_REFLECTED));
+            cleanDamage.absorb += absorb;
 
             DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s attacked %s for %u dmg inflicted by %u abs is %u",
-                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), damageInfo.damage, GetId(), damageInfo.absorb);
+                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, GetId(),absorb);
 
-            pCaster->DealDamageMods(target, damageInfo.damage, &damageInfo.absorb);
+            pCaster->DealDamageMods(target, pdamage, &absorb);
 
             // Set trigger flag
-            damageInfo.procAttacker = PROC_FLAG_ON_DO_PERIODIC; //  | PROC_FLAG_SUCCESSFUL_HARMFUL_SPELL_HIT;
-            damageInfo.procVictim   = PROC_FLAG_ON_TAKE_PERIODIC;// | PROC_FLAG_TAKEN_HARMFUL_SPELL_HIT;
-            damageInfo.procEx = isCrit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT;
+            uint32 procAttacker = PROC_FLAG_ON_DO_PERIODIC; //  | PROC_FLAG_SUCCESSFUL_HARMFUL_SPELL_HIT;
+            uint32 procVictim   = PROC_FLAG_ON_TAKE_PERIODIC;// | PROC_FLAG_TAKEN_HARMFUL_SPELL_HIT;
+            uint32 procEx = isCrit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT;
 
-            damageInfo.damage = (damageInfo.damage <= damageInfo.absorb + damageInfo.resist) ? 0 : (damageInfo.damage - damageInfo.absorb - damageInfo.resist);
+            pdamage = (pdamage <= absorb + resist) ? 0 : (pdamage - absorb - resist);
 
-            if (damageInfo.damage <= 0)
-                damageInfo.procEx &= ~PROC_EX_DIRECT_DAMAGE;
+            if (pdamage <= 0)
+                procEx &= ~PROC_EX_DIRECT_DAMAGE;
             else
-                damageInfo.procEx |= PROC_EX_DIRECT_DAMAGE;
+                procEx |= PROC_EX_DIRECT_DAMAGE;
 
-            uint32 overkill = damageInfo.damage > target->GetHealth() ? damageInfo.damage - target->GetHealth() : 0;
-            SpellPeriodicAuraLogInfo pInfo(this, damageInfo.damage, overkill, damageInfo.absorb, damageInfo.resist, 0.0f, isCrit);
+            uint32 overkill = pdamage > target->GetHealth() ? pdamage - target->GetHealth() : 0;
+            SpellPeriodicAuraLogInfo pInfo(this, pdamage, overkill, absorb, resist, 0.0f, isCrit);
             target->SendPeriodicAuraLog(&pInfo);
 
-            if (damageInfo.damage)
-                damageInfo.procVictim |= PROC_FLAG_TAKEN_ANY_DAMAGE;
+            if (pdamage)
+                procVictim|=PROC_FLAG_TAKEN_ANY_DAMAGE;
 
-            pCaster->ProcDamageAndSpell(&damageInfo);
+            pCaster->ProcDamageAndSpell(target, procAttacker, procVictim, procEx, pdamage, BASE_ATTACK, spellProto);
 
-            pCaster->DealDamage(target, &damageInfo, true);
+            pCaster->DealDamage(target, pdamage, &cleanDamage, DOT, GetSpellSchoolMask(spellProto), spellProto, true);
 
             // Drain Soul (chance soul shard)
             if (pCaster->GetTypeId() == TYPEID_PLAYER && spellProto->SpellFamilyName == SPELLFAMILY_WARLOCK && spellProto->SpellFamilyFlags.test<CF_WARLOCK_DRAIN_SOUL>())
@@ -8711,59 +8715,61 @@ void Aura::PeriodicTick()
             if (IsSpellCauseDamage(spellProto) && target->IsImmunedToDamage(GetSpellSchoolMask(spellProto)))
                 return;
 
-            DamageInfo damageInfo = DamageInfo(pCaster, target, spellProto);
-            damageInfo.CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
-            damageInfo.damageType = DOT;
+            uint32 absorb=0;
+            uint32 resist=0;
+            DamageInfo cleanDamage = DamageInfo(0);
+            cleanDamage.CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
 
-            damageInfo.damage = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
+            uint32 pdamage = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
 
             //Calculate armor mitigation if it is a physical spell
             if (GetSpellSchoolMask(spellProto) & SPELL_SCHOOL_MASK_NORMAL)
             {
-                uint32 pdamageReductedArmor = pCaster->CalcArmorReducedDamage(target, damageInfo.damage);
-                damageInfo.cleanDamage += damageInfo.damage - pdamageReductedArmor;
-                damageInfo.damage = pdamageReductedArmor;
+                uint32 pdamageReductedArmor = pCaster->CalcArmorReducedDamage(target, pdamage);
+                cleanDamage.damage += pdamage - pdamageReductedArmor;
+                pdamage = pdamageReductedArmor;
             }
 
-            damageInfo.damage = target->SpellDamageBonusTaken(pCaster, spellProto, damageInfo.damage, DOT, GetStackAmount());
+            pdamage = target->SpellDamageBonusTaken(pCaster, spellProto, pdamage, DOT, GetStackAmount());
 
-            bool isCrit = IsCritFromAbilityAura(pCaster, damageInfo.damage);
+            bool isCrit = IsCritFromAbilityAura(pCaster, pdamage);
 
             // send critical in hit info for threat calculation
             if (isCrit)
             {
-                damageInfo.hitOutCome = MELEE_HIT_CRIT;
+                cleanDamage.hitOutCome = MELEE_HIT_CRIT;
                 // Resilience - reduce crit damage
-                damageInfo.damage -= target->GetSpellCritDamageReduction(damageInfo.damage);
+                pdamage -= target->GetSpellCritDamageReduction(pdamage);
             }
 
             // only from players
             // FIXME: need use SpellDamageBonus instead?
             if (GetCasterGuid().IsPlayer())
-                damageInfo.damage -= target->GetSpellDamageReduction(damageInfo.damage);
+                pdamage -= target->GetSpellDamageReduction(pdamage);
 
-            target->CalculateDamageAbsorbAndResist(pCaster, GetSpellSchoolMask(spellProto), DOT, damageInfo.damage, &damageInfo.absorb, &damageInfo.resist, !(spellProto->AttributesEx & SPELL_ATTR_EX_CANT_REFLECTED));
+            target->CalculateDamageAbsorbAndResist(pCaster, GetSpellSchoolMask(spellProto), DOT, pdamage, &absorb, &resist, !(spellProto->AttributesEx & SPELL_ATTR_EX_CANT_REFLECTED));
+            cleanDamage.absorb += absorb;
 
             DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s health leech of %s for %u dmg inflicted by %u abs is %u",
-                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), damageInfo.damage, GetId(),damageInfo.absorb);
+                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, GetId(),absorb);
 
-            pCaster->DealDamageMods(target, damageInfo.damage, &damageInfo.absorb);
+            pCaster->DealDamageMods(target, pdamage, &absorb);
 
-            pCaster->SendSpellNonMeleeDamageLog(target, GetId(), damageInfo.damage, damageInfo.SchoolMask(), damageInfo.absorb, damageInfo.resist, false, 0, isCrit);
+            pCaster->SendSpellNonMeleeDamageLog(target, GetId(), pdamage, GetSpellSchoolMask(spellProto), absorb, resist, false, 0, isCrit);
 
             float multiplier = spellProto->EffectMultipleValue[GetEffIndex()] > 0 ? spellProto->EffectMultipleValue[GetEffIndex()] : 1;
 
             // Set trigger flag
-            damageInfo.procAttacker = PROC_FLAG_ON_DO_PERIODIC; //  | PROC_FLAG_SUCCESSFUL_HARMFUL_SPELL_HIT;
-            damageInfo.procVictim   = PROC_FLAG_ON_TAKE_PERIODIC;// | PROC_FLAG_TAKEN_HARMFUL_SPELL_HIT;
-            damageInfo.procEx = isCrit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT;
+            uint32 procAttacker = PROC_FLAG_ON_DO_PERIODIC; //  | PROC_FLAG_SUCCESSFUL_HARMFUL_SPELL_HIT;
+            uint32 procVictim   = PROC_FLAG_ON_TAKE_PERIODIC;// | PROC_FLAG_TAKEN_HARMFUL_SPELL_HIT;
+            uint32 procEx = isCrit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT;
 
-            damageInfo.damage = (damageInfo.damage <= damageInfo.absorb + damageInfo.resist) ? 0 : (damageInfo.damage - damageInfo.absorb - damageInfo.resist);
-            if (damageInfo.damage)
-                damageInfo.procVictim |= PROC_FLAG_TAKEN_ANY_DAMAGE;
+            pdamage = (pdamage <= absorb + resist) ? 0 : (pdamage-absorb-resist);
+            if (pdamage)
+                procVictim|=PROC_FLAG_TAKEN_ANY_DAMAGE;
 
-            pCaster->ProcDamageAndSpell(&damageInfo);
-            int32 new_damage = pCaster->DealDamage(target, &damageInfo, false);
+            pCaster->ProcDamageAndSpell(target, procAttacker, procVictim, procEx, pdamage, BASE_ATTACK, spellProto);
+            int32 new_damage = pCaster->DealDamage(target, pdamage, &cleanDamage, DOT, GetSpellSchoolMask(spellProto), spellProto, false);
 
             if (!target->isAlive() && pCaster->IsNonMeleeSpellCasted(false))
                 for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
@@ -8798,18 +8804,17 @@ void Aura::PeriodicTick()
             if (target != pCaster && spellProto->SpellVisual[0] == 163 && !pCaster->isAlive())
                 return;
 
-            DamageInfo damageInfo = DamageInfo(pCaster, target, spellProto);
-            damageInfo.CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
-            damageInfo.damageType = NODAMAGE;
-
             // ignore non positive values (can be result apply spellmods to aura damage
-            uint32 amount  = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
+            uint32 amount = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
 
-            if (m_modifier.m_auraname == SPELL_AURA_OBS_MOD_HEALTH)
-                damageInfo.damage = uint32(target->GetMaxHealth() * amount / 100);
+            uint32 pdamage;
+
+            if (m_modifier.m_auraname==SPELL_AURA_OBS_MOD_HEALTH)
+                pdamage = uint32(target->GetMaxHealth() * amount / 100);
             else
             {
-                damageInfo.damage = amount;
+                pdamage = amount;
+
                 // Wild Growth (1/7 - 6 + 2*ramainTicks) %
                 if (spellProto->SpellFamilyName == SPELLFAMILY_DRUID && spellProto->SpellIconID == 2864)
                 {
@@ -8822,33 +8827,31 @@ void Aura::PeriodicTick()
                         if (Aura *aura = pCaster->GetAura(70658, EFFECT_INDEX_0))
                             addition += abs(int32((addition * aura->GetModifier()->m_amount) / ((ticks-1)* 100)));
 
-                    damageInfo.damage = damageInfo.damage + addition;
+                    pdamage = int32(pdamage) + addition;
                 }
             }
 
-            damageInfo.damage = target->SpellHealingBonusTaken(pCaster, spellProto, damageInfo.damage, DOT, GetStackAmount());
+            pdamage = target->SpellHealingBonusTaken(pCaster, spellProto, pdamage, DOT, GetStackAmount());
 
             // This method can modify pdamage
-            bool isCrit = IsCritFromAbilityAura(pCaster, damageInfo.damage);
+            bool isCrit = IsCritFromAbilityAura(pCaster, pdamage);
 
-            pCaster->CalculateHealAbsorb(damageInfo.damage, &damageInfo.absorb);
-            damageInfo.damage -= damageInfo.absorb;
+            uint32 absorbHeal = 0;
+            pCaster->CalculateHealAbsorb(pdamage, &absorbHeal);
+            pdamage -= absorbHeal;
 
             DETAIL_FILTER_LOG(LOG_FILTER_PERIODIC_AFFECTS, "PeriodicTick: %s heal of %s for %u health  (absorbed %u) inflicted by %u",
-                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), damageInfo.damage, damageInfo.absorb, GetId());
+                GetCasterGuid().GetString().c_str(), target->GetGuidStr().c_str(), pdamage, absorbHeal, GetId());
 
-            int32 gain = target->ModifyHealth(damageInfo.damage);
-            damageInfo.cleanDamage = damageInfo.damage;
-            damageInfo.damage = damageInfo.cleanDamage - uint32(gain);
-            SpellPeriodicAuraLogInfo pInfo(this, damageInfo.cleanDamage, damageInfo.damage, damageInfo.absorb, 0, 0.0f, isCrit);
+            int32 gain = target->ModifyHealth(pdamage);
+            SpellPeriodicAuraLogInfo pInfo(this, pdamage, (pdamage - uint32(gain)), absorbHeal, 0, 0.0f, isCrit);
             target->SendPeriodicAuraLog(&pInfo);
 
             // Set trigger flag
-            damageInfo.procAttacker = PROC_FLAG_ON_DO_PERIODIC;
-            damageInfo.procVictim   = PROC_FLAG_ON_TAKE_PERIODIC;
-            damageInfo.procEx = PROC_EX_PERIODIC_POSITIVE | (isCrit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT);
-
-            pCaster->ProcDamageAndSpell(&damageInfo);
+            uint32 procAttacker = PROC_FLAG_ON_DO_PERIODIC;
+            uint32 procVictim   = PROC_FLAG_ON_TAKE_PERIODIC;
+            uint32 procEx = PROC_EX_PERIODIC_POSITIVE | (isCrit ? PROC_EX_CRITICAL_HIT : PROC_EX_NORMAL_HIT);
+            pCaster->ProcDamageAndSpell(target, procAttacker, procVictim, procEx, gain, BASE_ATTACK, spellProto);
 
             // add HoTs to amount healed in bgs
             if (pCaster->GetTypeId() == TYPEID_PLAYER )
@@ -8871,11 +8874,14 @@ void Aura::PeriodicTick()
                 }
                 else
                 {
-                    damageInfo.damage = gain;
-                    damageInfo.absorb = 0;
-                    pCaster->DealDamageMods(pCaster, damageInfo.damage, &damageInfo.absorb);
-                    pCaster->SendSpellNonMeleeDamageLog(pCaster, GetId(), damageInfo.damage, GetSpellSchoolMask(spellProto), damageInfo.absorb, 0, false, 0, false);
-                    pCaster->DealDamage(pCaster, &damageInfo, true);
+                    uint32 damage = gain;
+                    uint32 absorb = 0;
+                    pCaster->DealDamageMods(pCaster, damage, &absorb);
+                    pCaster->SendSpellNonMeleeDamageLog(pCaster, GetId(), damage, GetSpellSchoolMask(spellProto), absorb, 0, false, 0, false);
+
+                    DamageInfo cleanDamage = DamageInfo(0);
+                    cleanDamage.CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
+                    pCaster->DealDamage(pCaster, damage, &cleanDamage, NODAMAGE, GetSpellSchoolMask(spellProto), spellProto, true);
                 }
             }
 
@@ -9107,9 +9113,7 @@ void Aura::PeriodicTick()
             if (IsSpellCauseDamage(spellProto) && target->IsImmunedToDamage(GetSpellSchoolMask(spellProto)))
                 return;
 
-            DamageInfo damageInfo(pCaster, target, spellProto);
-
-            damageInfo.damage = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
+            int32 pdamage = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
 
             Powers powerType = Powers(m_modifier.m_miscvalue);
 
@@ -9118,14 +9122,15 @@ void Aura::PeriodicTick()
 
             // resilience reduce mana draining effect at spell crit damage reduction (added in 2.4)
             if (powerType == POWER_MANA)
-                damageInfo.damage -= target->GetSpellCritDamageReduction(damageInfo.damage);
+                pdamage -= target->GetSpellCritDamageReduction(pdamage);
 
-            damageInfo.cleanDamage = uint32(-target->ModifyPower(powerType, -damageInfo.damage));
+            uint32 gain = uint32(-target->ModifyPower(powerType, -pdamage));
 
-            damageInfo.cleanDamage = uint32(damageInfo.cleanDamage * spellProto->EffectMultipleValue[GetEffIndex()]);
+            gain = uint32(gain * spellProto->EffectMultipleValue[GetEffIndex()]);
 
             // maybe has to be sent different to client, but not by SMSG_PERIODICAURALOG
-            pCaster->CalculateSpellDamage(&damageInfo, damageInfo.cleanDamage, spellProto);
+            DamageInfo damageInfo(pCaster, target, spellProto);
+            pCaster->CalculateSpellDamage(&damageInfo, gain, spellProto);
 
             damageInfo.target->CalculateAbsorbResistBlock(pCaster, &damageInfo, spellProto);
 
@@ -9134,19 +9139,15 @@ void Aura::PeriodicTick()
             pCaster->SendSpellNonMeleeDamageLog(&damageInfo);
 
             // Set trigger flag
-            damageInfo.procAttacker = PROC_FLAG_ON_DO_PERIODIC; //  | PROC_FLAG_SUCCESSFUL_HARMFUL_SPELL_HIT;
-            damageInfo.procVictim   = PROC_FLAG_ON_TAKE_PERIODIC;// | PROC_FLAG_TAKEN_HARMFUL_SPELL_HIT;
-            damageInfo.procEx       = createProcExtendMask(&damageInfo, SPELL_MISS_NONE);
-
+            uint32 procAttacker = PROC_FLAG_ON_DO_PERIODIC; //  | PROC_FLAG_SUCCESSFUL_HARMFUL_SPELL_HIT;
+            uint32 procVictim   = PROC_FLAG_ON_TAKE_PERIODIC;// | PROC_FLAG_TAKEN_HARMFUL_SPELL_HIT;
+            uint32 procEx       = createProcExtendMask(&damageInfo, SPELL_MISS_NONE);
             if (damageInfo.damage)
-            {
-                damageInfo.procVictim  |= PROC_FLAG_TAKEN_ANY_DAMAGE;
-                damageInfo.procEx      |= PROC_EX_DIRECT_DAMAGE;
-            }
+                procVictim|=PROC_FLAG_TAKEN_ANY_DAMAGE;
 
-            pCaster->ProcDamageAndSpell(&damageInfo);
+            pCaster->ProcDamageAndSpell(damageInfo.target, procAttacker, procVictim, procEx, damageInfo.damage, BASE_ATTACK, spellProto);
+
             pCaster->DealSpellDamage(&damageInfo, true);
-
             break;
         }
         case SPELL_AURA_MOD_REGEN:
