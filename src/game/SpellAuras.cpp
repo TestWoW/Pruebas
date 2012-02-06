@@ -8584,8 +8584,7 @@ void Aura::PeriodicTick()
 
             uint32 absorb = 0;
             uint32 resist = 0;
-            DamageInfo cleanDamage = DamageInfo(0);
-            cleanDamage.CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
+            CleanDamage cleanDamage =  CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
 
             // ignore non positive values (can be result apply spellmods to aura damage
             uint32 amount = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
@@ -8717,8 +8716,7 @@ void Aura::PeriodicTick()
 
             uint32 absorb=0;
             uint32 resist=0;
-            DamageInfo cleanDamage = DamageInfo(0);
-            cleanDamage.CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
+            CleanDamage cleanDamage =  CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
 
             uint32 pdamage = m_modifier.m_amount > 0 ? m_modifier.m_amount : 0;
 
@@ -8879,8 +8877,7 @@ void Aura::PeriodicTick()
                     pCaster->DealDamageMods(pCaster, damage, &absorb);
                     pCaster->SendSpellNonMeleeDamageLog(pCaster, GetId(), damage, GetSpellSchoolMask(spellProto), absorb, 0, false, 0, false);
 
-                    DamageInfo cleanDamage = DamageInfo(0);
-                    cleanDamage.CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
+                    CleanDamage cleanDamage =  CleanDamage(0, 0, BASE_ATTACK, MELEE_HIT_NORMAL );
                     pCaster->DealDamage(pCaster, damage, &cleanDamage, NODAMAGE, GetSpellSchoolMask(spellProto), spellProto, true);
                 }
             }
@@ -9129,7 +9126,7 @@ void Aura::PeriodicTick()
             gain = uint32(gain * spellProto->EffectMultipleValue[GetEffIndex()]);
 
             // maybe has to be sent different to client, but not by SMSG_PERIODICAURALOG
-            DamageInfo damageInfo(pCaster, target, spellProto);
+            SpellNonMeleeDamage damageInfo(pCaster, target, spellProto->Id, SpellSchoolMask(spellProto->SchoolMask));
             pCaster->CalculateSpellDamage(&damageInfo, gain, spellProto);
 
             damageInfo.target->CalculateAbsorbResistBlock(pCaster, &damageInfo, spellProto);
