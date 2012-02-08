@@ -9659,6 +9659,14 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
+        case 72380: // Blood Nova AOE (saurfang)
+        case 72438:
+        case 72439:
+        case 72440:
+        {
+            FillAreaTargets(targetUnitMap, 12.0f, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE, GetAffectiveCaster());
+            break;
+        }
         case 72385:                                     // Boiling Blood
         case 72441:
         case 72442:

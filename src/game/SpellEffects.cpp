@@ -614,6 +614,8 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         for (uint32 i = 1; i <= stack; ++i)
                             damage += extraDamage * i;
 
+                        m_caster->CastSpell(m_caster, 7, true);
+
                         break;
                     }
                     // Vampiric Bite (Queen Lana'thel)
@@ -9962,7 +9964,12 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         if (SpellAuraHolderPtr holder = unitTarget->GetSpellAuraHolder(m_spellInfo->Id))
                         {
                             if (holder->GetStackAmount() >= 4)
+                            {
                                 unitTarget->CastSpell(unitTarget, 69839, false); // Unstable Ooze Explosion
+                                // despawn Big Ooze
+                                if (unitTarget->GetTypeId() == TYPEID_UNIT)
+                                    ((Creature*)unitTarget)->ForcedDespawn(5500);
+                            }
                         }
                     }
                     return;
@@ -10032,6 +10039,14 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         m_caster->RemoveAurasDueToSpell(70911);
                     }
 
+                    return;
+                }
+                case 71123:                                 // Decimate (Stinky && Precious ICC)
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->SetHealthPercent(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0));
                     return;
                 }
                 case 71255:                                 // Choking Gas Bomb (Putricide)
