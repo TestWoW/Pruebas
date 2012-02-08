@@ -713,6 +713,11 @@ uint32 Unit::DealDamage(Unit *pVictim, DamageInfo* damageInfo, bool durabilityLo
 
         if (pVictim != this)
             pVictim->AttackedBy(this);
+
+        if (damageInfo->SchoolMask() == SPELL_SCHOOL_MASK_NORMAL)
+            RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_MELEE_ATTACK);
+        else
+            RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_SPELL_ATTACK);
     }
 
     // Blessed Life talent of Paladin
@@ -3486,23 +3491,17 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
     if (pVictim->GetTypeId()==TYPEID_UNIT && ((Creature*)pVictim)->IsInEvadeMode())
         return SPELL_MISS_EVADE;
 
-    if (!(spell->Attributes & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY))
+    if (IsPositiveSpell(spell) && IsFriendlyTo(pVictim))
+        return SPELL_MISS_NONE;
+    else if (!(spell->Attributes & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY))
     {
-        // Check for immune
-        if (pVictim->IsImmuneToSpell(spell))
-            return SPELL_MISS_IMMUNE;
-
-        // All positive spells can`t miss
-        // TODO: client not show miss log for this spells - so need find info for this in dbc and use it!
-        if (IsPositiveSpell(spell->Id) && IsFriendlyTo(pVictim))
-            return SPELL_MISS_NONE;
-
         // Check for immune
         if (IsSpellCauseDamage(spell) && pVictim->IsImmunedToDamage(GetSpellSchoolMask(spell)))
             return SPELL_MISS_IMMUNE;
+
+        if (pVictim->IsImmuneToSpell(spell))
+            return SPELL_MISS_IMMUNE;
     }
-    else if (IsPositiveSpell(spell->Id) && IsFriendlyTo(pVictim))
-        return SPELL_MISS_NONE;
 
     if (spell->Id == 35101)//concusive barrage
     {      
@@ -6069,6 +6068,7 @@ void Unit::ProcDamageAndSpell(Unit* pVictim, uint32 procAttacker, uint32 procVic
     damageInfo.damage        = amount;
     damageInfo.procAttacker  = procAttacker;
     damageInfo.procVictim    = procVictim;
+    damageInfo.procEx        = procExtra;
     damageInfo.attackType    = attType;
     ProcDamageAndSpell(&damageInfo);
 }
@@ -8351,6 +8351,7 @@ bool Unit::IsImmuneToSpell(SpellEntry const* spellInfo) const
         return true;
 
     if (!(spellInfo->AttributesEx & SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY) &&
+        IsNonPositiveSpell(spellInfo) &&
         IsImmunedToSchool(GetSpellSchoolMask(spellInfo)))
         return true;
 
@@ -9074,6 +9075,8 @@ void Unit::SetInCombatState(bool PvP, Unit* enemy)
         if (Spell* spell = GetCurrentSpell(CurrentSpellTypes(i)))
             if (IsNonCombatSpell(spell->m_spellInfo))
                 InterruptSpell(CurrentSpellTypes(i),false);
+
+    RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_COMBAT);
 
     if (creatureNotInCombat)
     {
@@ -9946,7 +9949,7 @@ bool Unit::SelectHostileTarget()
 
     MANGOS_ASSERT(GetTypeId() == TYPEID_UNIT);
 
-    if (!this->isAlive())
+    if (!GetMap() ||!isAlive())
         return false;
 
     //This function only useful once AI has been initialized
@@ -9991,6 +9994,32 @@ bool Unit::SelectHostileTarget()
             SetInFront(target);
             if (oldTarget != target)
                 ((Creature*)this)->AI()->AttackStart(target);
+
+            // check if currently selected target is reachable
+            // NOTE: path alrteady generated from AttackStart()
+            if(!GetMotionMaster()->operator->()->IsReachable())
+            {
+                // remove all taunts
+                RemoveSpellsCausingAura(SPELL_AURA_MOD_TAUNT);
+
+                if(m_ThreatManager.getThreatList().size() < 2)
+                {
+                    // only one target in list, we have to evade after timer
+                    // TODO: make timer - inside Creature class
+                    ((Creature*)this)->AI()->EnterEvadeMode();
+                }
+                else
+                {
+                    // remove unreachable target from our threat list
+                    // next iteration we will select next possible target
+                    m_HostileRefManager.deleteReference(target);
+                    m_ThreatManager.modifyThreatPercent(target, -101);
+
+                    GetMap()->RemoveAttackerFor(GetObjectGuid(),target->GetObjectGuid());
+                }
+
+                return false;
+            }
         }
         return true;
     }
@@ -12421,10 +12450,10 @@ void Unit::NearTeleportTo( float x, float y, float z, float orientation, bool ca
     }
 }
 
-void Unit::MonsterMoveWithSpeed(float x, float y, float z, float speed)
+void Unit::MonsterMoveWithSpeed(float x, float y, float z, float speed, bool generatePath, bool forceDestination)
 {
     Movement::MoveSplineInit init(*this);
-    init.MoveTo(x,y,z);
+    init.MoveTo(x,y,z, generatePath, forceDestination);
     init.SetVelocity(speed);
     init.Launch();
 }
