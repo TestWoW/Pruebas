@@ -8899,6 +8899,72 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             break;
         }
+        case 65980: // Bloodlust (Trial Of The Crusader - Faction Champions)
+        {
+            UnitList tmpUnitMap;
+            FillAreaTargets(tmpUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY);
+            if (!tmpUnitMap.empty())
+            {
+                for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
+                {
+                    if ((*itr)->GetTypeId() != TYPEID_UNIT)
+                        continue;
+
+                    if ((*itr)->GetEntry() == 34451 ||
+                        (*itr)->GetEntry() == 34455 ||
+                        (*itr)->GetEntry() == 34458 ||
+                        (*itr)->GetEntry() == 34454 ||
+                        (*itr)->GetEntry() == 34453 ||
+                        (*itr)->GetEntry() == 34456 ||
+                        (*itr)->GetEntry() == 34441 ||
+                        (*itr)->GetEntry() == 34449 ||
+                        (*itr)->GetEntry() == 34448 ||
+                        (*itr)->GetEntry() == 34450 ||
+                        (*itr)->GetEntry() == 34444 ||
+                        (*itr)->GetEntry() == 34447 ||
+                        (*itr)->GetEntry() == 34445 ||
+                        (*itr)->GetEntry() == 34459 ||
+                        (*itr)->GetEntry() == 35465 ||
+                        (*itr)->GetEntry() == 35610)
+
+                        targetUnitMap.push_back(*itr);
+                }
+            }
+            break;
+        }
+        case 65983: // Heroism (Trial Of The Crusader - Faction Champions)
+        {
+            UnitList tmpUnitMap;
+            FillAreaTargets(tmpUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY);
+            if (!tmpUnitMap.empty())
+            {
+                for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
+                {
+                    if ((*itr)->GetTypeId() != TYPEID_UNIT)
+                        continue;
+
+                    if ((*itr)->GetEntry() == 34460 ||
+                        (*itr)->GetEntry() == 34463 ||
+                        (*itr)->GetEntry() == 34461 ||
+                        (*itr)->GetEntry() == 34472 ||
+                        (*itr)->GetEntry() == 34475 ||
+                        (*itr)->GetEntry() == 34471 ||
+                        (*itr)->GetEntry() == 34473 ||
+                        (*itr)->GetEntry() == 34468 ||
+                        (*itr)->GetEntry() == 34467 ||
+                        (*itr)->GetEntry() == 34474 ||
+                        (*itr)->GetEntry() == 34470 ||
+                        (*itr)->GetEntry() == 34466 ||
+                        (*itr)->GetEntry() == 34465 ||
+                        (*itr)->GetEntry() == 34469 ||
+                        (*itr)->GetEntry() == 35465 ||
+                        (*itr)->GetEntry() == 35610)
+
+                        targetUnitMap.push_back(*itr);
+                }
+            }
+            break;
+        }
         case 65919: // Anub'arak Cast Check Ice Spell (Trial of the Crusader - Anub'arak)
         case 67858:
         case 67859:
