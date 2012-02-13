@@ -1294,6 +1294,7 @@ bool TerrainInfo::CheckPathAccurate(float srcX, float srcY, float srcZ, float& d
                         case GAMEOBJECT_TYPE_SPELLCASTER:
                         case GAMEOBJECT_TYPE_FISHINGHOLE:
                         case GAMEOBJECT_TYPE_CAPTURE_POINT:
+                        case GAMEOBJECT_TYPE_DUEL_ARBITER:
                             break;
                         case GAMEOBJECT_TYPE_DOOR:
                             if (pGo->isSpawned() && pGo->GetGoState() == GO_STATE_READY)
@@ -1334,12 +1335,15 @@ bool TerrainInfo::CheckPathAccurate(float srcX, float srcY, float srcZ, float& d
         MaNGOS::NormalizeMapCoord(tstX);
         MaNGOS::NormalizeMapCoord(tstY);
 
-        if (tstZ <= INVALID_HEIGHT || fabs(tstZ-prevZ)>=8.0f) // Deep under surface or in front of pit (8.0f ?)
-        {
-            ++errorsCount;
-            break;
-        }
-        tstZ += (0.5f + DELTA_Z);
+        if (tstZ < (INVALID_HEIGHT + M_NULL_F) || 
+            tstZ > (MAX_HEIGHT - M_NULL_F) ||
+            fabs(tstZ - prevZ) > 10.0f )
+            {
+                ++errorsCount;
+                break;
+            }
+
+        tstZ += (DELTA + DELTA_Z);
 
         if (!CheckPath(prevX, prevY, prevZ, tstX, tstY, tstZ))
         {
