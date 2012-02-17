@@ -10049,7 +10049,8 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (!unitTarget)
                         return;
 
-                    unitTarget->SetHealthPercent(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0));
+                    if (unitTarget->GetHealthPercent() >= m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0))
+                        unitTarget->SetHealthPercent(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0));
                     return;
                 }
                 case 71255:                                 // Choking Gas Bomb (Putricide)

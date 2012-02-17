@@ -1932,11 +1932,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 73914:                                 // Necrotic Plague
                     radius = 10;
                     break;
-                case 69845:                                 // Sindragosa Frost bomb (hack!)
-                case 71053:
-                case 71054:
-                case 71055:
-                    radius = 50;
+                case 36922:                                 // Bellowing Roar
+                    radius = 35;
                     break;
                 case 71769:                                 // Raise Dead
                 case 72376:                                 // Raise Dead
