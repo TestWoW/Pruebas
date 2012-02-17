@@ -6755,7 +6755,7 @@ void Player::UpdateHonorFields()
 
         // lets check if player fits to title brackets (none of players reached by now 50k HK. this is bad condition in aspect
         // of making code generic, but allows to save some CPU and avoid fourther steps execution
-        if (HonorKills < 100 || HonorKills > 50000)
+        if (HonorKills < 100 || HonorKills >= 100000)
             return;
 
         if (HonorKills >= 100 && HonorKills < 200)
@@ -6782,9 +6782,9 @@ void Player::UpdateHonorFields()
             victim_rank = 11;
         else if (HonorKills >= 15000 && HonorKills < 30000)
             victim_rank = 12;
-        else if (HonorKills >= 30000 && HonorKills < 50000)
+        else if (HonorKills >= 25000 && HonorKills < 50000)
             victim_rank = 13;
-        else if (HonorKills == 50000)
+        else if (HonorKills >= 50000 && HonorKills < 100000))
             victim_rank = 14;
 
         // horde titles starting from 15+
