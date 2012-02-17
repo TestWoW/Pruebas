@@ -6784,7 +6784,7 @@ void Player::UpdateHonorFields()
             victim_rank = 12;
         else if (HonorKills >= 25000 && HonorKills < 50000)
             victim_rank = 13;
-        else if (HonorKills >= 50000 && HonorKills < 100000))
+        else if (HonorKills >= 50000 && HonorKills < 100000)
             victim_rank = 14;
 
         // horde titles starting from 15+
