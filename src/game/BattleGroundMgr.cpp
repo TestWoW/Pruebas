@@ -1283,15 +1283,12 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg)
         // it seems this must be according to BG_WINNER_A/H and _NOT_ TEAM_INDEX_A/H
         for(int i = 1; i >= 0; --i)
         {
-            uint32 at_id = bg->m_ArenaTeamIds[i];
-            ArenaTeam * at = sObjectMgr.GetArenaTeamById(at_id);
-
             uint32 pointsLost = bg->m_ArenaTeamRatingChanges[i] < 0 ? abs(bg->m_ArenaTeamRatingChanges[i]) : 0;
             uint32 pointsGained = bg->m_ArenaTeamRatingChanges[i] > 0 ? bg->m_ArenaTeamRatingChanges[i] : 0;
 
             *data << uint32(pointsLost);                        // Rating Lost
             *data << uint32(pointsGained);                      // Rating gained
-            *data << uint32(at->GetBattleRating());             // Matchmaking Value
+            *data << uint32(0);                                 // Matchmaking Value
             DEBUG_LOG("rating change: %d", bg->m_ArenaTeamRatingChanges[i]);
         }
         for(int i = 1; i >= 0; --i)
