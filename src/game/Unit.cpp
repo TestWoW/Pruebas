@@ -171,6 +171,12 @@ bool GlobalCooldownMgr::HasGlobalCooldown(SpellEntry const* spellInfo) const
     return itr != m_GlobalCooldowns.end() && itr->second.duration && WorldTimer::getMSTimeDiff(itr->second.cast_time, WorldTimer::getMSTime()) < itr->second.duration;
 }
 
+uint32 GlobalCooldownMgr::GetGlobalCooldown(SpellEntry const* spellInfo) const
+{
+    GlobalCooldownList::const_iterator itr = m_GlobalCooldowns.find(spellInfo->StartRecoveryCategory);
+    return itr != m_GlobalCooldowns.end() ? itr->second.duration - WorldTimer::getMSTimeDiff(itr->second.cast_time, WorldTimer::getMSTime()) : 0;
+}
+
 void GlobalCooldownMgr::AddGlobalCooldown(SpellEntry const* spellInfo, uint32 gcd)
 {
     m_GlobalCooldowns[spellInfo->StartRecoveryCategory] = GlobalCooldown(gcd, WorldTimer::getMSTime());
@@ -583,16 +589,22 @@ void Unit::resetAttackTimer(WeaponAttackType type)
     m_attackTimer[type] = uint32(GetAttackTime(type) * m_modAttackSpeedPct[type]);
 }
 
+float Unit::GetMeleeAttackDistance(Unit* pVictim /* NULL */) const
+{
+    // The measured values show BASE_MELEE_OFFSET in (1.3224, 1.342)
+    float dist = GetFloatValue(UNIT_FIELD_COMBATREACH) + 
+        (pVictim ? pVictim->GetFloatValue(UNIT_FIELD_COMBATREACH) : 0.0f) +
+        BASE_MELEERANGE_OFFSET;
+
+    return (dist < ATTACK_DISTANCE) ? ATTACK_DISTANCE : dist;
+}
+
 bool Unit::CanReachWithMeleeAttack(Unit* pVictim, float flat_mod /*= 0.0f*/) const
 {
     if (!pVictim || !pVictim->IsInWorld())
         return false;
 
-    // The measured values show BASE_MELEE_OFFSET in (1.3224, 1.342)
-    float reach = GetFloatValue(UNIT_FIELD_COMBATREACH) + pVictim->GetFloatValue(UNIT_FIELD_COMBATREACH) +
-        BASE_MELEERANGE_OFFSET + flat_mod;
-    if (reach < ATTACK_DISTANCE)
-        reach = ATTACK_DISTANCE;
+    float reach = GetMeleeAttackDistance(pVictim) + flat_mod;
 
     // This check is not related to bounding radius of both units!
     float dx = GetPositionX() - pVictim->GetPositionX();
@@ -13557,4 +13569,30 @@ void DamageInfo::Reset(uint32 _damage)
 SpellSchoolMask DamageInfo::SchoolMask()
 {
     return m_spellInfo ? GetSpellSchoolMask(m_spellInfo) : SPELL_SCHOOL_MASK_NORMAL;
+}
+
+void Unit::SetLastManaUse()
+{
+    if (GetTypeId() == TYPEID_PLAYER &&
+        !IsUnderLastManaUseEffect() &&
+        HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER))
+        RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
+
+    uint32 lastRegenInterval = IsUnderLastManaUseEffect() ? REGEN_TIME_PRECISE : REGEN_TIME_FULL;
+
+    m_lastManaUseTimer = 5000;
+
+    // Do first interrupted powers regen (not only PRECIZE interval), also set player mana regenerate interval to PRECIZE
+    if (GetTypeId() == TYPEID_PLAYER)
+    {
+        int32 diff = lastRegenInterval - ((Player*)this)->GetRegenTimer();
+        if (diff > 0)
+            ((Player*)this)->RegenerateAll(diff);
+    }
+}
+
+bool ManaUseEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
+{
+    m_caster.SetLastManaUse();
+    return true;
 }
