@@ -651,9 +651,10 @@ class World
         ObjectLockType& GetLock(MapLockType _locktype = MAP_LOCK_TYPE_DEFAULT) { return i_lock[_locktype]; }
 
         // reset duel area
-        void setAreas(const char* areas);
-        bool IsAreaEnabled(uint32 areaId);
-        std::set<uint32> getAreas() { return areaEnabledIds; }
+        void chompAndTrim(std::string& str);
+        bool getNextId(const std::string& pString, unsigned int& pStartPos, unsigned int& pId);
+        void setDuelResetEnableAreaIds(const char* areas);
+        bool IsAreaIdEnabledDuelReset(uint32 areaId);
 
     protected:
         void _UpdateGameTime();

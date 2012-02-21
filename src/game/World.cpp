@@ -981,9 +981,9 @@ void World::LoadConfigSettings(bool reload)
     sLog.outString("WORLD: mmap pathfinding %sabled", getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
 
     // reset duel area
-    setConfig(CONFIG_BOOL_RESET_DUEL_AREA_ENABLED, "DuelReset.Enable", true);
-    std::string areas = sConfig.GetStringDefault("DuelReset.AreaIds", "");
-    setAreas(areas.c_str());
+    setConfig(CONFIG_BOOL_RESET_DUEL_AREA_ENABLED, "DuelReset.Enable", false);
+    std::string areaIdsEnabledDuel = sConfig.GetStringDefault("DuelReset.AreaIds", "");
+    setDuelResetEnableAreaIds(areaIdsEnabledDuel.c_str());
     sLog.outString("WORLD: reset duel area %sabled", getConfig(CONFIG_BOOL_RESET_DUEL_AREA_ENABLED) ? "en" : "dis");
 
     // chat log and lexics cutter settings
@@ -2669,25 +2669,74 @@ bool World::configNoReload(bool reload, eConfigBoolValues index, char const* fie
     return false;
 }
 
-void World::setAreas(const char* areas)
+void World::chompAndTrim(std::string& str)
 {
-    if(areaEnabledIds.empty())
-        areaEnabledIds.clear();
-
-    uint32 strLenght = strlen(areas)+1;
-    char* areaList = new char[strLenght];
-    memcpy(areaList, areas, sizeof(char)*strLenght);
-
-    char* idstr = strtok(areaList, ",");
-    while (idstr)
+    while(str.length() >0)
     {
-        areaEnabledIds.insert(uint32(atoi(idstr)));
-        idstr = strtok(NULL, ",");
+        char lc = str[str.length()-1];
+        if(lc == '\r' || lc == '\n' || lc == ' ' || lc == '"' || lc == '\'')
+        {
+            str = str.substr(0,str.length()-1);
+        }
+        else
+        {
+            break;
+        }
     }
-    delete[] areaList;
+    while(str.length() >0)
+    {
+        char lc = str[0];
+        if(lc == ' ' || lc == '"' || lc == '\'')
+        {
+            str = str.substr(1,str.length()-1);
+        }
+        else
+        {
+            break;
+        }
+    }
 }
 
-bool World::IsAreaEnabled(uint32 areaId)
+//===============================================
+// result false, if no more id are found
+bool World::getNextId(const std::string& pString, unsigned int& pStartPos, unsigned int& pId)
+{
+    bool result = false;
+    unsigned int i;
+    for(i=pStartPos;i<pString.size(); ++i)
+    {
+        if(pString[i] == ',')
+        {
+            break;
+        }
+    }
+    if(i>pStartPos)
+    {
+        std::string idString = pString.substr(pStartPos, i-pStartPos);
+        pStartPos = i+1;
+        chompAndTrim(idString);
+        pId = atoi(idString.c_str());
+        result = true;
+    }
+    return(result);
+}
+
+void World::setDuelResetEnableAreaIds(const char* areas)
+{
+    if(!areaEnabledIds.empty())
+    {
+        unsigned int pos =0;
+        unsigned int id;
+        std::string confString(areas);
+        chompAndTrim(confString);
+        while(getNextId(confString, pos, id))
+        {
+           areaEnabledIds.insert(id);
+        }
+    }
+}
+
+bool World::IsAreaIdEnabledDuelReset(uint32 areaId)
 {
     return areaEnabledIds.find(areaId) != areaEnabledIds.end();
 }
