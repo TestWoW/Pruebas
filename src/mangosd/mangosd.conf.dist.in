@@ -929,6 +929,15 @@ LexicsCutterNoActionOnGM = 1
 #        Default: 0 - disabled (only GM's may transfer to this maps
 #                 1 - enabled  (any player, fit to custom areatrigger_teleport condition, may transfer to this maps).
 #
+#    DuelReset.Enable
+#        Enable duel reset script that resets all Arena Cooldows, set full hp/mana and erase all debuffs. (Need complete DuelReset.areaIds) -- Not Blizzlike
+#        Default: 0 (disabled)
+#                 1 (enabled)
+#
+#    DuelReset.AreaIds
+#        List of area's ids where Duel Reset Script will be enabled. With delimiter ','. You can lookup areas going with a GM to X zone and typing .gps
+#        Default: "12,14,4570" Outdoor Stormwind, Outdoor Orgrimmar, Dalaran's Circle of Wills 
+#
 ###################################################################################################################
 
 GameType = 1
@@ -1010,6 +1019,9 @@ Raid.MinLevel = 10
 CheckGOInPath = 0
 CrowdControlHPBase = 0.1
 AllowTransferToCustomMap = 0
+DuelReset.Enable = 0
+DuelReset.AreaIds = "12,14,4570"
+
 
 ###################################################################################################################
 # PLAYER INTERACTION

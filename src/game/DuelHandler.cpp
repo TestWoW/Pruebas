@@ -48,6 +48,34 @@ void WorldSession::HandleDuelAcceptedOpcode(WorldPacket& recvPacket)
 
     pl->SendDuelCountdown(3000);
     plTarget->SendDuelCountdown(3000);
+
+    /**
+    * Duel reset script
+    *
+    */
+   
+    uint32 areaId = pl->GetAreaId();
+       
+    if(sWorld.getConfig(CONFIG_BOOL_RESET_DUEL_AREA_ENABLED) && sWorld.IsAreaEnabled(areaId)){
+        pl->RemoveArenaSpellCooldowns();
+        plTarget->RemoveArenaSpellCooldowns();
+        pl->RemoveAurasDueToSpell(41425); // Remove Hypothermia Debuff
+        plTarget->RemoveAurasDueToSpell(41425);
+        pl->RemoveAurasDueToSpell(25771); // Remove Forbearance Debuff
+        plTarget->RemoveAurasDueToSpell(25771);
+        pl->RemoveAurasDueToSpell(57724); // Remove Sated Debuff
+        plTarget->RemoveAurasDueToSpell(57724);
+        pl->RemoveAurasDueToSpell(57723); // Remove Exhaustion Debuff
+        plTarget->RemoveAurasDueToSpell(57723);
+        pl->RemoveAurasDueToSpell(66233); // Remove Ardent Defender Debuff
+        plTarget->RemoveAurasDueToSpell(66233);
+        pl->RemoveAurasDueToSpell(11196); // Remove Recently Bandaged Debuff
+        plTarget->RemoveAurasDueToSpell(11196);
+        pl->SetHealth(pl->GetMaxHealth());
+        pl->SetPower(POWER_MANA, pl->GetMaxPower(POWER_MANA));
+        plTarget->SetHealth(plTarget->GetMaxHealth());
+        plTarget->SetPower(POWER_MANA,  plTarget->GetMaxPower(POWER_MANA));
+    }
 }
 
 void WorldSession::HandleDuelCancelledOpcode(WorldPacket& recvPacket)
