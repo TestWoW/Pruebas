@@ -2723,7 +2723,7 @@ bool World::getNextId(const std::string& pString, unsigned int& pStartPos, unsig
 
 void World::setDuelResetEnableAreaIds(const char* areas)
 {
-    if(!areaEnabledIds.empty())
+    if(areaEnabledIds.empty())
     {
         unsigned int pos =0;
         unsigned int id;
