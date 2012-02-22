@@ -28,6 +28,7 @@
 #include "Policies/Singleton.h"
 #include "SharedDefines.h"
 #include "ObjectLock.h"
+#include "Util.h"
 
 #include <map>
 #include <set>
@@ -651,8 +652,6 @@ class World
         ObjectLockType& GetLock(MapLockType _locktype = MAP_LOCK_TYPE_DEFAULT) { return i_lock[_locktype]; }
 
         // reset duel area
-        void chompAndTrim(std::string& str);
-        bool getNextId(const std::string& pString, unsigned int& pStartPos, unsigned int& pId);
         void setDuelResetEnableAreaIds(const char* areas);
         bool IsAreaIdEnabledDuelReset(uint32 areaId);
 
@@ -758,7 +757,7 @@ class World
         ObjectLockType   i_lock[MAP_LOCK_TYPE_MAX];
 
         // reset duel area
-        std::set<uint32> areaEnabledIds;
+        Tokens areaEnabledIds;
 
 };
 
