@@ -84,7 +84,7 @@ void WorldSession::HandleDuelAcceptedOpcode(WorldPacket& recvPacket)
         {
             plPetTarget->SetHealth(plPetTarget->GetMaxHealth());
             plPetTarget->SetPower(plPetTarget->getPowerType(), plPetTarget->GetMaxPower(plPetTarget->getPowerType()));
-            plTarget->RemoveArenaAuras(true);
+            plPetTarget->RemoveArenaAuras(true);
         }
     }
 }
