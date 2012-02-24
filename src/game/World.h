@@ -757,7 +757,7 @@ class World
         ObjectLockType   i_lock[MAP_LOCK_TYPE_MAX];
 
         // reset duel area
-        Tokens areaEnabledIds;
+        std::set<uint32> areaEnabledIds; //set of areaIds where is enabled the Duel reset system
 
 };
 
