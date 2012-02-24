@@ -651,7 +651,7 @@ class World
         // multithread locking (World locking used only if object map == NULL)
         ObjectLockType& GetLock(MapLockType _locktype = MAP_LOCK_TYPE_DEFAULT) { return i_lock[_locktype]; }
 
-        // reset duel area
+        // reset duel system
         void setDuelResetEnableAreaIds(const char* areas);
         bool IsAreaIdEnabledDuelReset(uint32 areaId);
 
@@ -756,7 +756,7 @@ class World
         // World locking for global (not-in-map) objects.
         ObjectLockType   i_lock[MAP_LOCK_TYPE_MAX];
 
-        // reset duel area
+        // reset duel system
         std::set<uint32> areaEnabledIds; //set of areaIds where is enabled the Duel reset system
 
 };
