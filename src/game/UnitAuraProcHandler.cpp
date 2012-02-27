@@ -3752,39 +3752,36 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, DamageIn
             // Deep Wounds (replace triggered spells to directly apply DoT), dot spell have familyflags
             if (!auraSpellInfo->SpellFamilyFlags.Flags && auraSpellInfo->SpellIconID == 243)
             {
-                float weaponDPS;
-                float attackPower;
-                float weaponSpeed;
-                // If procs on off-hand
-                if ((procFlags & PROC_FLAG_SUCCESSFUL_OFFHAND_HIT))
-                {
-                    weaponDPS = ((GetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE) + GetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE))/2)/(GetAttackTime(OFF_ATTACK)/1000);
-                    weaponSpeed = GetAttackTime(OFF_ATTACK)/1000;
-                    attackPower = GetTotalAttackPowerValue(OFF_ATTACK);
-                }
-                // If procs on main-hand
-                else if (!(procFlags & PROC_FLAG_SUCCESSFUL_OFFHAND_HIT))
-                {
-                    weaponDPS = ((GetFloatValue(UNIT_FIELD_MINDAMAGE) + GetFloatValue(UNIT_FIELD_MAXDAMAGE))/2)/(GetAttackTime(BASE_ATTACK)/1000);
-                    weaponSpeed = GetAttackTime(BASE_ATTACK)/1000;
-                    attackPower = GetTotalAttackPowerValue(BASE_ATTACK);
-                }
+                bool bOffHand = procFlags & PROC_FLAG_SUCCESSFUL_OFFHAND_HIT;
+
+                float weaponSpeed = GetAttackTime(bOffHand ? OFF_ATTACK : BASE_ATTACK)/1000.0f;
+                float weaponDPS   = ((GetFloatValue(bOffHand ? UNIT_FIELD_MINOFFHANDDAMAGE : UNIT_FIELD_MINDAMAGE) +
+                                    GetFloatValue(bOffHand ? UNIT_FIELD_MAXOFFHANDDAMAGE : UNIT_FIELD_MAXDAMAGE))/2.0f) / weaponSpeed;
+                float attackPower = GetTotalAttackPowerValue(bOffHand ? OFF_ATTACK : BASE_ATTACK);
+                float f_damage    = 0.0f;
 
                 switch (auraSpellInfo->Id)
                 {
-                    case 12834: basepoints[0] = int32(((weaponDPS + attackPower / 14) * weaponSpeed)* 0.16); break;
-                    case 12849: basepoints[0] = int32(((weaponDPS + attackPower / 14) * weaponSpeed)* 0.32); break;
-                    case 12867: basepoints[0] = int32(((weaponDPS + attackPower / 14) * weaponSpeed)* 0.48); break;
+                    case 12834: f_damage = ((weaponDPS + attackPower / 14.0f) * weaponSpeed)* 0.16f; break;
+                    case 12849: f_damage = ((weaponDPS + attackPower / 14.0f) * weaponSpeed)* 0.32f; break;
+                    case 12867: f_damage = ((weaponDPS + attackPower / 14.0f) * weaponSpeed)* 0.48f; break;
                     // Impossible case
                     default:
                         sLog.outError("Unit::HandleProcTriggerSpellAuraProc: DW unknown spell rank %u",auraSpellInfo->Id);
                         return SPELL_AURA_PROC_FAILED;
                 }
 
-                // 1 tick/sec * 6 sec = 6 ticks
-                basepoints[0] /= 6;
-
                 trigger_spell_id = 12721;
+
+                SpellEntry const* triggerspellInfo = sSpellStore.LookupEntry(trigger_spell_id);
+
+                if (!triggerspellInfo)
+                    return SPELL_AURA_PROC_FAILED;
+
+                uint32 tickcount = GetSpellDuration(triggerspellInfo) / triggerspellInfo->EffectAmplitude[EFFECT_INDEX_0];
+
+                basepoints[0] = floor( f_damage / tickcount);
+
                 break;
             }
             else if (auraSpellInfo->SpellIconID == 2961)    // Taste for Blood
