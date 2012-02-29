@@ -9834,6 +9834,18 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
+                case 68084:                                 // Clear Valkyr touch
+                {
+                    if (!unitTarget)
+                        return;
+
+                    if (unitTarget->HasAura(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1)))
+                        unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1));
+                    if (unitTarget->HasAura(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_2)))
+                        unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_2));
+
+                    return;
+                }
                 case 69057:                                 // Bone Spike Graveyard (Lord Marrowgar)
                 case 70826:                                 // Bone Spike Graveyard (Lord Marrowgar)
                 case 72088:                                 // Bone Spike Graveyard (Lord Marrowgar)
@@ -9862,6 +9874,33 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         return;
 
                     m_caster->CastSpell(unitTarget, 67532, true);
+                    return;
+                }
+                case 67590:                                 // Powering Up (Trial of the Crusader, Twin Val'kyr encounter)
+                case 67602:
+                case 67603:
+                case 67604:
+                {
+                    if (!unitTarget)
+                        return;
+
+                    if (Aura* pAur = unitTarget->GetAura(m_spellInfo->Id, EFFECT_INDEX_0))
+                    {
+                        if (SpellAuraHolderPtr pHolder = pAur->GetHolder())
+                        {
+                            if (pHolder->GetStackAmount() >= 99)
+                            {
+                                uint32 uiSpell = 0;
+                                if (unitTarget->HasAuraOfDifficulty(65684))
+                                    uiSpell = 65724;
+                                else if (unitTarget->HasAuraOfDifficulty(65686))
+                                    uiSpell = 65748;
+
+                                if (uiSpell > 0)
+                                    unitTarget->CastSpell(unitTarget, uiSpell, true);
+                            }
+                        }
+                    }
                     return;
                 }
                 case 68861:                                 // Consume Soul (ICC FoS: Bronjahm)
