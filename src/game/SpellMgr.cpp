@@ -717,6 +717,10 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
         case 39289:                                         // Kargath's Executioner
         case 39290:                                         // Kargath's Executioner
         case 74505:                                         // Enervating Brand (Baltharus)
+        case 69291:                                         // Inoculated (Festergut)
+        case 72101:
+        case 72102:
+        case 72103:
             return false;
         case 552:                                           // Abolish Disease
         case 12042:                                         // Arcane Power

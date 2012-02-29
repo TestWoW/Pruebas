@@ -7881,6 +7881,21 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
         case 72528:
         case 72529:
         case 72530:
+        case 70084:     // Frost Aura (Sindragosa)
+        case 71050:
+        case 71051:
+        case 71052:
+        case 69649:     // Frost Breath (Sindragosa)
+        case 71056:
+        case 71057:
+        case 71058:
+        case 70123:     // Blistering Cold (Sindragosa)
+        case 71048:
+        case 71049:
+        case 71047:
+        case 70122:     // Icy grip (Sindragosa)
+        case 71077:     // Tail smash (Sindragosa)
+        case 19983:     // Cleave (Sindragosa)
             uiObjectEntry = 201722;
             break;
     }
@@ -9361,6 +9376,12 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
+        case 69766: // Instability
+        {
+            if (m_caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC || m_caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
+                FillAreaTargets(targetUnitMap, 20.0f, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            break;
+        }
         case 69832: // Unstable Ooze Explosion (Rotface)
         {
             UnitList tempTargetUnitMap;
@@ -9608,6 +9629,22 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
+        case 70882: // Slime spray summon trigger
+        {
+            UnitList tempTargetUnitMap;
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
+            if (!tempTargetUnitMap.empty())
+            {
+                for (UnitList::const_iterator itr = tempTargetUnitMap.begin(); itr != tempTargetUnitMap.end(); ++itr)
+                {
+                    if ((*itr) && (*itr)->GetTypeId() != TYPEID_PLAYER)
+                        continue;
+
+                    targetUnitMap.push_back(*itr);
+                }
+            }
+            break;
+        }
         case 70911: // Unbound Plague (Putricide)
         case 72854:
         case 72855:
@@ -9788,14 +9825,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                 targetUnitMap.clear();
                 targetUnitMap.push_back(pTmp);
             }
-            break;
-        }
-        case 72380: // Blood Nova AOE (saurfang)
-        case 72438:
-        case 72439:
-        case 72440:
-        {
-            FillAreaTargets(targetUnitMap, 12.0f, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE, GetAffectiveCaster());
             break;
         }
         case 72385:                                     // Boiling Blood
