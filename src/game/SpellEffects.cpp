@@ -3551,6 +3551,22 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, 72195, true);
                     break;
                 }
+                case 72752:                                 // Will of the Forsaken Cooldown Trigger
+                case 72757:                                 // Will of the Forsaken Cooldown Trigger (WOTF)
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    Player* target = (Player*)unitTarget;
+                    target->AddSpellCooldown(m_spellInfo->Id, 0, time(NULL) + m_spellInfo->CategoryRecoveryTime / IN_MILLISECONDS);
+                    WorldPacket data(SMSG_SPELL_COOLDOWN, 8+1+4);
+                    data << target->GetObjectGuid();
+                    data << uint8(0);
+                    data << uint32(m_spellInfo->Id);
+                    data << uint32(0);
+                    target->GetSession()->SendPacket(&data);
+                    return;
+                }
                 default:
                     break;
             }
