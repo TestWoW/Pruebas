@@ -138,7 +138,7 @@ bool ChatHandler::HandleNameAnnounceCommand(char* args)
     if (!*args)
         return false;
 
-    switch(m_session->GetSecurity()) 
+    /*switch(m_session->GetSecurity()) 
     {
       case SEC_MODERATOR:
         strid = LANG_SYSTEMMESSAGE_MODERATOR;
@@ -151,8 +151,14 @@ bool ChatHandler::HandleNameAnnounceCommand(char* args)
         break;
       default:
         return false;
-    }
-      sWorld.SendWorldText(strid, m_session->GetPlayerName(), args);
+    }*/
+
+    uint nivel = m_session->GetSecurity();
+    if(nivel == 3) strid = LANG_SYSTEMMESSAGE_GAMEMASTER;
+    else if(nivel > 3) strid = LANG_SYSTEMMESSAGE_ADMINISTRATOR;
+    else return false;
+
+    sWorld.SendWorldText(strid, m_session->GetPlayerName(), args);
     return true;
 }
 
