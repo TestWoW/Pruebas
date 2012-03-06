@@ -9376,12 +9376,12 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
-        case 69766: // Instability
+        /*case 69766: // Instability
         {
             if (m_caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC || m_caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
                 FillAreaTargets(targetUnitMap, 20.0f, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             break;
-        }
+        }*/
         case 69832: // Unstable Ooze Explosion (Rotface)
         {
             UnitList tempTargetUnitMap;

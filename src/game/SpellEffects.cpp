@@ -10066,7 +10066,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                                 unitTarget->CastSpell(unitTarget, 69839, false); // Unstable Ooze Explosion
                                 // despawn Big Ooze
                                 if (unitTarget->GetTypeId() == TYPEID_UNIT)
-                                    ((Creature*)unitTarget)->ForcedDespawn(5500);
+                                    ((Creature*)unitTarget)->ForcedDespawn(4500);
                             }
                         }
                     }
