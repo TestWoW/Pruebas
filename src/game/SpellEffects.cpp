@@ -11695,9 +11695,29 @@ void Spell::EffectKnockBack(SpellEffectIndex eff_idx)
     if (unitTarget->IsInWater())
         return;
 
-    // Can't knockback rooted target
-    if (unitTarget->hasUnitState(UNIT_STAT_ROOT))
+    // Can't knockback rooted target or when has bladestorm aura
+    if (unitTarget->hasUnitState(UNIT_STAT_ROOT) || unitTarget->HasAura(46924))
         return;
+
+    if (unitTarget->GetTypeId() == TYPEID_UNIT)
+    {
+        switch (unitTarget->GetEntry()) // special cases (ICC)
+        {
+        case 36612: // Lord Marrowgar
+        case 36855: // Lady Deathhisper
+        case 37813: // Deathbringer Saurfang
+        case 36626: // Festergut
+        case 36627: // Rotface
+        case 36678: // Proffesor Putricide
+        case 37973: // Taldaram
+        case 37970: // Valanar
+        case 37972: // Keleseth
+        case 37955: // Blood Queen Lana'Thel
+        case 36853: // Sindragosa
+        case 36597: // Lich King
+            return;
+        }
+    }
 
     // Typhoon
     if (m_spellInfo->SpellFamilyName == SPELLFAMILY_DRUID && m_spellInfo->SpellFamilyFlags.test<CF_DRUID_TYPHOON>())
