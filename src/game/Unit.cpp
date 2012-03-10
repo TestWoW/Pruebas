@@ -4595,7 +4595,6 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolderPtr holder)
             bool bIsSpellStackingCustom = false;
             switch(holder->GetId())
             {
-                case 7386:  // Sunder Armor (Warrior)
                 case 70338: // Necrotic Plague (Lich King)
                 case 73785:
                 case 73786:
