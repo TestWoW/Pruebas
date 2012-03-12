@@ -23,7 +23,9 @@ MovementGenerator::~MovementGenerator()
 {
 }
 
-bool MovementGenerator::IsActive(Unit& u)
+bool MovementGenerator::IsActive( Unit& u )
 {
-    return u.GetMotionMaster()->top() == this;
+    // When movement generator list modified from Update movegen object erase delayed,
+    // so pointer still valid and be used for check
+    return !u.GetMotionMaster()->empty() && u.GetMotionMaster()->top() == this;
 }

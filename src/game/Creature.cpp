@@ -510,7 +510,7 @@ void Creature::Update(uint32 update_diff, uint32 diff)
                 {
                     SetDeathState(JUST_DIED);
                     SetHealth(0);
-                    GetUnitStateMgr().InitDefaults();
+                    i_motionMaster.Clear();
                     clearUnitState(UNIT_STAT_ALL_STATE);
                     LoadCreatureAddon(true);
                 }
@@ -1541,7 +1541,7 @@ void Creature::SetDeathState(DeathState s)
             pet->Unsummon(PET_SAVE_AS_DELETED, this);
 
         if (CanFly())
-            GetMotionMaster()->MoveFall();
+            i_motionMaster.MoveFall();
 
         Unit::SetDeathState(CORPSE);
     }
@@ -1560,7 +1560,7 @@ void Creature::SetDeathState(DeathState s)
         Unit::SetDeathState(ALIVE);
 
         clearUnitState(UNIT_STAT_ALL_STATE);
-        GetMotionMaster()->Initialize();
+        i_motionMaster.Initialize();
 
         SetMeleeDamageSchool(SpellSchools(cinfo->dmgschool));
 
@@ -2217,7 +2217,7 @@ bool Creature::HasSpellCooldown(uint32 spell_id) const
 
 bool Creature::IsInEvadeMode() const
 {
-    return i_motionMaster.GetCurrentMovementGeneratorType() == HOME_MOTION_TYPE;
+    return !i_motionMaster.empty() && i_motionMaster.GetCurrentMovementGeneratorType() == HOME_MOTION_TYPE;
 }
 
 bool Creature::HasSpell(uint32 spellID)
