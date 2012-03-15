@@ -3666,6 +3666,8 @@ void Spell::cast(bool skipCheck)
                 AddPrecastSpell(71277);
             else if (m_spellInfo->Id == 70923)             // Uncontrollable Frenzy (Queen Lana'thel ICC)
                 AddTriggeredSpell(70924); // health buff etc.
+            else if (m_spellInfo->Id == 70126 || m_spellInfo->Id == 69766)
+                 if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
             break;
         }
         case SPELLFAMILY_MAGE:
