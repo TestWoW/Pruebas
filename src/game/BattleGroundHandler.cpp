@@ -541,6 +541,20 @@ void WorldSession::HandleLeaveBattlefieldOpcode( WorldPacket& recv_data )
             if (bg->GetStatus() != STATUS_WAIT_LEAVE)
                 return;
 
+    // check if arena is in progress when player leave and make player lose rating if is in progres
+    if(BattleGround* bg = _player->GetBattleGround())
+    {
+        if(bg->isArena() && bg->isRated() && bg->GetStatus() != STATUS_WAIT_LEAVE)
+        {
+            ArenaTeam *team = sObjectMgr.GetArenaTeamById(bg->GetArenaTeamIdForTeam(bg->GetOtherTeam(_player->GetTeam())));
+            if(team)
+            {
+                uint32 other_team_rating = team->GetBattleRating();
+                team->MemberLost(_player, other_team_rating);
+            }
+        }
+    }
+
     _player->LeaveBattleground();
 }
 
