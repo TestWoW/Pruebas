@@ -9175,6 +9175,28 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE, GetAffectiveCaster());
             break;
         }
+        case 69159: // Gaseous Blight (Festergut)
+        case 69161:
+        case 69163:
+        case 70138:
+        case 70137:
+        case 70136:
+        case 70135:
+        {
+            UnitList tempTargetUnitMap;
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            if (!tempTargetUnitMap.empty())
+            {
+                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
+                {
+                    if (!(*iter)->GetCharmerOrOwnerPlayerOrPlayerItself())
+                        continue;
+
+                    targetUnitMap.push_back((*iter));
+                }
+            }
+            break;
+        }
         case 69278:                                 // Gas spore - 10 (Festergut)
         case 71221:                                 // Gas spore - 25 (Festergut)
         {
@@ -9381,12 +9403,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
-        /*case 69766: // Instability
-        {
-            if (m_caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_10MAN_HEROIC || m_caster->GetMap()->GetDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
-                FillAreaTargets(targetUnitMap, 20.0f, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
-            break;
-        }*/
         case 69832: // Unstable Ooze Explosion (Rotface)
         {
             UnitList tempTargetUnitMap;
