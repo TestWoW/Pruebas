@@ -11981,7 +11981,8 @@ Item* Player::EquipItem( uint16 pos, Item *pItem, bool update )
             ApplyItemOnStoreSpell(pItem, true);
 
             // Ranged weapons and also Totem/Relic/Sigil/etc
-            if (pProto && isInCombat() && (pProto->InventoryType == INVTYPE_RANGED || pProto->InventoryType == INVTYPE_RELIC) && m_weaponChangeTimer == 0)
+            //if (pProto && isInCombat() && (pProto->InventoryType == INVTYPE_RANGED || pProto->InventoryType == INVTYPE_RELIC) && m_weaponChangeTimer == 0)
+            if (pProto && isInCombat() && (pProto->Class == ITEM_CLASS_WEAPON || pProto->InventoryType == INVTYPE_RELIC) && m_weaponChangeTimer == 0)
             {
                 uint32 cooldownSpell = SPELL_ID_WEAPON_SWITCH_COOLDOWN_1_5s;
 
