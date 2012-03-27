@@ -11309,6 +11309,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     break;
                 }
                 case 70877:                                 // Frenzied Bloodthirst
+                case 71474:
                 {
                     if (!apply)
                     {

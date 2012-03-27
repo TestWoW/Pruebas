@@ -9874,6 +9874,15 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             }
             break;
         }
+        case 72380:                                     // Blood Nova AOE (Saurfang)
+        case 72438:
+        case 72439:
+        case 72440:
+        {
+            FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE, GetAffectiveCaster());
+            targetUnitMap.remove(m_caster);
+            break;
+        }
         case 72385:                                     // Boiling Blood
         case 72441:
         case 72442:
@@ -9916,8 +9925,14 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             {
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
                 {
-                    if (!(*iter)->GetObjectGuid().IsPlayer())
+                    if (!(*iter)->GetObjectGuid().IsPlayer() ||
+                        (*iter)->HasAuraOfDifficulty(70838) ||
+                        (*iter) == m_caster->getVictim())
                         continue;
+
+                    if (m_caster->GetDistance(*iter) < 5.0f) // target ranged players
+                        continue;
+
                     targetUnitMap.push_back((*iter));
                 }
             }
