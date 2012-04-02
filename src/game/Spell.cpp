@@ -3440,24 +3440,6 @@ void Spell::prepare(SpellCastTargets const* targets, Aura* triggeredByAura)
 
     SpellCastResult result = CheckCast(true);
 
-    // Death grip shouldn't be used moving
-
-    if(m_spellInfo->Id == 49576)
-    {
-        if(((Player*)m_caster)->isMoving())
-        {
-            bool root = false;
-            Unit::AuraList const& stunAuras = m_caster->GetAurasByType(SPELL_AURA_MOD_ROOT);
-            for (Unit::AuraList::const_iterator itr = stunAuras.begin(); itr != stunAuras.end(); ++itr)
-                if ((*itr)->HasMechanic(MECHANIC_ROOT)) 
-                {
-                    root = true;
-                    break;
-                }
-            if(!root) result = SPELL_FAILED_MOVING;
-        }
-    }
-
     // disengage vs roots
     if(m_spellInfo->Id == 781)
     {
