@@ -796,9 +796,42 @@ void Aura::AreaAuraUpdate(uint32 diff)
                 }
                 case AREA_AURA_FRIEND:
                 {
-                    MaNGOS::AnyFriendlyUnitInObjectRangeCheck u_check(caster, m_radius);
-                    MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitInObjectRangeCheck> searcher(_targets, u_check);
-                    Cell::VisitAllObjects(caster, searcher, m_radius);
+                    switch (GetSpellProto()->Id)
+                    {
+                        case 45822:    //BG AV Buffs - Horde
+                        case 45823:
+                        case 45824:
+                        case 45826:
+                        {
+                            Creature* pCreature = NULL;
+                            MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*caster, 11946, true, m_radius);
+                            MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pCreature, creature_check);
+                            Cell::VisitGridObjects(caster, searcher, m_radius);
+                            if (pCreature)
+                                targets.insert(pCreature->GetObjectGuid());
+                            break;
+                        }
+                        case 45828:    //BG AV Buffs - Alliance
+                        case 45829:
+                        case 45830:
+                        case 45831:
+                        {
+                            Creature* pCreature = NULL;
+                            MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*caster, 11948, true, m_radius);
+                            MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pCreature, creature_check);
+                            Cell::VisitGridObjects(caster, searcher, m_radius);
+                            if (pCreature)
+                                targets.insert(pCreature->GetObjectGuid());
+                            break;
+                        }
+                        default:
+                        {
+                            MaNGOS::AnyFriendlyUnitInObjectRangeCheck u_check(caster, m_radius);
+                            MaNGOS::UnitListSearcher<MaNGOS::AnyFriendlyUnitInObjectRangeCheck> searcher(_targets, u_check);
+                            Cell::VisitAllObjects(caster, searcher, m_radius);
+                            break;
+                        }
+                    }
                     break;
                 }
                 case AREA_AURA_ENEMY:
