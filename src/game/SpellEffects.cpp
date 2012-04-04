@@ -6411,6 +6411,14 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
                 data << uint32(dispelledHolder->GetId());   // Spell Id
                 data << uint8(0);                           // 0 - dispelled !=0 cleansed
 
+                // temporal
+
+                if(m_spellInfo->Id == 527 || m_spellInfo->Id == 988)
+                {
+                    if(dispelledHolder->GetId() == 642 || dispelledHolder->GetId() == 45438) return;
+                }
+                /////////////////////////
+
                 if (dispelledHolder->GetSpellProto()->AttributesEx7 & SPELL_ATTR_EX7_DISPEL_CHARGES && dispelledHolder->GetAuraCharges() > 1)
                 {
                     if (dispelledHolder->DropAuraCharge())
