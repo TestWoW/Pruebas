@@ -8570,29 +8570,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                 return true;
             break;
         }
-        case 45822: // Alterac buffs
-        case 45823:
-        case 45824:
-        case 45826:
-        case 45828:
-        case 45829:
-        case 45830:
-        case 45831:
-        {
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
-            if (!tempTargetUnitMap.empty())
-            {
-                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-                {
-                    if ((*iter)->GetObjectGuid().IsPlayer())
-                        continue;
-
-                    targetUnitMap.push_back((*iter));
-                }
-            }
-            break;
-        }
         case 46584: // Raise Dead
         {
             Unit* pCorpseTarget = NULL;
