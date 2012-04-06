@@ -721,6 +721,8 @@ bool IsPositiveEffect(SpellEntry const *spellproto, SpellEffectIndex effIndex)
         case 72101:
         case 72102:
         case 72103:
+        case 66550:                                         // Teleport(BattlegroundIC)
+        case 66551:                                         // Teleport(BattlegroundIC)
             return false;
         case 552:                                           // Abolish Disease
         case 12042:                                         // Arcane Power
