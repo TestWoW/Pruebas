@@ -6803,7 +6803,7 @@ void Player::UpdateHonorFields()
             victim_rank = 10;
         else if (HonorKills >= 9000 && HonorKills < 15000)
             victim_rank = 11;
-        else if (HonorKills >= 15000 && HonorKills < 30000)
+        else if (HonorKills >= 15000 && HonorKills < 25000)
             victim_rank = 12;
         else if (HonorKills >= 25000 && HonorKills < 50000)
             victim_rank = 13;
