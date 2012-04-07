@@ -3917,7 +3917,11 @@ void Spell::cast(bool skipCheck)
             break;
         }
             
-        default: break;
+        default:
+        {
+            if(m_spellInfo->Id == 72293) if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+            break;
+        }
 
     }
 
