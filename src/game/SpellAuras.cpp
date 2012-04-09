@@ -804,7 +804,7 @@ void Aura::AreaAuraUpdate(uint32 diff)
                         case 45826:
                         {
                             Creature* pCreature = NULL;
-                            MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*caster, 11946, true, false, m_radius);
+                            MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*caster, 11946, true, m_radius);
                             MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pCreature, creature_check);
                             Cell::VisitGridObjects(caster, searcher, m_radius);
                             if (pCreature)
@@ -817,7 +817,7 @@ void Aura::AreaAuraUpdate(uint32 diff)
                         case 45831:
                         {
                             Creature* pCreature = NULL;
-                            MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*caster, 11948, true, false, m_radius);
+                            MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*caster, 11948, true, m_radius);
                             MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pCreature, creature_check);
                             Cell::VisitGridObjects(caster, searcher, m_radius);
                             if (pCreature)
@@ -3228,7 +3228,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 
                         Creature* pCreature = NULL;
 
-                        MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*Caster,  26591, true, false, 15.0f);
+                        MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*Caster,  26591, true, 15.0f);
                         MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pCreature, creature_check);
 
                         Cell::VisitGridObjects(Caster, searcher, 15.0f);
