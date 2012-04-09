@@ -16447,6 +16447,9 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             currentBg->AddOrSetPlayerToCorrectBgGroup(this, GetObjectGuid(), m_bgData.bgTeam);
 
             SetInviteForBattleGroundQueueType(bgQueueTypeId,currentBg->GetInstanceID());
+
+            SetLocationMapId(savedLocation.mapid);
+            Relocate(savedLocation.coord_x, savedLocation.coord_y, savedLocation.coord_z, savedLocation.orientation);
         }
         else
         {
