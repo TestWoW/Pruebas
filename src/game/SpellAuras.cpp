@@ -802,22 +802,13 @@ void Aura::AreaAuraUpdate(uint32 diff)
                         case 45823:
                         case 45824:
                         case 45826:
-                        {
-                            Creature* pCreature = NULL;
-                            MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*caster, 11946, true, m_radius);
-                            MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pCreature, creature_check);
-                            Cell::VisitGridObjects(caster, searcher, m_radius);
-                            if (pCreature)
-                                targets.insert(pCreature->GetObjectGuid());
-                            break;
-                        }
                         case 45828:    //BG AV Buffs - Alliance
                         case 45829:
                         case 45830:
                         case 45831:
                         {
                             Creature* pCreature = NULL;
-                            MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*caster, 11948, true, m_radius);
+                            MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck creature_check(*caster, 11948, true, false, m_radius);
                             MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(pCreature, creature_check);
                             Cell::VisitGridObjects(caster, searcher, m_radius);
                             if (pCreature)
