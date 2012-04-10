@@ -5586,6 +5586,25 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (m_spellInfo != sSpellMgr.SelectAuraRankForLevel(m_spellInfo, target->getLevel()))
                     return SPELL_FAILED_LOWLEVEL;
             }
+
+            if (m_caster->GetTypeId() == TYPEID_PLAYER && m_spellInfo->Mechanic == MECHANIC_DISARM)
+            {
+                if (target->GetTypeId() == TYPEID_PLAYER)
+                {
+                    Player *player = (Player*)target;
+                    if (m_spellInfo->Id == 51722)                           // Dismantle
+                    {
+                        if (!player->GetWeaponForAttack(BASE_ATTACK) && !player->GetShield() && !player->GetWeaponForAttack(RANGED_ATTACK))
+                            return SPELL_FAILED_TARGET_NO_WEAPONS;
+                    }
+                    else if ((!player->GetWeaponForAttack(BASE_ATTACK) && !player->GetWeaponForAttack(RANGED_ATTACK)) || !player->IsUsingEquippedWeapon(true))
+                    {
+                        return SPELL_FAILED_TARGET_NO_WEAPONS;
+                    }
+                }
+                else if (!target->GetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID))
+                    return SPELL_FAILED_TARGET_NO_WEAPONS;
+            }
         }
         else if (m_caster == target)
         {
@@ -5907,7 +5926,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                             // no target provided or it was not valid, so use closest in range
                             if (!targetExplicit)
                             {
-                                MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster, i_spellST->second.targetEntry, i_spellST->second.type != SPELL_TARGET_TYPE_DEAD, range);
+                                MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck u_check(*m_caster, i_spellST->second.targetEntry, i_spellST->second.type != SPELL_TARGET_TYPE_DEAD, i_spellST->second.type == SPELL_TARGET_TYPE_DEAD, range);
                                 MaNGOS::CreatureLastSearcher<MaNGOS::NearestCreatureEntryWithLiveStateInObjectRangeCheck> searcher(p_Creature, u_check);
 
                                 // Visit all, need to find also Pet* objects
@@ -6632,7 +6651,11 @@ SpellCastResult Spell::CheckCast(bool strict)
                 if (!pTarget || !pTarget->GetVehicleKit())
                     return SPELL_FAILED_BAD_TARGETS;
 
-                int32 seat = m_spellInfo->EffectBasePoints[i] < 8 ? m_spellInfo->EffectBasePoints[i] : -1;
+                if (m_currentBasePoints[i] < 0 || m_currentBasePoints[i] > MAX_VEHICLE_SEAT)
+                    return SPELL_FAILED_BAD_TARGETS;
+
+                // -1 if "first empty seat", seat number (starting from 0) - in other cases
+                int32 seat = m_currentBasePoints[i] - 1;
 
                 if (!pTarget->GetVehicleKit()->HasEmptySeat(seat))
                 {

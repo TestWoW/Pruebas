@@ -212,8 +212,8 @@ void BattleGroundIC::Update(uint32 diff)
                 }
 
                 // gunship starting
-                if (node == BG_IC_NODE_HANGAR)
-                    (teamIndex == TEAM_INDEX_ALLIANCE ? gunshipAlliance : gunshipHorde)->BuildStartMovePacket(GetBgMap());
+//                if (node == BG_IC_NODE_HANGAR)
+//                    (teamIndex == BG_TEAM_ALLIANCE ? gunshipAlliance : gunshipHorde)->BuildStartMovePacket(GetBgMap());
             }
         }
     }
@@ -258,7 +258,7 @@ void BattleGroundIC::AddPlayer(Player *plr)
 
     m_PlayerScores[plr->GetObjectGuid()] = sc;
 
-    SendTransportInit(plr);
+//    SendTransportInit(plr);
 
     if (GetStatus() != STATUS_IN_PROGRESS)
         MakeInteractive(IC_EVENT_ADD_TELEPORT, 0, false);
@@ -392,11 +392,11 @@ bool BattleGroundIC::SetupBattleGround()
     }
 
     //Send transport init packet to all player in map
-    for (BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end();itr++)
-    {
-        if (Player* player = sObjectMgr.GetPlayer(itr->first))
-            SendTransportInit(player);
-    }
+//    for (BattleGroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end();itr++)
+//    {
+//        if (Player* player = sObjectMgr.GetPlayer(itr->first))
+//            SendTransportInit(player);
+//    }
 
     return true;
 }
@@ -590,8 +590,8 @@ void BattleGroundIC::EventPlayerClickedOnFlag(Player *source, GameObject* target
 
         sound = (teamIndex == TEAM_INDEX_ALLIANCE) ? BG_IC_SOUND_NODE_ASSAULTED_ALLIANCE : BG_IC_SOUND_NODE_ASSAULTED_HORDE;
 
-        if (node == BG_IC_NODE_HANGAR)
-            (teamIndex == TEAM_INDEX_ALLIANCE ? gunshipHorde : gunshipAlliance)->BuildStopMovePacket(GetBgMap());
+//        if (node == BG_IC_NODE_HANGAR)
+//            (teamIndex == BG_TEAM_ALLIANCE ? gunshipHorde : gunshipAlliance)->BuildStopMovePacket(GetBgMap());
     }
     PlaySoundToAll(sound);
 }
