@@ -4202,18 +4202,6 @@ void Spell::update(uint32 difftime)
             cancel();
     }
 
-    // check if all targets away range
-    if (!m_IsTriggeredSpell && (difftime >= m_timer) && !(m_spellInfo->AttributesEx7 & SPELL_ATTR_EX7_HAS_CHARGE_EFFECT))
-    {
-        SpellCastResult result = CheckRange(true, m_targets.getUnitTarget());
-        if (result != SPELL_CAST_OK)
-        {
-            SendCastResult(result);
-            cancel();
-            return;
-        }
-    }
-
     switch(m_spellState)
     {
         case SPELL_STATE_PREPARING:
@@ -4249,6 +4237,35 @@ void Spell::update(uint32 difftime)
                     // check if player has turned if flag is set
                     if ( m_spellInfo->ChannelInterruptFlags & CHANNEL_FLAG_TURNING && m_castOrientation != m_caster->GetOrientation() )
                         cancel();
+                }
+
+                // check if all targets away range
+                if (!m_IsTriggeredSpell && (difftime >= m_timer))
+                {
+                    SpellCastResult result = CheckRange(true, m_targets.getUnitTarget());
+                    bool checkFailed = false;
+                    switch (result)
+                    {
+                        case SPELL_CAST_OK:
+                            break;
+                        case SPELL_FAILED_TOO_CLOSE:
+                        case SPELL_FAILED_UNIT_NOT_INFRONT:
+                            if (m_spellInfo->AttributesEx7 & SPELL_ATTR_EX7_HAS_CHARGE_EFFECT)
+                                break;
+                            checkFailed = true;
+                            break;
+                        case SPELL_FAILED_OUT_OF_RANGE:
+                        default:
+                            checkFailed = true;
+                            break;
+                    }
+
+                    if (checkFailed)
+                    {
+                        SendCastResult(result);
+                        cancel();
+                        return;
+                    }
                 }
 
                 // check if there are alive targets left

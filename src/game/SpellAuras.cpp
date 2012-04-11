@@ -4044,14 +4044,10 @@ void Aura::HandleWaterBreathing(bool /*apply*/, bool /*Real*/)
 
 void Aura::HandleAuraModShapeshift(bool apply, bool Real)
 {
-    if(!Real)
+    if (!Real)
         return;
 
-    uint32 modelid = 0;
-    Powers PowerType = POWER_MANA;
     ShapeshiftForm form = ShapeshiftForm(m_modifier.m_miscvalue);
-
-    Unit *target = GetTarget();
 
     SpellShapeshiftFormEntry const* ssEntry = sSpellShapeshiftFormStore.LookupEntry(form);
     if (!ssEntry)
@@ -4059,6 +4055,10 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
         sLog.outError("Unknown shapeshift form %u in spell %u", form, GetId());
         return;
     }
+
+    uint32 modelid = 0;
+    Powers PowerType = POWER_MANA;
+    Unit* target = GetTarget();
 
     if (ssEntry->modelID_A)
         modelid = target->GetModelForForm(ssEntry);
@@ -4183,10 +4183,10 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                             target->CastCustomSpell(target, 17099, &furorChance, NULL, NULL, true, NULL, this);
                         }
                     }
-                    else if (furorChance)                    // only if talent known
+                    else if (furorChance)                   // only if talent known
                     {
                         target->SetPower(POWER_RAGE, 0);
-                        if (irand(1,100) <= furorChance)
+                        if (irand(1, 100) <= furorChance)
                             target->CastSpell(target, 17057, true, NULL, this);
                     }
                     break;
@@ -4202,7 +4202,9 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                         PlayerSpellMap const& sp_list = ((Player *)target)->GetSpellMap();
                         for (PlayerSpellMap::const_iterator itr = sp_list.begin(); itr != sp_list.end(); ++itr)
                         {
-                            if (itr->second.state == PLAYERSPELL_REMOVED) continue;
+                            if (itr->second.state == PLAYERSPELL_REMOVED)
+                                continue;
+
                             SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
                             if (spellInfo && spellInfo->SpellFamilyName == SPELLFAMILY_WARRIOR && spellInfo->SpellIconID == 139)
                                 Rage_val += target->CalculateSpellDamage(target, spellInfo, EFFECT_INDEX_0) * 10;
@@ -4234,14 +4236,15 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
             for (uint32 i = 0; i < 8; ++i)
                 if (ssEntry->spellId[i])
                     ((Player*)target)->addSpell(ssEntry->spellId[i], true, false, false, false);
-
     }
     else
     {
         if (modelid > 0)
             target->SetDisplayId(target->GetNativeDisplayId());
+
         if (target->getClass() == CLASS_DRUID)
             target->setPowerType(POWER_MANA);
+
         target->SetShapeshiftForm(FORM_NONE);
 
         // re-apply transform display with preference negative cases
@@ -4268,12 +4271,12 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
             case FORM_BEAR:
             case FORM_DIREBEAR:
             case FORM_CAT:
-                if (Aura* dummy = target->GetDummyAura(37315) )
+                if (Aura* dummy = target->GetDummyAura(37315))
                     target->CastSpell(target, 37316, true, NULL, dummy);
                 break;
             // Nordrassil Regalia - bonus
             case FORM_MOONKIN:
-                if (Aura* dummy = target->GetDummyAura(37324) )
+                if (Aura* dummy = target->GetDummyAura(37324))
                     target->CastSpell(target, 37325, true, NULL, dummy);
                 break;
             // Shadow Dance - remove stealth mode stand flag
@@ -4289,7 +4292,6 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
             for (uint32 i = 0; i < 8; ++i)
                 if (ssEntry->spellId[i])
                     ((Player*)target)->removeSpell(ssEntry->spellId[i], false, false, false);
-
     }
 
     // adding/removing linked auras
