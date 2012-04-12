@@ -1538,7 +1538,9 @@ void Creature::SetDeathState(DeathState s)
             UpdateSpeed(MOVE_RUN, false);
         }
 
-        GetUnitStateMgr().InitDefaults();
+        // FIXME: may not be blizzlike
+        if (Pet* pet = GetPet())
+            pet->Unsummon(PET_SAVE_AS_DELETED, this);
 
         if (CanFly())
             GetMotionMaster()->MoveFall();
