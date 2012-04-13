@@ -4154,8 +4154,16 @@ bool Unit::isInAccessablePlaceFor(Unit const* unit) const
 
     if (unit->GetObjectGuid().IsAnyTypeCreature())
     {
-        if (IsInWater())
+        float targetReach = ((Creature*)unit)->GetReachDistance(this);
+        if (IsWithinDistInMap(unit, targetReach, true))
+            return true;
+
+        if (IsInWater() || IsUnderWater())
             return ((Creature*)unit)->CanSwim();
+        else if (IsLevitating())
+            return (unit->IsLevitating() || ((Creature*)unit)->CanFly());
+        else if (GetTypeId() == TYPEID_PLAYER && ((Player*)this)->IsFlying())
+            return (unit->IsLevitating() || ((Creature*)unit)->CanFly());
         else
             return ((Creature*)unit)->CanWalk() || ((Creature*)unit)->CanFly();
     }
@@ -7195,13 +7203,21 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, Spell* spell, SpellEffectIndex eff)
                   spell->m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MAGIC ||
                   spell->m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_NONE ))
     {
-        Unit::AuraList const& magnetAuras = victim->GetAurasByType(SPELL_AURA_SPELL_MAGNET);
-        for(Unit::AuraList::const_iterator itr = magnetAuras.begin(); itr != magnetAuras.end(); ++itr)
+        AuraList const& magnetAuras = victim->GetAurasByType(SPELL_AURA_SPELL_MAGNET);
+        if (!magnetAuras.empty())
         {
-            if (Unit* magnet = (*itr)->GetCaster())
+            for (AuraList::const_iterator itr = magnetAuras.begin(); itr != magnetAuras.end(); ++itr)
             {
-                if (magnet->isAlive() && magnet->IsWithinLOSInMap(this) && spell->CheckTarget(magnet, eff))
-                    return magnet;
+                Aura* aura = *itr;
+                if (!aura || !aura->GetHolder() || aura->GetHolder()->IsDeleted())
+                    continue;
+
+                if (Unit* magnet = aura->GetCaster())
+                {
+                    // spell->CheckTarget() include LOS check
+                    if (magnet->isAlive() && spell->CheckTarget(magnet, eff))
+                        return magnet;
+                }
             }
         }
     }
@@ -7209,16 +7225,21 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, Spell* spell, SpellEffectIndex eff)
     else
     {
         AuraList const& hitTriggerAuras = victim->GetAurasByType(SPELL_AURA_ADD_CASTER_HIT_TRIGGER);
-        for(AuraList::const_iterator i = hitTriggerAuras.begin(); i != hitTriggerAuras.end(); ++i)
+        if (!hitTriggerAuras.empty())
         {
-            if (Unit* magnet = (*i)->GetCaster())
+            for (AuraList::const_iterator itr = hitTriggerAuras.begin(); itr != hitTriggerAuras.end(); ++itr)
             {
-                if (magnet->isAlive() && magnet->IsWithinLOSInMap(this) && (!spell || spell->CheckTarget(magnet, eff)))
+                Aura* aura = *itr;
+                if (!aura || !aura->GetHolder() || aura->GetHolder()->IsDeleted())
+                    continue;
+
+                if (Unit* magnet = aura->GetCaster())
                 {
-                    if (roll_chance_i((*i)->GetModifier()->m_amount))
+                    // spell->CheckTarget() include LOS check
+                    if (magnet->isAlive() && ((!spell && magnet->IsWithinLOSInMap(this) || (spell && spell->CheckTarget(magnet, eff)))))
                     {
-                        victim->RemoveAuraHolderFromStack((*i)->GetId());
-                        return magnet;
+                        if (roll_chance_i(aura->GetModifier()->m_amount))
+                            return magnet;
                     }
                 }
             }
@@ -9844,14 +9865,6 @@ void Unit::SetSpeedRate(UnitMoveType mtype, float rate, bool forced)
     CallForAllControlledUnits(SetSpeedRateHelper(mtype,forced), CONTROLLED_PET|CONTROLLED_GUARDIANS|CONTROLLED_CHARM|CONTROLLED_MINIPET);
 }
 
-void Unit::SetHover(bool on)
-{
-    if (on)
-        CastSpell(this, 11010, true);
-    else
-        RemoveAurasDueToSpell(11010);
-}
-
 void Unit::SetDeathState(DeathState s)
 {
     if (s != ALIVE && s!= JUST_ALIVED)
@@ -9872,7 +9885,7 @@ void Unit::SetDeathState(DeathState s)
         RemoveMiniPet();
         UnsummonAllTotems();
 
-        GetUnitStateMgr().InitDefaults();
+        GetUnitStateMgr().InitDefaults(false);
         StopMoving();
 
         ModifyAuraState(AURA_STATE_HEALTHLESS_20_PERCENT, false);
@@ -9888,6 +9901,10 @@ void Unit::SetDeathState(DeathState s)
     else if (s == JUST_ALIVED)
     {
         RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE); // clear skinnable for creature and player (at battleground)
+    }
+    else if (s == DEAD || s == CORPSE)
+    {
+        GetUnitStateMgr().DropAllStates();
     }
 
     if (m_deathState != ALIVE && s == ALIVE)
@@ -10951,7 +10968,7 @@ void Unit::CleanupsBeforeDelete()
         else
             getHostileRefManager().deleteReferences();
         RemoveAllAuras(AURA_REMOVE_BY_DELETE);
-        GetUnitStateMgr().InitDefaults();
+        GetUnitStateMgr().InitDefaults(false);
     }
     WorldObject::CleanupsBeforeDelete();
 }
