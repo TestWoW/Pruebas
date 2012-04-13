@@ -8158,7 +8158,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 }
                 case 28374:                                 // Decimate (Naxxramas: Gluth)
                 case 54426:                                 // Decimate (Naxxramas: Gluth (spells are identical))
-                case 71123:                                 // Decimate (ICC: Precious / Stinky)
+                //case 71123:                                 // Decimate (ICC: Precious / Stinky)
                 {
                     if (!unitTarget)
                         return;
