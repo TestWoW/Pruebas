@@ -6931,6 +6931,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
             // and those in a lifetime
             ApplyModUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, 1, true);
             UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL);
+            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL, 1);
             UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_CLASS, pVictim->getClass());
             UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HK_RACE, pVictim->getRace());
         }
@@ -11803,6 +11804,7 @@ Item* Player::StoreNewItem(ItemPosCountVec const& dest, uint32 item, bool update
         ResetCachedGearScore();
         ItemAddedQuestCheck( item, count );
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_RECEIVE_EPIC_ITEM, item, count);
+        GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_OWN_ITEM, item, count);
         pItem = StoreItem( dest, pItem, update );
 
         if (allowedLooters && pItem->GetProto()->GetMaxStackSize() == 1 && pItem->IsSoulBound())
@@ -11847,7 +11849,6 @@ Item* Player::StoreItem( ItemPosCountVec const& dest, Item* pItem, bool update )
 
         lastItem = _StoreItem(pos,pItem,count,true,update);
     }
-    GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_OWN_ITEM, entry);
     return lastItem;
 }
 
@@ -21695,7 +21696,8 @@ void Player::SendAurasForTarget(Unit *target)
 
 void Player::SetDailyQuestStatus( uint32 quest_id )
 {
-    for(uint32 quest_daily_idx = 0; quest_daily_idx < PLAYER_MAX_DAILY_QUESTS; ++quest_daily_idx)
+    uint32 quest_daily_idx;
+    for(quest_daily_idx = 0; quest_daily_idx < PLAYER_MAX_DAILY_QUESTS; ++quest_daily_idx)
     {
         if(!GetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1+quest_daily_idx))
         {
@@ -21704,6 +21706,9 @@ void Player::SetDailyQuestStatus( uint32 quest_id )
             break;
         }
     }
+    // if first daily quest at curent day
+    if (!quest_daily_idx)
+        GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY, 1);
 }
 
 void Player::SetWeeklyQuestStatus( uint32 quest_id )
@@ -21720,8 +21725,17 @@ void Player::SetMonthlyQuestStatus(uint32 quest_id)
 
 void Player::ResetDailyQuestStatus()
 {
-    for(uint32 quest_daily_idx = 0; quest_daily_idx < PLAYER_MAX_DAILY_QUESTS; ++quest_daily_idx)
+    uint32 dailyQuestCount = 0;
+    for(uint32 quest_daily_idx = 0; quest_daily_idx < PLAYER_MAX_DAILY_QUESTS; ++quest_daily_idx)   
+    {
+        if(GetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1+quest_daily_idx))
+            ++dailyQuestCount;
         SetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1+quest_daily_idx,0);
+    }
+
+    // Reset daily_quest_daily if there are no daily quest last day
+    if(!dailyQuestCount)
+        GetAchievementMgr().ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY,ACHIEVEMENT_CRITERIA_CONDITION_DAILY);
 
     // DB data deleted in caller
     m_DailyQuestChanged = false;
@@ -22187,6 +22201,8 @@ void Player::RewardSinglePlayerAtKill(Unit* pVictim)
     // honor can be in PvP and !PvP (racial leader) cases
     RewardHonor(pVictim,1);
 
+    GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS, 1, 0, pVictim);
+
     // xp and reputation only in !PvP case
     if(!PvP)
     {
@@ -22199,7 +22215,11 @@ void Player::RewardSinglePlayerAtKill(Unit* pVictim)
         // normal creature (not pet/etc) can be only in !PvP case
         if (pVictim->GetTypeId()==TYPEID_UNIT)
             if (CreatureInfo const* normalInfo = ObjectMgr::GetCreatureTemplate(pVictim->GetEntry()))
+            {
                 KilledMonster(normalInfo, pVictim->GetObjectGuid());
+                if(uint32 normalType = normalInfo->type)
+                    GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE_TYPE, normalType, xp);
+            }
     }
 }
 
