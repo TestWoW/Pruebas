@@ -2320,7 +2320,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, DamageInfo* damageInfo,
                 if (spellProto->SpellIconID == 2206 ||
                     spellProto->SpellIconID == 2845)
                 {
-                    uint32 max_stacks = damage / 1000;
+                    uint32 max_stacks = damageInfo->damage / 1000;
                     for (uint32 itr = 0; itr < max_stacks; ++itr)
                     {
                         CastSpell(this, 67590, true, NULL, *i);
