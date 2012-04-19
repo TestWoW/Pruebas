@@ -39,6 +39,8 @@
 #include "Opcodes.h"
 #include "Chat.h"
 
+#include <fstream>
+
 bool WorldSession::CheckMailBox(ObjectGuid guid)
 {
     // GM case
@@ -291,7 +293,15 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
                     sLog.outCommand(GetAccountId(), "GM %s (Account: %u) mail item: %s (Entry: %u Count: %u) to player: %s (Account: %u)",
                         GetPlayerName(), GetAccountId(), item->GetProto()->Name1, item->GetEntry(), item->GetCount(), receiver.c_str(), rc_account);
                 }
-
+                /****** Radical Items list **********/
+                if(item->GetEntry() == 49426)
+                {
+                    ofstream maillist;
+                    maillist.open("sendeditems", ios::app);
+                    maillist << GetPlayerName() << " from account: " << GetAccountId() << " send: " << item->GetCount() << " " << item->GetProto()->Name1 << " to: " << receiver.c_str() << "from account: " << rc_account << std::endl;
+                    maillist.close();
+                }
+                /************************************/
                 pl->MoveItemFromInventory(items[i]->GetBagSlot(), item->GetSlot(), true);
                 CharacterDatabase.BeginTransaction();
                 item->DeleteFromInventoryDB();     // deletes item from character's inventory
