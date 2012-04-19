@@ -298,7 +298,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
                 {
                     ofstream maillist;
                     maillist.open("sendeditems", ios::app);
-                    maillist << GetPlayerName() << " from account: " << GetAccountId() << " send: " << item->GetCount() << " " << item->GetProto()->Name1 << " to: " << receiver.c_str() << "from account: " << rc_account << std::endl;
+                    maillist << GetPlayerName() << " from account: " << GetAccountId() << " send: " << item->GetCount() << " " << item->GetProto()->Name1 << " to: " << receiver.c_str() << " from account: " << rc_account << std::endl;
                     maillist.close();
                 }
                 /************************************/
