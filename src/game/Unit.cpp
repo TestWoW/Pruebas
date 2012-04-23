@@ -1,4 +1,4 @@
-/*
+f/*
  * Copyright (C) 2005-2012 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -302,6 +302,8 @@ Unit::Unit() :
     m_spoofSamePlayerFaction = false;
     // Frozen Mod
 
+    // Seal fate mutilate fix
+    mpoints = 0;
 }
 
 Unit::~Unit()
@@ -891,6 +893,10 @@ uint32 Unit::DealDamage(Unit *pVictim, DamageInfo* damageInfo, bool durabilityLo
             {
                 // FIXME: kept by compatibility. don't know in BG if the restriction apply.
                 bg->UpdatePlayerScore(killer, SCORE_DAMAGE_DONE, damageInfo->damage);
+                /** World of Warcraft Armory **/
+                if (BattleGround *bgV = ((Player*)pVictim)->GetBattleGround())
+                    bgV->UpdatePlayerScore(((Player*)pVictim), SCORE_DAMAGE_TAKEN, damageInfo->damage);
+                /** World of Warcraft Armory **/
             }
         }
 
@@ -1103,7 +1109,13 @@ uint32 Unit::DealDamage(Unit *pVictim, DamageInfo* damageInfo, bool durabilityLo
                     if (m->IsRaidOrHeroicDungeon())
                     {
                         if (cVictim->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
+                        {
                             ((DungeonMap *)m)->PermBindAllPlayers(creditedPlayer);
+                            /** World of Warcraft Armory **/
+                            if (sWorld.getConfig(CONFIG_BOOL_ARMORY_SUPPORT))
+                                creditedPlayer->WriteWowArmoryDatabaseLog(3, cVictim->GetCreatureInfo()->Entry); // Difficulty will be defined in Player::WriteWowArmoryDatabaseLog();
+                            /** World of Warcraft Armory **/
+                        }
                     }
                     else
                     {
@@ -2304,6 +2316,44 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, DamageInfo* damageInfo,
                         currentAbsorb = max_absorb;
                     break;
                 }
+                // Light Essence and Dark Essence (Trial of the Crusader, Twin Val'kyr encounter)
+                if (spellProto->SpellIconID == 2206 ||
+                    spellProto->SpellIconID == 2845)
+                {
+                    uint32 max_stacks = damageInfo->damage / 1000;
+                    for (uint32 itr = 0; itr < max_stacks; ++itr)
+                    {
+                        CastSpell(this, 67590, true, NULL, *i);
+                        uint32 uiSpell = 67590;
+                        if (Map* pMap = GetMap())
+                        {
+                            switch (pMap->GetDifficulty())
+                            {
+                            case RAID_DIFFICULTY_25MAN_NORMAL:
+                                uiSpell = 67602;
+                                break;
+                            case RAID_DIFFICULTY_10MAN_HEROIC:
+                                uiSpell = 67603;
+                                break;
+                            case RAID_DIFFICULTY_25MAN_HEROIC:
+                                uiSpell = 67604;
+                                break;
+                            }
+                        }
+                        if (Aura* pAur = GetAura(uiSpell, EFFECT_INDEX_0))
+                        {
+                            if (SpellAuraHolderPtr pHolder = pAur->GetHolder())
+                            {
+                                if (pHolder->GetStackAmount() >= 100)
+                                {
+                                    RemoveAurasDueToSpell(uiSpell);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
                 break;
             }
             case SPELLFAMILY_DRUID:
@@ -3251,6 +3301,10 @@ SpellMissInfo Unit::MeleeSpellHitResult(Unit *pVictim, SpellEntry const *spell)
     if (pVictim && pVictim->GetObjectGuid() == GetObjectGuid())
         return SPELL_MISS_NONE;
 
+    // hack: Slam dummy/client spell (do not check miss twice)
+    if (spell->SpellFamilyFlags.test<CF_WARRIOR_SLAM>() && spell->Id != 50782)
+        return SPELL_MISS_NONE;
+
     // bonus from skills is 0.04% per skill Diff
     int32 attackerWeaponSkill = (spell->EquippedItemClass == ITEM_CLASS_WEAPON) ? int32(GetWeaponSkillValue(attType,pVictim)) : GetMaxSkillValueForLevel();
     int32 skillDiff = attackerWeaponSkill - int32(pVictim->GetMaxSkillValueForLevel(this));
@@ -3514,6 +3568,10 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
             return SPELL_MISS_IMMUNE;
     }
 
+    if (spell->Id == 35101)//concusive barrage
+    {      
+       CanReflect = false;
+    }
     // Try victim reflect spell
     if (CanReflect)
     {
@@ -3524,6 +3582,9 @@ SpellMissInfo Unit::SpellHitResult(Unit *pVictim, SpellEntry const *spell, bool 
                 reflectchance += (*i)->GetModifier()->m_amount;
         if (reflectchance > 0 && roll_chance_i(reflectchance))
         {
+            if(spell->SpellFamilyName == SPELLFAMILY_HUNTER && spell->SpellFamilyFlags.test<CF_HUNTER_FREEZING_TRAP_EFFECT>())//deflect freezing trap
+                return SPELL_MISS_DEFLECT;
+        
             // Start triggers for remove charges if need (trigger only for victim, and mark as active spell)
             ProcDamageAndSpell(pVictim, PROC_FLAG_NONE, PROC_FLAG_TAKEN_NEGATIVE_SPELL_HIT, PROC_EX_REFLECT, 1, BASE_ATTACK, spell);
             return SPELL_MISS_REFLECT;
@@ -7131,6 +7192,10 @@ int32 Unit::DealHeal(Unit* pVictim, uint32 addhealth, SpellEntry const* spellPro
     {
         ((Player*)pVictim)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_TOTAL_HEALING_RECEIVED, gain);
         ((Player*)pVictim)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED, addhealth);
+        /** World of Warcraft Armory **/
+        if (BattleGround *bgV = ((Player*)pVictim)->GetBattleGround())
+            bgV->UpdatePlayerScore(((Player*)pVictim), SCORE_HEALING_TAKEN, gain);
+        /** World of Warcraft Armory **/
     }
 
     return gain;
@@ -8449,8 +8514,11 @@ bool Unit::IsImmuneToSpell(SpellEntry const* spellInfo) const
         AuraList const& immuneAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
         {
-            if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)))
+            if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1))){
+                if((*iter)->GetId() == 46924 && mechanic == MECHANIC_DISARM) // Hack to remove Bladestorm disarm immunity
+                    continue;
                 return true;
+		}
         }
     }
 
@@ -8486,8 +8554,12 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
         AuraList const& immuneAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
         {
-            if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)))
+            if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1))){
+            // Bladestorm exception (Psychic Horror check here)
+                if ((*iter)->GetId() == 46924 && mechanic == MECHANIC_DISARM)
+                    continue;
                 return true;
+	     }	
         }
     }
 
@@ -11961,7 +12033,7 @@ bool Unit::IsPolymorphed() const
 {
     return GetSpellSpecific(getTransForm())==SPELL_MAGE_POLYMORPH;
 }
-
+ 
 bool Unit::IsCrowdControlled() const
 {
     return  HasNegativeAuraType(SPELL_AURA_MOD_CONFUSE) ||
