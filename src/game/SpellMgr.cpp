@@ -1475,7 +1475,7 @@ void SpellMgr::LoadSpellProcEvents()
         spe.schoolMask      = fields[1].GetUInt32();
         spe.spellFamilyName = fields[2].GetUInt32();
 
-        for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
+        for (int i = 0; i < MAX_EFFECT_INDEX; ++i)
         {
             spe.spellFamilyMask[i] = ClassFamilyMask(
                 fields[i+3].GetUInt32(),
@@ -1561,7 +1561,7 @@ void SpellMgr::LoadSpellProcItemEnchant()
 
         // also add to high ranks
         DoSpellProcItemEnchant worker(mSpellProcItemEnchantMap, ppmRate);
-        doForHighRanks(entry,worker);
+        doForHighRanks(entry, worker);
 
         ++count;
     } while( result->NextRow() );
@@ -3555,7 +3555,7 @@ bool SpellMgr::IsSpellValid(SpellEntry const* spellInfo, Player* pl, bool msg)
     {
         switch(spellInfo->Effect[i])
         {
-            case 0:
+            case SPELL_EFFECT_NONE:
                 continue;
 
             // craft spell for crafting nonexistent item (break client recipes list show)
