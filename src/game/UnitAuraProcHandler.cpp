@@ -1109,11 +1109,11 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, DamageInfo* damageI
                         71491, 71484, 71492,    // Paladin
                         71485, 71491, 71486,    // Hunter
                         71485, 71486, 71492,    // Rogue
-                        71492, 71492, 71492,    // Priest
+                        71486, 71486, 71486,    // Priest
                         71491, 71484, 71492,    // Death Knight
                         71485, 71486, 71492,    // Shaman
-                        71492, 71492, 71492,    // Mage
-                        71492, 71492, 71492,    // Warlock
+                        71486, 71486, 71486,    // Mage
+                        71486, 71486, 71486,    // Warlock
                         0, 0, 0,                // (unused)
                         71485, 71484, 71492     // Druid
                     };
@@ -1124,11 +1124,11 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, DamageInfo* damageI
                         71559, 71561, 71560,    // Paladin
                         71556, 71559, 71558,    // Hunter
                         71556, 71558, 71560,    // Rogue
-                        71560, 71560, 71560,    // Priest
+                        71558, 71558, 71558,    // Priest
                         71559, 71561, 71560,    // Death Knight
                         71556, 71558, 71560,    // Shaman
-                        71560, 71560, 71560,    // Mage
-                        71560, 71560, 71560,    // Warlock
+                        71558, 71558, 71558,    // Mage
+                        71558, 71558, 71558,    // Warlock
                         0, 0, 0,                // (unused)
                         71556, 71561, 71560     // Druid
                     };
