@@ -9518,8 +9518,8 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 case 73032:
                 {
                     //m_caster->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
-                    m_caster->RemoveAurasDueToSpell(69166));
-                    m_caster->RemoveAurasDueToSpell(71912));
+                    m_caster->RemoveAurasDueToSpell(69166);
+                    m_caster->RemoveAurasDueToSpell(71912);
                     return;
                 }
                 case 69298:                                 // Cancel Resistant to Blight (Festergut)
