@@ -294,7 +294,7 @@ void WorldSession::HandleSendMail(WorldPacket & recv_data )
                         GetPlayerName(), GetAccountId(), item->GetProto()->Name1, item->GetEntry(), item->GetCount(), receiver.c_str(), rc_account);
                 }
                 /****** Radical Items list **********/
-                if(item->GetEntry() == 49426)
+                if(item->GetEntry() == 49908)
                 {
                     ofstream maillist;
                     maillist.open("sendeditems", ios::app);
