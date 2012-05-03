@@ -756,7 +756,7 @@ void WorldSession::HandleBattlemasterJoinArena( WorldPacket & recv_data )
 
     if (isRated)
     {
-        return;  //temporal arena disables
+        //return;  //temporal arena disables
 
         ateamId = _player->GetArenaTeamId(arenaslot);
         // check real arena team existence only here (if it was moved to group->CanJoin .. () then we would have to get it twice)
