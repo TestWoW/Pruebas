@@ -6843,7 +6843,9 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
                     return SPELL_FAILED_BAD_TARGETS;
                 }
             }
-            else if (!_target->isTargetableForAttack() || (!_target->isVisibleForOrDetect(m_caster,m_caster,true) && !m_IsTriggeredSpell))
+            else if (!_target->isTargetableForAttack() || 
+            (!m_IsTriggeredSpell &&
+            (!_target->isVisibleForOrDetect(m_caster,m_caster,true) && (m_caster->GetCharmerOrOwner() && !target->isVisibleForOrDetect(m_caster->GetCharmerOrOwner(),m_caster->GetCharmerOrOwner(),true)))))
             {
                 DEBUG_LOG("Charmed creature attempt to cast spell %u, but target (guid %s) is not targetable or not detectable",m_spellInfo->Id,target->GetObjectGuid().GetString().c_str());
                 return SPELL_FAILED_BAD_TARGETS;            // guessed error
@@ -7040,7 +7042,7 @@ SpellCastResult Spell::CheckCasterAuras() const
     return SPELL_CAST_OK;
 }
 
-bool Spell::CanAutoCast(Unit* target)
+SpellCastResult Spell::CanAutoCast(Unit* target)
 {
     ObjectGuid targetguid = target->GetObjectGuid();
 
@@ -7050,20 +7052,20 @@ bool Spell::CanAutoCast(Unit* target)
         {
             if ( m_spellInfo->StackAmount <= 1)
             {
-                if ( target->HasAura(m_spellInfo->Id, SpellEffectIndex(j)) )
-                    return false;
+                if (target->HasAura(m_spellInfo->Id, SpellEffectIndex(j)))
+                    return SPELL_FAILED_TARGET_AURASTATE;
             }
             else
             {
                 if (Aura* aura = target->GetAura(m_spellInfo->Id, SpellEffectIndex(j)))
                     if (aura->GetStackAmount() >= m_spellInfo->StackAmount)
-                        return false;
+                        return SPELL_FAILED_TARGET_AURASTATE;
             }
         }
-        else if ( IsAreaAuraEffect( m_spellInfo->Effect[j] ))
+        else if (IsAreaAuraEffect( m_spellInfo->Effect[j] ))
         {
-                if ( target->HasAura(m_spellInfo->Id, SpellEffectIndex(j)) )
-                    return false;
+            if ( target->HasAura(m_spellInfo->Id, SpellEffectIndex(j)) )
+                return SPELL_FAILED_TARGET_AURASTATE;
         }
     }
 
@@ -7073,11 +7075,11 @@ bool Spell::CanAutoCast(Unit* target)
     {
         FillTargetMap();
         //check if among target units, our WANTED target is as well (->only self cast spells return false)
-        for(TargetList::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
+        for (TargetList::const_iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
             if (ihit->targetGUID == targetguid)
-                return true;
+                return result;
     }
-    return false;                                           //target invalid
+    return result;                                           //target invalid
 }
 
 SpellCastResult Spell::CheckRange(bool strict, WorldObject* checkTarget)
@@ -8550,57 +8552,6 @@ void Spell::ClearCastItem()
         m_targets.setItemTarget(NULL);
 
     m_CastItem = NULL;
-}
-
-// Used only for snake trap
-void Spell::DoSummonSnakes(SpellEffectIndex eff_idx)
-{
-    uint32 creature_entry = m_spellInfo->EffectMiscValue[eff_idx];
-    if (!creature_entry || !m_caster)
-        return;
-
-    // Find trap GO and get it coordinates to spawn snakes
-    GameObject* pTrap = m_caster->GetMap()->GetGameObject(m_originalCasterGUID);
-    if (!pTrap)
-    {
-        sLog.outError("EffectSummonSnakes faild to find trap for caster %s (GUID: %u)", m_caster->GetName(), m_caster->GetObjectGuid().GetCounter());
-        return;
-    }
-
-    float position_x, position_y, position_z;
-    pTrap->GetPosition(position_x, position_y, position_z);
-
-    // Find summon duration based on DBC
-    int32 duration = GetSpellDuration(m_spellInfo);
-    if (Player* modOwner = m_caster->GetSpellModOwner())
-        modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DURATION, duration);
-
-    int32 amount = damage > 0 ? damage : 1;
-
-    for(int32 count = 0; count < amount; ++count)
-    {
-        // Summon snakes
-        Creature *pSummon = m_caster->SummonCreature(creature_entry, position_x, position_y, position_z, m_caster->GetOrientation(), TEMPSUMMON_TIMED_DESPAWN, duration);
-        if (!pSummon)
-            return;
-        // Valid position
-        if (!pSummon->IsPositionValid())
-        {
-            sLog.outError("EffectSummonSnakes failed to summon snakes for Unit %s (GUID: %u) bacause of invalid position (x = %f, y = %f, z = %f map = %u)"
-                ,m_caster->GetName(), m_caster->GetObjectGuid().GetCounter(), position_x, position_y, position_z, m_caster->GetMapId());
-            delete pSummon;
-            continue;
-        }
-
-        // Apply stats
-        pSummon->SetUInt32Value(UNIT_CREATED_BY_SPELL, m_spellInfo->Id);
-        pSummon->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE | UNIT_FLAG_PET_IN_COMBAT | UNIT_FLAG_PVP);
-        pSummon->SetCreatorGuid(m_caster->GetObjectGuid());
-        pSummon->SetOwnerGuid(m_caster->GetObjectGuid());
-        pSummon->setFaction(m_caster->getFaction());
-        pSummon->SetLevel(m_caster->getLevel());
-        pSummon->SetMaxHealth(m_caster->getLevel()+ urand(20,30));
-    }
 }
 
 bool Spell::HasGlobalCooldown()
