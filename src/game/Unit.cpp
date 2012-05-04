@@ -7271,7 +7271,7 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, Spell* spell, SpellEffectIndex eff)
                     {
                         if (roll_chance_i(aura->GetModifier()->m_amount))
                         {
-                            victim->RemoveAuraHolderFromStack((*i)->GetId());//intervene hack
+                            victim->RemoveAuraHolderFromStack((*itr)->GetId());//intervene hack
                             return magnet;
                         }
                     }
