@@ -7278,7 +7278,10 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, Spell* spell, SpellEffectIndex eff)
                     if (magnet->isAlive() && ((!spell && magnet->IsWithinLOSInMap(this)) || (spell && spell->CheckTarget(magnet, eff))))
                     {
                         if (roll_chance_i(aura->GetModifier()->m_amount))
+                        {
+                            victim->RemoveAuraHolderFromStack((*i)->GetId());//intervene hack
                             return magnet;
+                        }
                     }
                 }
             }
