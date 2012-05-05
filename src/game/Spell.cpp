@@ -1230,7 +1230,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         damageInfo.procEx = createProcExtendMask(&damageInfo, missInfo);
         damageInfo.procVictim |= PROC_FLAG_TAKEN_ANY_DAMAGE;
 
-        if (damageInfo.absorb && damageInfo.damage == 0)
+        if (damageInfo.absorb)
             damageInfo.procEx &= ~PROC_EX_DIRECT_DAMAGE;
 
         // Do triggers for unit (reflect triggers passed on hit phase for correct drop charge)
