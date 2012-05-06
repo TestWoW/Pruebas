@@ -112,7 +112,7 @@ void BattleGroundDS::Update(uint32 diff)
                 teleportCheck = false;
 
                 // close the gate
-                OpenDoorEvent(BG_EVENT_DOOR);
+                //OpenDoorEvent(BG_EVENT_DOOR);
             }
             else
                 m_uiTeleport -= diff;
