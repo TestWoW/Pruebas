@@ -5661,7 +5661,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             if (target->IsTaxiFlying())
                 return SPELL_FAILED_BAD_TARGETS;
 
-            if(!m_IsTriggeredSpell && !target->IsVisibleTargetForSpell(m_caster, m_spellInfo, strict))
+            if(!m_IsTriggeredSpell && !(m_spellInfo->AttributesEx2 & SPELL_ATTR_EX2_IGNORE_LOS) && VMAP::VMapFactory::checkSpellForLoS(m_spellInfo->Id) && !m_caster->IsWithinLOSInMap(target, false))
                 return SPELL_FAILED_LINE_OF_SIGHT;
 
             // auto selection spell rank implemented in WorldSession::HandleCastSpellOpcode
