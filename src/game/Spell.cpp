@@ -1806,6 +1806,14 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 72271:                                 // Vile Gas (Rotface, Festergut)
                 case 73022:                                 // Mutated Infection (heroic)
                 case 73023:                                 // Mutated Infection (heroic)
+                case 69140:                                 // Coldflame (ICC, Marrowgar)
+                case 69674:                                 // Mutated Infection (ICC, Rotface)
+                case 70882:                                 // Slime Spray Summon Trigger (ICC, Rotface)
+                case 70920:                                 // Unbound Plague Search Effect (ICC, Putricide)
+                case 71224:                                 // Mutated Infection (Mode 1)
+                case 72091:                                 // Frozen Orb (Vault of Archavon, Toravon)
+                case 73022:                                 // Mutated Infection (Mode 2)
+                case 73023:                                 // Mutated Infection (Mode 3)
                 case 51146:                                 // Searching Gaze (Halls Of Stone)
                 case 68980:                                 // Harvest Soul
                 case 74325:                                 // Harvest Soul
@@ -1956,7 +1964,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 72934:                                 // Blood infusion credit
                     radius = DEFAULT_VISIBILITY_INSTANCE;
                     break;
-//<<<<<<< HEAD
                 case 71805:                                 // Plague Stench
                 case 71160:                                 // Plague Stench
                 case 71161:                                 // Plague Stench
@@ -1976,8 +1983,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     break;
                 case 71769:                                 // Raise Dead
                 case 72376:                                 // Raise Dead
-/*=======
->>>>>>> 04752b91d2218d6617e985bc5f9347859a28f260*/
                 case 72350:                                 // Fury of Frostmourne
                 case 72351:                                 // Fury of Frostmourne
                     radius = 300.0f;
@@ -2027,6 +2032,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             continue;
         unMaxTargets += (*m)->GetModifier()->m_amount;
     }
+
+    std::list<GameObject*> tempTargetGOList;
 
     switch (targetMode)
     {
@@ -2498,17 +2505,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             break;
         }
         case TARGET_GO_IN_FRONT_OF_CASTER_90:
-        case TARGET_OBJECT_AREA_SRC:
+        case TARGET_AREAEFFECT_GO_AROUND_SOURCE:
         case TARGET_AREAEFFECT_GO_AROUND_DEST:
         {
-            // It may be possible to fill targets for some spell effects
-            // automatically (SPELL_EFFECT_WMO_REPAIR(88) for example) but
-            // for some/most spells we clearly need/want to limit with spell_target_script
-
-            // Some spells untested, for affected GO type 33. May need further adjustments for spells related.
-
             float x, y, z;
-            if (targetMode == TARGET_OBJECT_AREA_SRC)
+            if (targetMode == TARGET_AREAEFFECT_GO_AROUND_SOURCE)
             {
                 if (m_targets.m_targetMask & TARGET_FLAG_SOURCE_LOCATION)
                 {
@@ -2517,7 +2518,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     z = m_targets.m_srcZ;
                 }
                 else
-                    break;
+                    m_caster->GetPosition(x, y, z);
             }
             else if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
             {
@@ -2527,6 +2528,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             }
             else
                 m_caster->GetPosition(x, y, z);
+
 
             // It may be possible to fill targets for some spell effects
             // automatically (SPELL_EFFECT_WMO_REPAIR(88) for example) but
@@ -2545,7 +2547,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     if (i_spellST->second.type == SPELL_TARGET_TYPE_GAMEOBJECT)
                     {
                         // search all GO's with entry, within range of m_destN
-                        MaNGOS::GameObjectEntryInPosRangeCheck go_check(*m_caster, i_spellST->second.targetEntry, m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, radius);
+                        MaNGOS::GameObjectEntryInPosRangeCheck go_check(*m_caster, i_spellST->second.targetEntry, x, y, z, radius);
                         MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectEntryInPosRangeCheck> checker(tempTargetGOList, go_check);
                         Cell::VisitGridObjects(m_caster, checker, radius + fSearchDistance);
                     }
@@ -2568,7 +2570,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                             if (m_caster->isInFront(*iter, radius, M_PI_F/2))
                                 AddGOTarget(*iter, effIndex);
                             break;
-                        case TARGET_OBJECT_AREA_SRC:
+                        case TARGET_AREAEFFECT_GO_AROUND_SOURCE:
                         case TARGET_AREAEFFECT_GO_AROUND_DEST:
                         default:
                             AddGOTarget(*iter, effIndex);
@@ -2576,7 +2578,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     }
                 }
             }
-
             break;
         }
         case TARGET_ALL_ENEMY_IN_AREA_INSTANT:
@@ -3436,6 +3437,44 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         // the player's target will always be added to the map
         if (removed_utarget && m_targets.getUnitTarget())
             targetUnitMap.push_back(m_targets.getUnitTarget());
+    }
+    if (!tempTargetGOList.empty())                          // GO CASE
+    {
+        if (unMaxTargets && tempTargetGOList.size() > unMaxTargets)
+        {
+            // make sure one go is always removed per iteration
+            uint32 removed_utarget = 0;
+            for (std::list<GameObject*>::iterator itr = tempTargetGOList.begin(), next; itr != tempTargetGOList.end(); itr = next)
+            {
+                next = itr;
+                ++next;
+                if (!*itr) continue;
+                if ((*itr) == m_targets.getGOTarget())
+                {
+                    tempTargetGOList.erase(itr);
+                    removed_utarget = 1;
+                    //        break;
+                }
+            }
+            // remove random units from the map
+            while (tempTargetGOList.size() > unMaxTargets - removed_utarget)
+            {
+                uint32 poz = urand(0, tempTargetGOList.size()-1);
+                for (std::list<GameObject*>::iterator itr = tempTargetGOList.begin(); itr != tempTargetGOList.end(); ++itr, --poz)
+                {
+                    if (!*itr) continue;
+
+                    if (!poz)
+                    {
+                        tempTargetGOList.erase(itr);
+                        break;
+                    }
+                }
+            }
+        }
+        // Add resulting GOs as GOTargets
+        for (std::list<GameObject*>::iterator iter = tempTargetGOList.begin(); iter != tempTargetGOList.end(); ++iter)
+            AddGOTarget(*iter, effIndex);
     }
 }
 
