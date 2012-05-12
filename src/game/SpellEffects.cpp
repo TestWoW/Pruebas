@@ -2420,6 +2420,16 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                     return;
                 }
+                case 47670:                             // Awaken Gortok
+                {
+                    if (unitTarget && unitTarget->GetTypeId() == TYPEID_UNIT)
+                    {
+                        unitTarget->RemoveAurasDueToSpell(16245);
+                        unitTarget->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        ((Creature*)unitTarget)->SetInCombatWithZone();
+                    }
+                    break;
+                }
                 case 48046:                                 // Use Camera
                 {
                     if (!unitTarget)
@@ -4557,7 +4567,7 @@ void Spell::EffectForceCast(SpellEffectIndex eff_idx)
     {
         if (spellInfo->EffectApplyAuraName[i] == SPELL_AURA_CONTROL_VEHICLE)
         {
-            unitTarget->CastSpell(m_caster, spellInfo, true, NULL, NULL, ObjectGuid::Null, m_spellInfo);
+            unitTarget->CastSpell(m_caster, spellInfo, true, NULL, NULL, ObjectGuid(), m_spellInfo);
             return;
         }
     }
@@ -5063,7 +5073,7 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
 
     // Mixology - increase effect and duration of alchemy spells which the caster has
     if (m_spellInfo->SpellFamilyName == SPELLFAMILY_POTION &&
-        !(m_spellInfo->AttributesEx4 & SPELL_ATTR_EX4_UNK21) &&         // unaffected by Mixology
+        !m_spellInfo->HasAttribute(SPELL_ATTR_EX4_UNK21) &&             // unaffected by Mixology
         caster->GetTypeId() == TYPEID_PLAYER && caster->HasAura(53042)) // has Mixology passive
     {
         SpellSpecific spellSpec = GetSpellSpecific(aur->GetSpellProto()->Id);
@@ -5567,7 +5577,7 @@ void Spell::DoCreateItem(SpellEffectIndex eff_idx, uint32 itemtype)
 void Spell::EffectCreateItem(SpellEffectIndex eff_idx)
 {
     DoCreateItem(eff_idx,m_spellInfo->EffectItemType[eff_idx]);
-    SendEffectLogExecute(eff_idx, ObjectGuid::Null, m_spellInfo->EffectItemType[eff_idx]);
+    SendEffectLogExecute(eff_idx, ObjectGuid(), m_spellInfo->EffectItemType[eff_idx]);
 }
 
 void Spell::EffectCreateItem2(SpellEffectIndex eff_idx)
@@ -5582,7 +5592,7 @@ void Spell::EffectCreateItem2(SpellEffectIndex eff_idx)
     if (item_id)
     {
         DoCreateItem(eff_idx, item_id);
-        SendEffectLogExecute(eff_idx,ObjectGuid::Null, item_id);
+        SendEffectLogExecute(eff_idx,ObjectGuid(), item_id);
     }
 
     // not explicit loot (with fake item drop if need)
@@ -6794,7 +6804,7 @@ void Spell::DoSummonVehicle(SpellEffectIndex eff_idx, uint32 forceFaction)
 
     if (m_caster->hasUnitState(UNIT_STAT_ON_VEHICLE))
     {
-        if (m_spellInfo->Attributes & SPELL_ATTR_HIDDEN_CLIENTSIDE)
+        if (m_spellInfo->HasAttribute(SPELL_ATTR_HIDDEN_CLIENTSIDE))
             m_caster->RemoveSpellsCausingAura(SPELL_AURA_CONTROL_VEHICLE);
         else
             return;
@@ -11402,7 +11412,7 @@ void Spell::EffectFeedPet(SpellEffectIndex eff_idx)
 
     m_caster->CastCustomSpell(pet, m_spellInfo->EffectTriggerSpell[eff_idx], &benefit, NULL, NULL, true);
 
-    SendEffectLogExecute(eff_idx, ObjectGuid::Null, foodItem->GetObjectGuid().GetEntry());
+    SendEffectLogExecute(eff_idx, ObjectGuid(), foodItem->GetObjectGuid().GetEntry());
 }
 
 void Spell::EffectDismissPet(SpellEffectIndex eff_idx)
