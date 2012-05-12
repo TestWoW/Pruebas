@@ -9989,7 +9989,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                         if (Creature *pSpike = unitTarget->SummonCreature(38711, x, y, z, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 2000))
                         {
-                            unitTarget->EnterVehicle(pSpike->GetVehicleKit(), 0); // enter vehicle
+                            unitTarget->CastSpell(pSpike, 46598, true); // enter vehicle
                             pSpike->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
                         }
                     }
