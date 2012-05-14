@@ -40,10 +40,50 @@ inline void MaNGOS::VisibleNotifier::Visit(GridRefManager<T> &m)
 
 inline void MaNGOS::ObjectUpdater::Visit(CreatureMapType &m)
 {
+    uint32 LastUpdateTime;
+    uint32 DiffTime;
+    uint32 MinUpdateTime = 0;
+    uint32 VisitorCount = 0;
+    uint8 VisitCount = 1;
+    std::vector<uint32> LastUpdateTimeList;
     for(CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
     {
+        VisitorCount++;
+        LastUpdateTime = iter->getSource()->GetLastUpdateTime();
+        if (LastUpdateTime == 0)
+        {
+            iter->getSource()->SetLastUpdateTime();
+            LastUpdateTime = iter->getSource()->GetLastUpdateTime();
+        }
+        LastUpdateTimeList.push_back(LastUpdateTime);
+    }
+    if (VisitorCount == 0)
+        return;
+    std::sort(LastUpdateTimeList.begin(), LastUpdateTimeList.end());
+    if (VisitorCount > 9)
+        MinUpdateTime = LastUpdateTimeList.at(9);
+    else
+        MinUpdateTime = LastUpdateTimeList.at(VisitorCount-1);
+
+    /*if (VisitorCount > 50)
+        for(CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
+        {
+            sLog.outError("Entry: %u, GUID: %u, VisitorCount: %u", iter->getSource()->GetEntry(),iter->getSource()->GetGUIDLow(), VisitorCount);
+        }*/
+
+    for(CreatureMapType::iterator iter = m.begin(); iter != m.end(); ++iter)
+    {
+        LastUpdateTime = iter->getSource()->GetLastUpdateTime();
+        DiffTime = WorldTimer::getMSTime() - LastUpdateTime;
+        if (DiffTime < (iter->getSource()->IsInCombat() ? 100 : 500) || LastUpdateTime > MinUpdateTime)
+            continue;
+
         WorldObject::UpdateHelper helper(iter->getSource());
-        helper.Update(i_timeDiff);
+        helper.Update(DiffTime);
+        iter->getSource()->SetLastUpdateTime();
+        VisitCount++;
+        if (VisitCount > 10) // Do not visit more than 10 creature
+            break;
     }
 }
 
