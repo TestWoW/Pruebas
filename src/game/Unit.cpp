@@ -1578,8 +1578,10 @@ void Unit::CalculateSpellDamage(DamageInfo* damageInfo, int32 _damage, SpellEntr
                 damageInfo->HitInfo |=  SPELL_HIT_TYPE_CRIT;
                 damageInfo->damage = SpellCriticalDamageBonus(spellInfo, damageInfo->damage, pVictim);
 
-                // Resilience - reduce crit damage
-                uint32 reduction_affected_damage = CalcNotIgnoreDamageReduction(damageInfo);
+                // Resilience - reduce crit damage (full or reduced)
+                uint32 reduction_affected_damage = sWorld.getConfig(CONFIG_BOOL_RESILENCE_ALTERNATIVE_CALCULATION) ?
+                                                   damageInfo->damage :
+                                                   CalcNotIgnoreDamageReduction(damageInfo);
 
                 if (attackType != RANGED_ATTACK)
                     damageInfo->damage -= pVictim->GetMeleeCritDamageReduction(reduction_affected_damage);
@@ -1604,9 +1606,19 @@ void Unit::CalculateSpellDamage(DamageInfo* damageInfo, int32 _damage, SpellEntr
                 damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
                 damageInfo->damage = SpellCriticalDamageBonus(spellInfo, damageInfo->damage, pVictim);
 
-                // Resilience - reduce crit damage
-                uint32 reduction_affected_damage = CalcNotIgnoreDamageReduction(damageInfo);
-                damageInfo->damage -= pVictim->GetSpellCritDamageReduction(reduction_affected_damage);
+                // Resilience - reduce crit damage (full or reduced)
+                uint32 reduction_affected_damage = sWorld.getConfig(CONFIG_BOOL_RESILENCE_ALTERNATIVE_CALCULATION) ?
+                                                   damageInfo->damage :
+                                                   CalcNotIgnoreDamageReduction(damageInfo);
+
+                damageInfo->damage -= damageInfo->target->GetSpellCritDamageReduction(reduction_affected_damage);
+            }
+            else
+            {
+                damageInfo->HitInfo &= ~SPELL_HIT_TYPE_CRIT;
+
+                // Resilience - reduce regular damage
+                damageInfo->damage -= damageInfo->target->GetSpellDamageReduction(CalcNotIgnoreDamageReduction(damageInfo));
             }
         }
         break;
