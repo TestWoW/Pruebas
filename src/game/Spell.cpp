@@ -4102,6 +4102,9 @@ void Spell::cast(bool skipCheck)
 
     m_caster->DecreaseCastCounter();
     SetExecutedCurrently(false);
+
+    // Borrowed Time temp fix
+    if(m_caster->HasAura(59887)) RemoveAurasDueToSpell(59887);
 }
 
 void Spell::handle_immediate()
