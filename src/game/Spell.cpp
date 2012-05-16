@@ -4102,6 +4102,14 @@ void Spell::cast(bool skipCheck)
 
     m_caster->DecreaseCastCounter();
     SetExecutedCurrently(false);
+
+    // Borrowed Time temp fix
+   /* if(!m_spellInfo->SpellFamilyFlags.test<CF_PRIEST_POWER_WORD_SHIELD>() && m_spellInfo->Id != 52800) {
+    if(m_caster->HasAura(59887)) m_caster->RemoveAurasDueToSpell(59887);  // 1
+    if(m_caster->HasAura(59888)) m_caster->RemoveAurasDueToSpell(59888);  // 2
+    if(m_caster->HasAura(59889)) m_caster->RemoveAurasDueToSpell(59889);  // 3
+    if(m_caster->HasAura(59890)) m_caster->RemoveAurasDueToSpell(59890);  // 4*/
+    if(m_spellInfo->Id == 8129) { if(m_caster->HasAura(59891)) m_caster->RemoveAurasDueToSpell(59891);} // 5
 }
 
 void Spell::handle_immediate()
