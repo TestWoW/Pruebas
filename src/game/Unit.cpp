@@ -1572,8 +1572,10 @@ void Unit::CalculateSpellDamage(DamageInfo* damageInfo, float DamageMultiplier)
                 damageInfo->HitInfo |=  SPELL_HIT_TYPE_CRIT;
                 damageInfo->damage = SpellCriticalDamageBonus(damageInfo->m_spellInfo, damageInfo->damage, damageInfo->target);
 
-                // Resilience - reduce crit damage
-                uint32 reduction_affected_damage = CalcNotIgnoreDamageReduction(damageInfo);
+                // Resilience - reduce crit damage (full or reduced)
+                uint32 reduction_affected_damage = sWorld.getConfig(CONFIG_BOOL_RESILENCE_ALTERNATIVE_CALCULATION) ?
+                                                   damageInfo->damage :
+                                                   CalcNotIgnoreDamageReduction(damageInfo);
 
                 if (damageInfo->attackType != RANGED_ATTACK)
                     damageInfo->damage -= damageInfo->target->GetMeleeCritDamageReduction(reduction_affected_damage);
@@ -1605,8 +1607,12 @@ void Unit::CalculateSpellDamage(DamageInfo* damageInfo, float DamageMultiplier)
                 damageInfo->HitInfo |= SPELL_HIT_TYPE_CRIT;
                 damageInfo->damage = SpellCriticalDamageBonus(damageInfo->m_spellInfo, damageInfo->damage, damageInfo->target);
 
-                // Resilience - reduce crit damage
-                damageInfo->damage -= damageInfo->target->GetSpellCritDamageReduction(CalcNotIgnoreDamageReduction(damageInfo));
+                // Resilience - reduce crit damage (full or reduced)
+                uint32 reduction_affected_damage = sWorld.getConfig(CONFIG_BOOL_RESILENCE_ALTERNATIVE_CALCULATION) ?
+                                                   damageInfo->damage :
+                                                   CalcNotIgnoreDamageReduction(damageInfo);
+
+                damageInfo->damage -= damageInfo->target->GetSpellCritDamageReduction(reduction_affected_damage);
             }
             else
             {
