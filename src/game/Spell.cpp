@@ -4108,11 +4108,21 @@ void Spell::cast(bool skipCheck)
 
     // Borrowed Time temp fix
    /* if(!m_spellInfo->SpellFamilyFlags.test<CF_PRIEST_POWER_WORD_SHIELD>() && m_spellInfo->Id != 52800) {
-    if(m_caster->HasAura(59887)) m_caster->RemoveAurasDueToSpell(59887);  // 1
-    if(m_caster->HasAura(59888)) m_caster->RemoveAurasDueToSpell(59888);  // 2
-    if(m_caster->HasAura(59889)) m_caster->RemoveAurasDueToSpell(59889);  // 3
-    if(m_caster->HasAura(59890)) m_caster->RemoveAurasDueToSpell(59890);  // 4*/
-    if(m_spellInfo->Id == 8129) { if(m_caster->HasAura(59891)) m_caster->RemoveAurasDueToSpell(59891);} // 5
+    
+    
+    
+    */
+    if(          m_spellInfo->Id == 8129           // quemar mana
+          ||     m_spellInfo->Id == 53007          // penitencia 4
+          ||     m_spellInfo->Id == 48127          // explosion mental 13
+          ||     m_spellInfo->Id == 48135          // fuego sagrado 11
+    ){ 
+        if(m_caster->HasAura(59891)) m_caster->RemoveAurasDueToSpell(59891);       // 5
+        else if(m_caster->HasAura(59890)) m_caster->RemoveAurasDueToSpell(59890);  // 4
+        else if(m_caster->HasAura(59889)) m_caster->RemoveAurasDueToSpell(59889);  // 3
+        else if(m_caster->HasAura(59888)) m_caster->RemoveAurasDueToSpell(59888);  // 2
+        else if(m_caster->HasAura(59887)) m_caster->RemoveAurasDueToSpell(59887);  // 1
+    }
 }
 
 void Spell::handle_immediate()
