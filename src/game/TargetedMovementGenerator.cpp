@@ -233,11 +233,13 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
             {
                 if (i_targetSearchingTimer >= TARGET_NOT_ACCESSIBLE_MAX_TIMER)
                 {
+                    // Evading in Unit::SelectHostileTarget()
+                    owner.DeleteThreatList();
                     return false;
                 }
                 else
                 {
-                    i_targetSearchingTimer += RECHECK_DISTANCE_TIMER;
+                    i_targetSearchingTimer += WorldTimer::getMSTime() - owner.GetLastUpdateTime();
                     targetMoved = true;
                 }
             }
@@ -298,16 +300,13 @@ void ChaseMovementGenerator<Creature>::Initialize(Creature &owner)
 template<class T>
 void ChaseMovementGenerator<T>::Finalize(T &owner)
 {
-    owner.clearUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
-    if (owner.GetTypeId() == TYPEID_UNIT && !((Creature*)&owner)->IsPet() && owner.isAlive())
-    {
-        if (!owner.isInCombat() || ( this->i_target.getTarget() && !this->i_target.getTarget()->isInAccessablePlaceFor(&owner)))
-        {
-            if (((Creature*)&owner)->AI())
-                ((Creature*)&owner)->AI()->EnterEvadeMode();
-        }
-    }
-}
+     owner.clearUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
+     if (owner.GetTypeId() == TYPEID_UNIT && !((Creature*)&owner)->IsPet() && owner.isAlive())
+     {
+        if (!owner.isInCombat())
+             owner.GetMotionMaster()->MoveTargetedHome();
+     }
+ }
 
 template<class T>
 void ChaseMovementGenerator<T>::Interrupt(T &owner)
