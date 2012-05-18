@@ -3895,16 +3895,6 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
         }
     }
 
-    // pet auras
-    if (PetAura const* petSpell = sSpellMgr.GetPetAura(GetId(), m_effIndex))
-    {
-        if (apply)
-            target->AddPetAura(petSpell);
-        else
-            target->RemovePetAura(petSpell);
-        return;
-    }
-
     if (GetEffIndex() == EFFECT_INDEX_0 && target->GetTypeId() == TYPEID_PLAYER)
     {
         SpellAreaForAreaMapBounds saBounds = sSpellMgr.GetSpellAreaForAuraMapBounds(GetId());
@@ -11215,6 +11205,19 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
         }
     }
 
+    // pet auras add (effects not checked! must be checked at load from DB)
+    for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
+    {
+        if (PetAura const* petSpell = sSpellMgr.GetPetAura(GetId(), SpellEffectIndex(i)))
+        {
+            if (apply)
+                m_target->AddPetAura(petSpell);
+            else
+                m_target->RemovePetAura(petSpell);
+        }
+    }
+
+    linkedSet.clear();
     if (!apply)
     {
         // Linked spells (CastOnRemove chain)
@@ -11661,25 +11664,6 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                 else if(((caster = GetCaster())) && caster->HasAura(63310))
                     spellId1 = 63311;
                 else
-                    return;
-            }
-
-            switch(GetId())
-            {
-                case 54037:                                 // Improved Felhunter (Rank 1)
-                case 54038:                                 // Improved Felhunter (Rank 2)
-                {
-                    if (Pet* pet = m_target->GetPet())
-                    {
-                        spellId1 = 56249;                   // 56249 (broken description!)
-                        if (apply)
-                            pet->CastSpell(pet, spellId1, true, NULL);
-                        else
-                            pet->RemoveAurasDueToSpell(spellId1);
-                    }
-                    return;
-                }
-                default:
                     return;
             }
             break;
