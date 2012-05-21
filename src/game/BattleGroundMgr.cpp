@@ -46,6 +46,8 @@
 
 #include "Policies/SingletonImp.h"
 
+#include <fstream>
+
 INSTANTIATE_SINGLETON_1( BattleGroundMgr );
 
 /*********************************************************/
@@ -1281,6 +1283,21 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg)
 
     if (type)                                                // arena
     {
+        /****** arena battle log ************/
+        if(bg->isRated())
+        {
+            ArenaTeam * at1 = sObjectMgr.GetArenaTeamById(0);
+            ArenaTeam * at2 = sObjectMgr.GetArenaTeamById(1);
+            if ((at1 && at2) && (at1->GetBattleRating() > 1800 || at2->GetBattleRating() > 1800))
+            {
+                ofstream arenalog;
+                arenalog.open("arenalog.log", ios::app);
+                arenalog << "Arena: Team: " << at1->GetName() << " vs " << at2->GetName() << "\n";
+                arenalog.close();
+            }   
+        }
+        /************************************/
+
         // it seems this must be according to BG_WINNER_A/H and _NOT_ TEAM_INDEX_A/H
         for(int i = 1; i >= 0; --i)
         {
