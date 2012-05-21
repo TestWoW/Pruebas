@@ -1220,7 +1220,8 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
             if (m_damageIndex >= 0 && (m_applyMultiplierMask & (1 << m_damageIndex)))
                 dmgMultiplier = m_damageMultipliers[m_damageIndex];
 
-            caster->CalculateSpellDamage(&damageInfo, m_damage, m_spellInfo, m_attackType, dmgMultiplier);
+            damageInfo.damage = m_damage;
+            caster->CalculateSpellDamage(&damageInfo, dmgMultiplier);
         }
 
         unitTarget->CalculateAbsorbResistBlock(caster, &damageInfo, m_spellInfo);
@@ -1235,6 +1236,8 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
 
         if (damageInfo.absorb && damageInfo.damage == 0)
             damageInfo.procEx &= ~PROC_EX_DIRECT_DAMAGE;
+        else if (damageInfo.damage > 0)
+            damageInfo.procEx |= PROC_EX_DIRECT_DAMAGE;
 
         // Do triggers for unit (reflect triggers passed on hit phase for correct drop charge)
         if (m_canTrigger && missInfo != SPELL_MISS_REFLECT)
@@ -1568,6 +1571,7 @@ void Spell::HandleDelayedSpellLaunch(TargetInfo *target)
 
     // Fill base damage struct (unitTarget - is real spell target)
     DamageInfo damageInfo(caster, unitTarget, m_spellInfo);
+    damageInfo.attackType = m_attackType;
 
     // keep damage amount for reflected spells
     if (missInfo == SPELL_MISS_NONE || (missInfo == SPELL_MISS_REFLECT && target->reflectResult == SPELL_MISS_NONE))
@@ -1591,11 +1595,13 @@ void Spell::HandleDelayedSpellLaunch(TargetInfo *target)
             float dmgMultiplier = 1.0f;
             if (m_damageIndex >= 0 && (m_applyMultiplierMask & (1 << m_damageIndex)))
                 dmgMultiplier = m_damageMultipliers[m_damageIndex];
-            caster->CalculateSpellDamage(&damageInfo, m_damage, m_spellInfo, m_attackType, dmgMultiplier);
+            damageInfo.damage = m_damage;
+            caster->CalculateSpellDamage(&damageInfo, dmgMultiplier);
         }
 
         // Update damage multipliers
         for (int32 effectNumber = 0; effectNumber < MAX_EFFECT_INDEX; ++effectNumber)
+        {
             if (update_mult[effectNumber])
             {
                 // Get multiplier
@@ -1606,6 +1612,7 @@ void Spell::HandleDelayedSpellLaunch(TargetInfo *target)
                         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_EFFECT_PAST_FIRST, multiplier, this);
                 m_damageMultipliers[effectNumber] *= multiplier;
             }
+        }
     }
 
     target->damage = damageInfo.damage;
