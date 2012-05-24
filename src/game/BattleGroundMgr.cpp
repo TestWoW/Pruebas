@@ -1286,8 +1286,8 @@ void BattleGroundMgr::BuildPvpLogDataPacket(WorldPacket *data, BattleGround *bg)
         /****** arena battle log ************/
         if(bg->isRated())
         {
-            ArenaTeam * at1 = sObjectMgr.GetArenaTeamById(0);
-            ArenaTeam * at2 = sObjectMgr.GetArenaTeamById(1);
+            ArenaTeam * at1 = sObjectMgr.GetArenaTeamById(bg->m_ArenaTeamIds[0]);
+            ArenaTeam * at2 = sObjectMgr.GetArenaTeamById(bg->m_ArenaTeamIds[1]);
             if ((at1 && at2) && (at1->GetBattleRating() > 1800 || at2->GetBattleRating() > 1800))
             {
                 ofstream arenalog;
