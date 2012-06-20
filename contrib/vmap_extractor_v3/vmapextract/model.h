@@ -41,21 +41,14 @@ public:
     size_t nIndices;
 
     bool open();
-    bool ConvertToVMAPModel(const char * outfilename);
+    bool ConvertToVMAPModel(char * outfilename);
 
     bool ok;
 
     Model(std::string &filename);
-    ~Model() {_unload();}
+    ~Model();
 
 private:
-    void _unload()
-    {
-        delete[] vertices;
-        delete[] indices;
-        vertices = NULL;
-        indices = NULL;
-    }
     std::string filename;
     char outfilename;
 };

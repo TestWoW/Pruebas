@@ -93,7 +93,7 @@ class WardenBase
 
     public:
         WardenBase();
-        virtual ~WardenBase();
+        ~WardenBase();
 
         virtual void Init(WorldSession *pClient, BigNumber *K);
         virtual ClientWardenModule *GetModuleForClient(WorldSession *session);

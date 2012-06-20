@@ -527,7 +527,7 @@ NavTerrain PathFinder::getNavTerrain(float x, float y, float z)
     GridMapLiquidData data;
     m_sourceUnit->GetTerrain()->getLiquidStatus(x, y, z, MAP_ALL_LIQUIDS, &data);
 
-    switch (data.type_flags)
+    switch (data.type)
     {
         case MAP_LIQUID_TYPE_WATER:
         case MAP_LIQUID_TYPE_OCEAN:

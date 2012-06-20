@@ -7993,7 +7993,7 @@ bool PlayerCondition::Meets(Player const * player) const
             player->GetZoneAndAreaId(zone,area);
             return (zone == m_value1 || area == m_value1) == (m_value2 == 0);
         }
-        case CONDITION_REPUTATION_RANK_MIN:
+        case CONDITION_REPUTATION_RANK:
         {
             FactionEntry const* faction = sFactionStore.LookupEntry(m_value1);
             return faction && player->GetReputationMgr().GetRank(faction) >= ReputationRank(m_value2);
@@ -8162,11 +8162,6 @@ bool PlayerCondition::Meets(Player const * player) const
                 return !player->HasSkill(m_value1);
             else
                 return player->HasSkill(m_value1) && player->GetBaseSkillValue(m_value1) < m_value2;
-        case CONDITION_REPUTATION_RANK_MAX:
-        {
-            FactionEntry const* faction = sFactionStore.LookupEntry(m_value1);
-            return faction && player->GetReputationMgr().GetRank(faction) <= ReputationRank(m_value2);
-        }
         default:
             return false;
     }
@@ -8263,19 +8258,12 @@ bool PlayerCondition::IsValid(uint16 entry, ConditionType condition, uint32 valu
             }
             break;
         }
-        case CONDITION_REPUTATION_RANK_MIN:
-        case CONDITION_REPUTATION_RANK_MAX:
+        case CONDITION_REPUTATION_RANK:
         {
             FactionEntry const* factionEntry = sFactionStore.LookupEntry(value1);
             if (!factionEntry)
             {
                 sLog.outErrorDb("Reputation condition (entry %u, type %u) requires to have reputation non existing faction (%u), skipped", entry, condition, value1);
-                return false;
-            }
-
-            if (value2 >= MAX_REPUTATION_RANK)
-            {
-                sLog.outErrorDb("Reputation condition (entry %u, type %u) has invalid rank requirement (value2 = %u) - must be between %u and %u, skipped", entry, condition, value2, MIN_REPUTATION_RANK, MAX_REPUTATION_RANK-1);
                 return false;
             }
             break;

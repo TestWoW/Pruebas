@@ -24,6 +24,8 @@ ADD_DEFINITIONS("-O3")
 include_directories(../../src/shared)
 include_directories(../../src/game/vmap/)
 include_directories(../../dep/include/g3dlite/)
+include_directories(../../dep/ACE_wrappers/)
+include_directories(../../objdir/dep/ACE_wrappers)
 include_directories(../../src/framework/)
 
 add_library(g3dlite ../../dep/src/g3dlite/AABox.cpp
@@ -75,7 +77,7 @@ add_library(vmap
 	../../src/game/vmap/ModelInstance.cpp
 	)
 
-target_link_libraries(vmap g3dlite z pthread ACE)
+target_link_libraries(vmap g3dlite z)
 
 add_executable(vmap_assembler vmap_assembler.cpp)
 target_link_libraries(vmap_assembler vmap)

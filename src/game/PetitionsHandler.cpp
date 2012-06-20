@@ -550,8 +550,7 @@ void WorldSession::HandlePetitionSignOpcode(WorldPacket & recv_data)
         SendPacket(&data);
 
         // update for owner if online
-        Player* owner = sObjectMgr.GetPlayer(ownerGuid);
-        if(owner)
+        if(Player *owner = sObjectMgr.GetPlayer(ownerGuid))
             owner->GetSession()->SendPacket(&data);
         return;
     }
@@ -575,8 +574,7 @@ void WorldSession::HandlePetitionSignOpcode(WorldPacket & recv_data)
     //    item->SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1+1, signs);
 
     // update for owner if online
-    Player* owner = sObjectMgr.GetPlayer(ownerGuid);
-    if(owner)
+    if(Player *owner = sObjectMgr.GetPlayer(ownerGuid))
         owner->GetSession()->SendPacket(&data);
 }
 

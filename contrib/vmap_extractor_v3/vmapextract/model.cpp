@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <cstdio>
 
-Model::Model(std::string &filename) : filename(filename), vertices(0), indices(0)
+Model::Model(std::string &filename) : filename(filename)
 {
 }
 
@@ -40,8 +40,6 @@ bool Model::open()
         printf("Error loading model %s\n", filename.c_str());
         return false;
     }
-
-    _unload();
 
     memcpy(&header, f.getBuffer(), sizeof(ModelHeader));
     if(header.nBoundingTriangles > 0)
@@ -69,7 +67,7 @@ bool Model::open()
     return true;
 }
 
-bool Model::ConvertToVMAPModel(const char * outfilename)
+bool Model::ConvertToVMAPModel(char * outfilename)
 {
     int N[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
     FILE * output=fopen(outfilename,"wb");
@@ -112,16 +110,24 @@ bool Model::ConvertToVMAPModel(const char * outfilename)
     {
         for(uint32 vpos=0; vpos <nVertices; ++vpos)
         {
-            std::swap(vertices[vpos].y, vertices[vpos].z);
+            float sy = vertices[vpos].y;
+            vertices[vpos].y = vertices[vpos].z;
+            vertices[vpos].z = sy;
         }
         fwrite(vertices, sizeof(float)*3, nVertices, output);
     }
+
+    delete[] vertices;
+    delete[] indices;
 
     fclose(output);
 
     return true;
 }
 
+Model::~Model()
+{
+}
 
 Vec3D fixCoordSystem(Vec3D v)
 {
@@ -166,7 +172,7 @@ ModelInstance::ModelInstance(MPQFile &f,const char* ModelInstName, uint32 mapID,
 
     uint16 adtId = 0;// not used for models
     uint32 flags = MOD_M2;
-    if(tileX == 65 && tileY == 65) flags |= MOD_WORLDSPAWN;
+	if(tileX == 65 && tileY == 65) flags |= MOD_WORLDSPAWN;
     //write mapID, tileX, tileY, Flags, ID, Pos, Rot, Scale, name
     fwrite(&mapID, sizeof(uint32), 1, pDirfile);
     fwrite(&tileX, sizeof(uint32), 1, pDirfile);
