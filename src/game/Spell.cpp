@@ -3398,7 +3398,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 continue;
             }
 
-            if (!CheckTargetBeforeLimitation(*itr))
+            if (!CheckTargetBeforeLimitation(*itr, effIndex))
                 itr = targetUnitMap.erase(itr);
             else
                 ++itr;
@@ -7964,15 +7964,18 @@ CurrentSpellTypes Spell::GetCurrentContainer()
         return(CURRENT_GENERIC_SPELL);
 }
 
-bool Spell::CheckTargetBeforeLimitation(Unit* target)
+bool Spell::CheckTargetBeforeLimitation(Unit* target, SpellEffectIndex eff)
 {
     if (!target)
         return false;
     // check right target                                                                                       // should activ for spells 72034, 72096
     if (!target->isAlive() && !IsSpellAllowDeadTarget(m_spellInfo))
         return false;
-    if (m_spellInfo->HasAttribute(SPELL_ATTR_EX3_TARGET_ONLY_PLAYER) && target->GetTypeId() != TYPEID_PLAYER /*&& m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SCRIPT*/)
+    if (m_spellInfo->HasAttribute(SPELL_ATTR_EX3_TARGET_ONLY_PLAYER) && target->GetTypeId() != TYPEID_PLAYER &&
+        m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SCRIPT && m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SELF)
+    {
         return false;
+    }
     // Check Aura spell req (need for AoE spells)
     if (m_spellInfo->targetAuraSpell && !target->HasAura(m_spellInfo->targetAuraSpell))
         return false;
@@ -7991,6 +7994,13 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
         if (!SpellMgr::IsTargetMatchedWithCreatureType(m_spellInfo, target))
             return false;
     }
+
+     // check right target                                                                                       // should activ for spells 72034, 72096
+    if (m_spellInfo->HasAttribute(SPELL_ATTR_EX3_TARGET_ONLY_PLAYER) && target->GetTypeId() != TYPEID_PLAYER &&
+        m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SCRIPT && m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SELF)
+    {
+        return false;
+    }
     // Check Aura spell req (need for AoE spells)
     if (m_spellInfo->targetAuraSpell && !target->HasAura(m_spellInfo->targetAuraSpell))
         return false;
@@ -7998,12 +8008,7 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
         return false;
     if (m_spellInfo->TargetAuraStateNot && target->HasAura(m_spellInfo->TargetAuraStateNot))
         return false;
- 
-/* revert mr1911   
-    // check right target                                                                                       // should activ for spells 72034, 72096
-    if (m_spellInfo->HasAttribute(SPELL_ATTR_EX3_TARGET_ONLY_PLAYER) && target->GetTypeId() != TYPEID_PLAYER /*&& m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SCRIPT/)
-        return false;
-*/
+
     // Check targets for not_selectable unit flag and remove
     // A player can cast spells on his pet (or other controlled unit) though in any state
     if (target != m_caster && target->GetCharmerOrOwnerGuid() != m_caster->GetObjectGuid())
@@ -9203,12 +9208,12 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             radius = DEFAULT_VISIBILITY_INSTANCE;
 
             UnitList tmpUnitMap;
-            FillAreaTargets(tmpUnitMap, radius, PUSH_INHERITED_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            FillAreaTargets(tmpUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             if (!tmpUnitMap.empty())
             {
                 for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
                 {
-                    if (*itr && (*itr)->GetTypeId() == TYPEID_PLAYER && // target players only
+                    if ((*itr) && (*itr)->GetTypeId() == TYPEID_PLAYER && // target players only
                         m_caster->getVictim() &&                        // don't target tank
                         m_caster->getVictim()->GetObjectGuid() != (*itr)->GetObjectGuid())
                     {
@@ -9242,7 +9247,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 73777:
         case 73778:
         {
-            FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE, GetAffectiveCaster());
+            FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE, GetAffectiveCaster());
             break;
         }
         case 69159: // Gaseous Blight (Festergut)
@@ -9275,7 +9280,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                 maxTargets = 3;
 
             UnitList tmpUnitMap;
-            FillAreaTargets(tmpUnitMap, radius, PUSH_INHERITED_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            FillAreaTargets(tmpUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             if (!tmpUnitMap.empty())
             {
                 for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
@@ -9308,7 +9313,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 69298: // Cancel Resistant To Blight (Festergut)
         {
             UnitList tmpUnitMap;
-            FillAreaTargets(tmpUnitMap, radius, PUSH_INHERITED_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            FillAreaTargets(tmpUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             if (!tmpUnitMap.empty())
             {
                 for (UnitList::const_iterator itr = tmpUnitMap.begin(); itr != tmpUnitMap.end(); ++itr)
@@ -9517,7 +9522,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 69839: // Unstable Ooze Explosion (Rotface)
         {
             UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_INHERITED_CENTER, SPELL_TARGETS_ALL);
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
             if (!tempTargetUnitMap.empty())
             {
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
@@ -9551,7 +9556,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 70117: // Icy grip (Sindragosa encounter)
         {
             UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             if (!tempTargetUnitMap.empty())
             {
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
@@ -9891,7 +9896,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 72816:
         case 72817:
         {
-            FillAreaTargets(targetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             targetUnitMap.remove(m_caster);
         }
         case 72905: // Frostbolt Volley (Lady Deathwhisper)
@@ -9900,7 +9905,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 72908:
         {
             UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             if (!tempTargetUnitMap.empty())
             {
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
@@ -9917,7 +9922,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 73058:
         {
             UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             if (!tempTargetUnitMap.empty())
             {
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
@@ -9990,7 +9995,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 71336:                                     // Pact of the Darkfallen
         {
             UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             if (!tempTargetUnitMap.empty())
             {
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
@@ -10043,7 +10048,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 71390:                                     // Pact of the Darkfallen
         {
             UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_FRIENDLY);
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY);
             if (!tempTargetUnitMap.empty())
             {
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
