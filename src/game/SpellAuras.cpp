@@ -11475,19 +11475,6 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     }
                     break;
                 }
-                case 70877:                                 // Frenzied Bloodthirst
-                case 71474:
-                {
-                    if (!apply)
-                    {
-                        if (m_removeMode == AURA_REMOVE_BY_EXPIRE)
-                        {
-                            cast_at_remove = true;
-                            spellId1 = 8329; //Suicide, temp hack.
-                        }
-                    }
-                    break;
-                }
                 case 70877:                                 // Frenzied Bloodthirst (Queen Lana'thel)
                 case 71474:
                 {

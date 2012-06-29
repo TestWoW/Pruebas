@@ -7880,6 +7880,98 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
     {
         case SPELLFAMILY_GENERIC:
         {
+            switch (m_spellInfo->SpellDifficultyId)
+            {
+                case 344:                                           // Mistress' Kiss (Lord Jaraxxus) - Spells 66336 , 67076 , 67077 , 67078
+                {
+                    if (unitTarget)
+                        unitTarget->CastSpell(unitTarget, 66334, true);
+                    return;
+                }
+                case 581:                                           // Powering Up (Twin Val'kyrs) - Spells 67590 , 67602 , 67603 , 67604
+                {
+                    if (!unitTarget)
+                        return;
+
+                    if (SpellAuraHolderPtr pHolder = unitTarget->GetSpellAuraHolder(m_spellInfo->Id))
+                    {
+                        if (pHolder->GetStackAmount() + 1 == m_spellInfo->StackAmount)
+                        {
+                            if (unitTarget->HasAuraOfDifficulty(65686)) // Light Essence
+                            {
+                                unitTarget->CastSpell(unitTarget, 65748, true); // Empowered Light
+                            }
+                            if (unitTarget->HasAuraOfDifficulty(65684)) // Dark Essence
+                            {
+                                unitTarget->CastSpell(unitTarget, 67215, true); // Empowered Darkness
+                            }
+                            pHolder->SetStackAmount(0);
+                        }
+                    }
+                    return;
+                }
+                case 1822:                                          // Bone Spike Graveyard (Lord Marrowgar) - Spells 69057 , 70826 , 72088 , 72089
+                case 2270:                                          // Spells 73142 , 73143 , 73144 , 73145
+                {
+                    if (unitTarget)
+                    {
+                        float x, y, z;
+                        unitTarget->GetPosition(x, y, z);
+
+                        if (Creature *pSpike = unitTarget->SummonCreature(38711, x, y, z, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 2000))
+                        {
+                            unitTarget->CastSpell(pSpike, 46598, true); // enter vehicle
+                            pSpike->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
+                        }
+                    }
+                    return;
+                }
+                case 1988:                                          // Pungent Blight (Festergut) - Spells 69195 , 71219 , 73031 , 73032
+                {
+                    m_caster->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
+                    return;
+                }
+                case 2085:                                          // Twilight Bloodbolt (Blood-Queen) - Spells 71446 , 71478 , 71479 , 71480
+                case 2109:                                          // Spells 71818 , 71819 , 71820 , 71821
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 71447, true);
+                    return;
+                }
+                case 2113:                                          // Bloodbolt Whirl (Blood-Queen) - Spells 71899 , 71900 , 71901 , 71902
+                {
+                    if (!unitTarget)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, 71446, true);
+                    return;
+                }
+                case 2169:                                          // Blood Nova (Saurfang) - Spells 72380 , 72438 , 72439 , 72440
+                case 2172:                                          // Rune of Blood (Saurfang) - Spells 72409 , 72447 , 72448 , 72449
+                {
+                    // cast Blood Link on Saurfang (script target)
+                    if (unitTarget)
+                        unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
+                    return;
+                }
+                case 2198:                                          // Gastric Bloat (Festergut) - 72219 , 72551 , 72552 , 72553
+                {
+                    if (!unitTarget)
+                        return;
+
+                    if (SpellAuraHolderPtr pHolder = unitTarget->GetSpellAuraHolder(m_spellInfo->Id))
+                    {
+                        if (pHolder->GetStackAmount() + 1 >= m_spellInfo->StackAmount)
+                            unitTarget->CastSpell(unitTarget, 72227, true);
+                    }
+
+                    return;
+                }
+                default:
+                    break;
+            }
             switch(m_spellInfo->Id)
             {
                 case 6962:                                  // Called pet
@@ -8226,7 +8318,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 }
                 case 28374:                                 // Decimate (Naxxramas: Gluth)
                 case 54426:                                 // Decimate (Naxxramas: Gluth (spells are identical))
-                //case 71123:                                 // Decimate (ICC: Precious / Stinky)
+                case 71123:                                 // Decimate (ICC: Precious / Stinky)
                 {
                     if (!unitTarget)
                         return;
@@ -8846,18 +8938,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 47957, true);
                     return;
                 }
-/*                case 48590:                                 // Avenging Spirits
-                {
-                    if (!unitTarget)
-                        return;
-
-                    // Summon 4 spirits summoners
-                    unitTarget->CastSpell(unitTarget, 48586, true);
-                    unitTarget->CastSpell(unitTarget, 48587, true);
-                    unitTarget->CastSpell(unitTarget, 48588, true);
-                    unitTarget->CastSpell(unitTarget, 48589, true);
-                    return;
-                }*/
                 case 48590:                                 // Avenging Spirits (summon Avenging Spirit Summoners)
                 {
                     if (!unitTarget)
@@ -9573,68 +9653,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     return;
                 }
-                case 69165:                                 // Inhale Blight (Festergut)
-                {
-                    // TODO: get proper difficulty spell?
-                    SpellAuraHolderPtr holder = m_caster->GetSpellAuraHolder(69166);
-
-                    if (!holder)
-                        holder = m_caster->GetSpellAuraHolder(71912);
-
-                    if (!holder)
-                    {
-                        // first Inhale
-                        m_caster->RemoveAurasDueToSpell(69157);
-                        m_caster->CastSpell(m_caster, 69162, true);
-                    }
-                    else if (holder)
-                    {
-                        if (holder->GetStackAmount() == 1)
-                        {
-                            // second Inhale
-                            m_caster->RemoveAurasDueToSpell(69162);
-                            m_caster->CastSpell(m_caster, 69164, true);
-                        }
-                        else if (holder->GetStackAmount() == 2)
-                        {
-                            // third Inhale
-                            m_caster->RemoveAurasDueToSpell(69164);
-                        }
-                    }
-
-                    return;
-                }
-                case 69195:                                 // Pungent Blight (Festergut)
-                case 71219:
-                case 73031:
-                case 73032:
-                {
-                    //m_caster->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
-                    m_caster->RemoveAurasDueToSpell(69166);
-                    m_caster->RemoveAurasDueToSpell(71912);
-                    return;
-                }
-                case 69298:                                 // Cancel Resistant to Blight (Festergut)
-                {
-                    if (unitTarget)
-                        unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
-                    return;
-                }
-                case 69197:                                 // Raging Spirit Clone
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(m_caster, 69198, true);
-                }
-                case 69200:                                 // Raging Spirit
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, 69201, true);
-                    return;
-                }
                 case 60123: // Lightwell
                 {
                    if (m_caster->GetTypeId() != TYPEID_UNIT)
@@ -10003,73 +10021,12 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
-                case 68084:                                 // Clear Valkyr touch
-                {
-                    if (!unitTarget)
-                        return;
-
-                    if (unitTarget->HasAura(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1)))
-                        unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1));
-                    if (unitTarget->HasAura(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_2)))
-                        unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_2));
-
-                    return;
-                }
-                case 69057:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 70826:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 72088:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 72089:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73142:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73143:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73144:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                case 73145:                                 // Bone Spike Graveyard (Lord Marrowgar)
-                {
-                    if (unitTarget)
-                    {
-                        float x, y, z;
-                        unitTarget->GetPosition(x, y, z);
-
-                        if (Creature *pSpike = unitTarget->SummonCreature(38711, x, y, z, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 2000))
-                        {
-                            unitTarget->CastSpell(pSpike, 46598, true); // enter vehicle
-                            pSpike->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
-                        }
-                    }
-                    return;
-                }
                 case 67533:                                 // Shoot Air Rifle
                 {
                     if (!unitTarget)
                         return;
 
                     m_caster->CastSpell(unitTarget, 67532, true);
-                    return;
-                }
-                case 67590:                                 // Powering Up (Trial of the Crusader, Twin Val'kyr encounter)
-                case 67602:
-                case 67603:
-                case 67604:
-                {
-                    if (!unitTarget)
-                        return;
-
-                    if (Aura* pAur = unitTarget->GetAura(m_spellInfo->Id, EFFECT_INDEX_0))
-                    {
-                        if (SpellAuraHolderPtr pHolder = pAur->GetHolder())
-                        {
-                            if (pHolder->GetStackAmount() >= 99)
-                            {
-                                uint32 uiSpell = 0;
-                                if (unitTarget->HasAuraOfDifficulty(65684))
-                                    uiSpell = 65724;
-                                else if (unitTarget->HasAuraOfDifficulty(65686))
-                                    uiSpell = 65748;
-
-                                if (uiSpell > 0)
-                                    unitTarget->CastSpell(unitTarget, uiSpell, true);
-                            }
-                        }
-                    }
                     return;
                 }
                 case 68861:                                 // Consume Soul (ICC FoS: Bronjahm)
@@ -10102,6 +10059,51 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     // Actually this spell should be sent with SMSG_SPELL_START
                     unitTarget->CastSpell(m_caster, 69023, true);
+                    return;
+                }
+                case 69165:                                 // Inhale Blight (Festergut)
+                {
+                    // TODO: get proper difficulty spell?
+                    SpellAuraHolderPtr holder = m_caster->GetSpellAuraHolder(69166);
+
+                    if (!holder)
+                        holder = m_caster->GetSpellAuraHolder(71912);
+
+                    if (!holder)
+                    {
+                        // first Inhale
+                        m_caster->RemoveAurasDueToSpell(69157);
+                        m_caster->CastSpell(m_caster, 69162, true);
+                    }
+                    else if (holder)
+                    {
+                        if (holder->GetStackAmount() == 1)
+                        {
+                            // second Inhale
+                            m_caster->RemoveAurasDueToSpell(69162);
+                            m_caster->CastSpell(m_caster, 69164, true);
+                        }
+                        else if (holder->GetStackAmount() == 2)
+                        {
+                            // third Inhale
+                            m_caster->RemoveAurasDueToSpell(69164);
+                        }
+                    }
+
+                    return;
+                }
+                case 69200:                                 // Raging Spirit
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 69201, true);
+                    return;
+                }
+                case 69298:                                 // Cancel Resistant to Blight (Festergut)
+                {
+                    if (unitTarget)
+                        unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
                     return;
                 }
                 case 69377:                                 // Fortitude
@@ -10153,15 +10155,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         }
                     }
                 return;
-                }
-                case 66336:                                 // Mistress' Kiss (Trial of the Crusader, ->
-                case 67076:                                 // -> Lord Jaraxxus encounter, all difficulties)
-                case 67077:                                 // ----- // -----
-                case 67078:                                 // ----- // -----
-                {
-                    if (unitTarget)
-                        unitTarget->CastSpell(unitTarget, 66334, true);
-                    return;
                 }
                 case 69140:                                 // Coldflame (random target selection)
                 {
@@ -10223,12 +10216,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         if (SpellAuraHolderPtr holder = unitTarget->GetSpellAuraHolder(m_spellInfo->Id))
                         {
                             if (holder->GetStackAmount() >= 4)
-                            {
                                 unitTarget->CastSpell(unitTarget, 69839, false); // Unstable Ooze Explosion
-                                // despawn Big Ooze
-                                if (unitTarget->GetTypeId() == TYPEID_UNIT)
-                                    ((Creature*)unitTarget)->ForcedDespawn(4500);
-                            }
                         }
                     }
                     return;
@@ -10300,56 +10288,11 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
 
                     return;
                 }
-                case 71123:                                 // Decimate (Stinky && Precious ICC)
-                {
-                    if (!unitTarget)
-                        return;
-
-                    if (unitTarget->GetHealthPercent() >= m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0))
-                        unitTarget->SetHealthPercent(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0));
-                    return;
-                }
                 case 71255:                                 // Choking Gas Bomb (Putricide)
                 {
                     m_caster->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0), true);
                     // second is on random side
                     m_caster->CastSpell(m_caster, m_spellInfo->CalculateSimpleValue(SpellEffectIndex(urand(1, 2))), true);
-                    return;
-                }
-                case 71446:                                 // Twilight Bloodbolt 10N
-                case 71818:
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, 71447, true);
-                    return;
-                }
-                case 71478:                                 // Twilight Bloodbolt 25N
-                case 71819:
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, 71481, true);
-                    return;
-                }
-                case 71479:                                 // Twilight Bloodbolt 10H
-                case 71820:
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, 71482, true);
-                    return;
-                }
-                case 71480:                                 // Twilight Bloodbolt 25H
-                case 71821:
-                {
-                    if (!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(unitTarget, 71483, true);
                     return;
                 }
                 case 71620:                                 // Tear Gas Cancel (Putricide)
@@ -10360,38 +10303,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0));
                         unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1));
                     }
-                    return;
-                }
-                case 71899:                                 // Bloodbolt Whirl 10N
-                {
-                    if (!unitTarget)
-                        return;
-
-                    m_caster->CastSpell(unitTarget, 71446, true);
-                    return;
-                }
-                case 71900:                                 // Bloodbolt Whirl 25N
-                {
-                    if (!unitTarget)
-                        return;
-
-                    m_caster->CastSpell(unitTarget, 71478, true);
-                    return;
-                }
-                case 71901:                                 // Bloodbolt Whirl 10H
-                {
-                    if (!unitTarget)
-                        return;
-
-                    m_caster->CastSpell(unitTarget, 71479, true);
-                    return;
-                }
-                case 71902:                                 // Bloodbolt Whirl 25H
-                {
-                    if (!unitTarget)
-                        return;
-
-                    m_caster->CastSpell(unitTarget, 71480, true);
                     return;
                 }
                 case 71952:                                 // Presence of the Darkfallen (Queen Lana'thel ICC)
@@ -10425,46 +10336,10 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
-                case 72219:                                 // Gastric Bloat (Festergut)
-                case 72551:
-                case 72552:
-                case 72553:
-                {
-                    if (!unitTarget)
-                        return;
-
-                    if (SpellAuraHolderPtr pHolder = unitTarget->GetSpellAuraHolder(m_spellInfo->Id))
-                    {
-                        if (pHolder->GetStackAmount() + 1 >= m_spellInfo->StackAmount)
-                            unitTarget->CastSpell(unitTarget, 72227, true);
-                    }
-
-                    return;
-                }
                 case 72257:                                 // Remove Marks of the Fallen Champion
                 {
                     if (unitTarget)
                         unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(eff_idx));
-                    return;
-                }
-                case 72380:                                 // Blood Nova (Saurfang)
-                case 72438:
-                case 72439:
-                case 72440:
-                {
-                    // cast Blood Link on Saurfang (script target)
-                    if (unitTarget)
-                        unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
-                    return;
-                }
-                case 72409:                                 // Rune of Blood (Saurfang)
-                case 72447:
-                case 72448:
-                case 72449:
-                {
-                    // cast Blood Link on Saurfang (script target)
-                    if (unitTarget)
-                        unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true, 0, 0, m_caster->GetObjectGuid(), m_spellInfo);
                     return;
                 }
                 case 72429:                                 // Mass Resurrection (Lich King encounter)
@@ -10510,22 +10385,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         if (m_caster->GetTypeId() == TYPEID_UNIT)
                             ((Creature*)m_caster)->ForcedDespawn(800);
                     }
-                    return;
-                }
-                case 74445:                                 // Valkyr Carry (control vehicle)
-                {
-                    if(!unitTarget || !m_caster)
-                        return;
-
-                    unitTarget->CastSpell(m_caster, 46598, true); // Control Vehicle aura
-                    break;
-                }
-                case 74455:                                 // Conflagration (Saviana Ragefire)
-                {
-                    if(!unitTarget)
-                        return;
-
-                    unitTarget->CastSpell(m_caster, 74456, true);
                     return;
                 }
             }
