@@ -10348,6 +10348,22 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         m_caster->CastSpell(unitTarget, 72423, true);
                     return;
                 }
+                case 74445:                                 // Valkyr Carry (control vehicle)
+                {
+                    if(!unitTarget || !m_caster)
+                        return;
+
+                    unitTarget->CastSpell(m_caster, 46598, true); // Control Vehicle aura
+                    break;
+                }
+                case 74455:                                 // Conflagration (Saviana Ragefire)
+                {
+                    if(!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(m_caster, 74456, true);
+                    return;
+                }
                 case 72705:                                 // Coldflame (summon around the caster)
                 {
                     if (!unitTarget)
