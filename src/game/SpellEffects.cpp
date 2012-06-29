@@ -3541,6 +3541,13 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         unitTarget->RemoveAurasDueToSpell(71340);
                     break;
                 }
+                case 71445:                                 // Twilight Bloodbolt (Lana'thel)
+                case 71471:
+                {
+                    if (unitTarget)
+                        m_caster->CastSpell(unitTarget, 71818, true);
+                    break;
+                }
                 case 71718:                                 // Conjure Flame
                 case 72040:                                 // Conjure Empowered Flame
                 {
@@ -9091,28 +9098,26 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 {
                     if (!unitTarget)
                         return;
-
-                    uint8 gender = unitTarget->getGender();
-                    uint8 race = unitTarget->getRace();
                     uint32 spellId = 0;
-                    switch (race)
+
+                    bool isMale = unitTarget->getGender() == GENDER_MALE;
+                    switch (unitTarget->getRace())
                     {
-                        case RACE_HUMAN:            spellId = (gender == GENDER_MALE ? 51520 : 51534); break;
-                        case RACE_DWARF:            spellId = (gender == GENDER_MALE ? 51538 : 51537); break;
-                        case RACE_NIGHTELF:         spellId = (gender == GENDER_MALE ? 51535 : 51536); break;
-                        case RACE_GNOME:            spellId = (gender == GENDER_MALE ? 51539 : 51540); break;
-                        case RACE_DRAENEI:          spellId = (gender == GENDER_MALE ? 51541 : 51542); break;
-                        case RACE_ORC:              spellId = (gender == GENDER_MALE ? 51543 : 51544); break;
-                        case RACE_UNDEAD:           spellId = (gender == GENDER_MALE ? 51549 : 51550); break;
-                        case RACE_TAUREN:           spellId = (gender == GENDER_MALE ? 51547 : 51548); break;
-                        case RACE_TROLL:            spellId = (gender == GENDER_MALE ? 51546 : 51545); break;
-                        case RACE_BLOODELF:         spellId = (gender == GENDER_MALE ? 51551 : 51552); break;
+                        case RACE_HUMAN:    spellId = isMale ? 51520 : 51534; break;
+                        case RACE_DWARF:    spellId = isMale ? 51538 : 51537; break;
+                        case RACE_NIGHTELF: spellId = isMale ? 51535 : 51536; break;
+                        case RACE_GNOME:    spellId = isMale ? 51539 : 51540; break;
+                        case RACE_DRAENEI:  spellId = isMale ? 51541 : 51542; break;
+                        case RACE_ORC:      spellId = isMale ? 51543 : 51544; break;
+                        case RACE_UNDEAD:   spellId = isMale ? 51549 : 51550; break;
+                        case RACE_TAUREN:   spellId = isMale ? 51547 : 51548; break;
+                        case RACE_TROLL:    spellId = isMale ? 51546 : 51545; break;
+                        case RACE_BLOODELF: spellId = isMale ? 51551 : 51552; break;
                         default:
                             return;
                     }
-                    if (spellId)
-                        unitTarget->CastSpell(unitTarget, spellId, true);
 
+                    unitTarget->CastSpell(unitTarget, spellId, true);
                     return;
                 }
                 case 51770:                                 // Emblazon Runeblade
@@ -10312,6 +10317,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     return;
                 }
                 case 71446:                                 // Twilight Bloodbolt 10N
+                case 71818:
                 {
                     if (!unitTarget)
                         return;
@@ -10320,6 +10326,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     return;
                 }
                 case 71478:                                 // Twilight Bloodbolt 25N
+                case 71819:
                 {
                     if (!unitTarget)
                         return;
@@ -10328,6 +10335,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     return;
                 }
                 case 71479:                                 // Twilight Bloodbolt 10H
+                case 71820:
                 {
                     if (!unitTarget)
                         return;
@@ -10336,6 +10344,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     return;
                 }
                 case 71480:                                 // Twilight Bloodbolt 25H
+                case 71821:
                 {
                     if (!unitTarget)
                         return;

@@ -1832,8 +1832,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 69055:                                 // Bone Slice (ICC, Lord Marrowgar)
                 case 69278:                                 // Gas spore (ICC, Festergut)
                 case 70341:                                 // Slime Puddle (ICC, Putricide)
-                case 71336:                                 // Pact of the Darkfallen
-                case 71390:                                 // Pact of the Darkfallen
                     unMaxTargets = 2;
                     break;
                 case 28796:                                 // Poison Bolt Volley
@@ -1854,8 +1852,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 71221:                                 // Gas spore (Mode 1) (ICC, Festergut)
                     unMaxTargets = 4;
                     break;
-                case 30843:                                 // Enfeeble TODO: exclude top threat target from target selection
-                case 42005:                                 // Bloodboil TODO: need to be 5 targets(players) furthest away from caster
+                case 30843:                                 // Enfeeble
+                case 42005:                                 // Bloodboil
                 case 45641:                                 // Fire Bloom (SWP, Kil'jaeden)
                 case 55665:                                 // Life Drain (h)
                 case 58917:                                 // Consume Minions
@@ -2390,14 +2388,18 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 else
                     unMaxTargets = 1;
             }
-            else if (m_spellInfo->Id == 42005)                   // Bloodboil
+            else if (m_spellInfo->Id == 42005)                   // Bloodboil (spell hits only the 5 furthest away targets)
             {
-                // manually cuting, because the spell hits only the 5 furthest away targets
                 if (targetUnitMap.size() > unMaxTargets)
                 {
                     targetUnitMap.sort(TargetDistanceOrderFarAway(m_caster));
                     targetUnitMap.resize(unMaxTargets);
                 }
+            }
+            else if (m_spellInfo->Id == 30843)              // Enfeeble (do not target current victim)
+            {
+                if (Unit* pVictim = m_caster->getVictim())
+                    targetUnitMap.remove(pVictim);
             }
             break;
         }
@@ -10001,12 +10003,11 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
                 {
                     if (!(*iter)->GetObjectGuid().IsPlayer() ||
-                        (*iter)->HasAuraOfDifficulty(70838) ||
-                        (*iter) == m_caster->getVictim())
+                        m_caster->getVictim() == (*iter) ||         // don't target the tank
+                        (*iter)->HasAuraOfDifficulty(70451))        // don't target offtank linked with Blood Mirror
+                    {
                         continue;
-
-                    if (m_caster->GetDistance(*iter) < 5.0f) // target ranged players
-                        continue;
+                    }
 
                     targetUnitMap.push_back((*iter));
                 }
@@ -10053,15 +10054,43 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             {
                 for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
                 {
-                    if (!(*iter)->GetObjectGuid().IsPlayer())
-                        continue;
-
-                    if (!(*iter)->HasAura(71340))
-                        continue;
-
-                    targetUnitMap.push_back((*iter));
+                    if ((*iter)->HasAura(71340))
+                        targetUnitMap.push_back((*iter));
                 }
             }
+            break;
+        }
+        case 71445:                                 // Twilight Bloodbolt (Lana'thel)
+        case 71471:
+        {
+            radius = DEFAULT_VISIBILITY_INSTANCE;
+            UnitList tempTargetUnitMap;
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
+            for (UnitList::iterator itr = tempTargetUnitMap.begin(); itr != tempTargetUnitMap.end();++itr)
+            {
+                if ((*itr) && (*itr)->GetTypeId() == TYPEID_PLAYER &&
+                    !(*itr)->HasAuraOfDifficulty(70445) && !(*itr)->HasAuraOfDifficulty(70451)) // Blood Mirror
+                {
+                    targetUnitMap.push_back(*itr);
+                }
+            }
+
+            // remove random units from the map
+            while (targetUnitMap.size() > 2)
+            {
+                uint32 poz = urand(0, targetUnitMap.size()-1);
+                for (UnitList::iterator itr = targetUnitMap.begin(); itr != targetUnitMap.end(); ++itr, --poz)
+                {
+                    if (!*itr) continue;
+
+                    if (!poz)
+                    {
+                        targetUnitMap.erase(itr);
+                        break;
+                    }
+                }
+            }
+
             break;
         }
         case 71447:                                 // Bloodbolt Splash 10N
@@ -10069,7 +10098,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 71482:                                 // Bloodbolt Splash 10H
         case 71483:                                 // Bloodbolt Splash 25H
         {
-            FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE, GetAffectiveCaster());
+            FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_FRIENDLY);
             targetUnitMap.remove(m_caster);
             break;
         }
