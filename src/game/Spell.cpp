@@ -9223,6 +9223,27 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE, GetAffectiveCaster());
             break;
         }
+        case 69159: // Gaseous Blight (Festergut)
+        case 69161:
+        case 69163:
+        case 70138:
+        case 70137:
+        case 70136:
+        case 70135:
+        {
+            UnitList tempTargetUnitMap;
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_INHERITED_CENTER, SPELL_TARGETS_AOE_DAMAGE);
+            if (!tempTargetUnitMap.empty())
+            {
+                for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
+                {
+                    if (!(*iter)->GetCharmerOrOwnerPlayerOrPlayerItself())
+                        continue;
+                    targetUnitMap.push_back((*iter));
+                }
+            }
+            break;
+        }
         case 69298: // Cancel Resistant To Blight (Festergut)
         {
             UnitList tmpUnitMap;
