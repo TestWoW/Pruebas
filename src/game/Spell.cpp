@@ -129,17 +129,27 @@ SpellCastTargets::~SpellCastTargets()
 {
 }
 
-void SpellCastTargets::setUnitTarget(Unit *target)
+void SpellCastTargets::setUnitTarget(Unit* target)
 {
-    if (!target)
-        return;
+    if (target && !(m_targetMask & TARGET_FLAG_DEST_LOCATION))
+    {
+        m_destX = target->GetPositionX();
+        m_destY = target->GetPositionY();
+        m_destZ = target->GetPositionZ();
+    }
 
-    m_destX = target->GetPositionX();
-    m_destY = target->GetPositionY();
-    m_destZ = target->GetPositionZ();
     m_unitTarget = target;
-    m_unitTargetGUID = target->GetObjectGuid();
-    m_targetMask |= TARGET_FLAG_UNIT;
+
+    if (target)
+    {
+        m_unitTargetGUID = target->GetObjectGuid();
+        m_targetMask |= TARGET_FLAG_UNIT;
+    }
+    else
+    {
+        m_unitTargetGUID = ObjectGuid();
+        m_targetMask &= ~TARGET_FLAG_UNIT;
+    }
 }
 
 void SpellCastTargets::setDestination(float x, float y, float z)
@@ -675,6 +685,13 @@ void Spell::FillTargetMap()
                         case TARGET_RANDOM_NEARBY_DEST:
                             SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetA[i], tmpUnitLists[i /*==effToIndex[i]*/]);
                         break;
+                        case TARGET_AREAEFFECT_CUSTOM:
+                            // triggered spells get dest point from default target set, ignore it
+                            if (!(m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION) || m_IsTriggeredSpell)
+                                if (WorldObject* castObject = GetCastingObject())
+                                    m_targets.setDestination(castObject->GetPositionX(), castObject->GetPositionY(), castObject->GetPositionZ());
+                            SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetB[i], tmpUnitLists[i /*==effToIndex[i]*/]);
+                            break;
                         // most A/B target pairs is self->negative and not expect adding caster to target list
                         default:
                             SetTargetMap(SpellEffectIndex(i), m_spellInfo->EffectImplicitTargetB[i], tmpUnitLists[i /*==effToIndex[i]*/]);
@@ -1773,6 +1790,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 50988:                                 // Glare of the Tribunal (Halls of Stone)
                 case 54148:                                 // Ritual of the Sword (Utgarde Pinnacle, Svala)
                 case 55479:                                 // Forced Obedience (Naxxramas, Razovius)
+                case 56140:                                 // Summon Power Spark (Eye of Eternity, Malygos)
                 case 59870:                                 // Glare of the Tribunal (h) (Halls of Stone)
                 case 62016:                                 // Charge Orb (Ulduar, Thorim)
                 case 62301:                                 // Cosmic Smash (Ulduar, Algalon)
@@ -2016,6 +2034,10 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 73710:                                 // Defile 25H
                     if (Unit* realCaster = GetAffectiveCaster())
                         radius = realCaster->GetObjectScale() * 6;
+                    break;
+                case 56438:                                 // Arcane Overload
+                    if (Unit* realCaster = GetAffectiveCaster())
+                        radius = radius * realCaster->GetObjectScale();
                     break;
                 default:
                     break;
@@ -5721,7 +5743,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             if (target->IsTaxiFlying())
                 return SPELL_FAILED_BAD_TARGETS;
 
-            if(!m_IsTriggeredSpell && !m_spellInfo->HasAttribute(SPELL_ATTR_EX2_IGNORE_LOS) && VMAP::VMapFactory::checkSpellForLoS(m_spellInfo->Id) && !m_caster->IsWithinLOSInMap(target))
+            if(!m_IsTriggeredSpell && !target->IsVisibleTargetForSpell(m_caster, m_spellInfo))
                 return SPELL_FAILED_LINE_OF_SIGHT;
 
             // auto selection spell rank implemented in WorldSession::HandleCastSpellOpcode
@@ -8158,7 +8180,7 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
             /* no break - fall through*/
         case SPELL_EFFECT_RESURRECT_NEW:
             // player far away, maybe his corpse near?
-            if (target != m_caster && !m_spellInfo->HasAttribute(SPELL_ATTR_EX2_IGNORE_LOS) && !target->IsWithinLOSInMap(m_caster))
+            if (target != m_caster && !target->IsVisibleTargetForSpell(m_caster, m_spellInfo))
             {
                 if (!m_targets.getCorpseTargetGuid())
                     return false;
@@ -8180,8 +8202,8 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
             // Get GO cast coordinates if original caster -> GO
             if (target != m_caster)
             {
-                if (WorldObject* caster = GetCastingObject())
-                    if (!m_spellInfo->HasAttribute(SPELL_ATTR_EX2_IGNORE_LOS) && !target->IsWithinLOSInMap(caster))
+                if (WorldObject *caster = GetCastingObject())
+                    if (!target->IsVisibleTargetForSpell(m_caster, m_spellInfo))
                         return false;
             }
             break;
@@ -9450,32 +9472,6 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
             FillAreaTargets(targetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_AOE_DAMAGE);
             break;
         }
-        case 70360: // Eat Ooze (Mutated Abomination, Putricide)
-        case 72527:
-        {
-            radius = 50.0f;
-
-            UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
-            for (UnitList::const_iterator iter = tempTargetUnitMap.begin(); iter != tempTargetUnitMap.end(); ++iter)
-            {
-                Unit* unit = *iter;
-
-                if (unit->GetEntry() == 37690) // Growing Ooze Puddle
-                {
-                    radius = 5.0f;
-                    if (Aura* aura = unit->GetAura(70347, EFFECT_INDEX_0))
-                        radius += aura->GetStackAmount();
-
-                    if (m_caster->IsWithinDist(unit, radius))
-                    {
-                        targetUnitMap.push_back(unit);
-                        break;
-                    }
-                }
-            }
-            break;
-        }
         case 70127: // Mystic Buffet (Sindragosa)
         case 72528:
         case 72529:
@@ -9689,7 +9685,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
         case 72548:
         {
             UnitList tempTargetUnitMap;
-            FillAreaTargets(tempTargetUnitMap, radius, PUSH_SELF_CENTER, SPELL_TARGETS_ALL);
+            FillAreaTargets(tempTargetUnitMap, radius, PUSH_DEST_CENTER, SPELL_TARGETS_ALL);
             for (UnitList::iterator itr = tempTargetUnitMap.begin(); itr != tempTargetUnitMap.end(); ++itr)
             {
                 if ((*itr) && !(*itr)->GetObjectGuid().IsVehicle())

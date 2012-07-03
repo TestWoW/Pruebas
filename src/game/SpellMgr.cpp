@@ -4669,6 +4669,13 @@ DiminishingGroup GetDiminishingReturnsGroupForSpell(SpellEntry const* spellproto
                 return DIMINISHING_FEAR_CHARM_BLIND;
             break;
         }
+        case SPELLFAMILY_SHAMAN:
+        {
+            // Earthgrab
+            if (spellproto->SpellFamilyFlags.test<CF_SHAMAN_EARTHGRAB>())
+                return DIMINISHING_LIMITONLY;
+            break;
+        }
         case SPELLFAMILY_WARLOCK:
         {
             // Curses/etc
@@ -4864,7 +4871,7 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
             return false;
     }
 
-    if (raceMask)
+    if (player && raceMask)
     {
         // not in expected race
         if (!(raceMask & player->getRaceMask()))

@@ -4796,13 +4796,10 @@ void Spell::EffectTriggerMissileSpell(SpellEffectIndex effect_idx)
 
     if (!spellInfo)
     {
-        sLog.outError("EffectTriggerMissileSpell of spell %u (eff: %u): triggering unknown spell id %u",
+        sLog.outError("Spell::EffectTriggerMissileSpell spell %u (eff: %u): triggering unknown spell id %u",
             m_spellInfo->Id,effect_idx,triggered_spell_id);
         return;
     }
-
-    if (m_CastItem)
-        DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "WORLD: cast Item spellId - %i", spellInfo->Id);
 
     if (m_caster->GetTypeId() == TYPEID_PLAYER)
         ((Player*)m_caster)->RemoveSpellCooldown(triggered_spell_id);
@@ -4819,11 +4816,26 @@ void Spell::EffectTriggerMissileSpell(SpellEffectIndex effect_idx)
         MaNGOS::NormalizeMapCoord(y);
         m_caster->UpdateAllowedPositionZ(x,y,z);
 
+        DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell::EffectTriggerMissileSpell %s spell %u (eff %u): triggering spell %u with coords %f %f %f",
+            m_CastItem ?  "Item" : "",
+            m_spellInfo->Id,
+            effect_idx,
+            triggered_spell_id,
+            x,y,z);
+
         m_caster->CastSpell(x, y, z, spellInfo, true, m_CastItem, NULL, m_originalCasterGUID);
     }
     else
     {
         Unit* caster = IsSpellWithCasterSourceTargetsOnly(spellInfo) ? unitTarget : m_caster;
+
+        DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell::EffectTriggerMissileSpell %s spell %u (eff %u): triggering spell %u to %s without coords",
+            m_CastItem ?  "Item" : "",
+            m_spellInfo->Id,
+            effect_idx,
+            triggered_spell_id,
+            unitTarget->GetObjectGuid().GetString().c_str());
+
         caster->CastSpell(unitTarget,spellInfo,true,m_CastItem,NULL,m_originalCasterGUID);
     }
 }
@@ -6615,23 +6627,12 @@ void Spell::DoSummonWild(SpellEffectIndex eff_idx, uint32 forceFaction)
     for(int32 count = 0; count < amount; ++count)
     {
         float px, py, pz;
-        bool checkPath = false;
         // If dest location if present
         if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
         {
-            // Summon 1 unit in dest location
-            if (count == 0)
-            {
-                px = m_targets.m_destX;
-                py = m_targets.m_destY;
-                pz = m_targets.m_destZ;
-            }
-            // Summon in random point all other units if location present
-            else
-            {
-                m_caster->GetRandomPoint(center_x, center_y, center_z, radius, px, py, pz);
-                checkPath = true;
-            }
+            m_caster->GetRandomPoint(center_x, center_y, center_z, radius, px, py, pz);
+            m_caster->GetMap()->GetHitPosition(center_x,center_y,center_z, px, py, pz, m_caster->GetPhaseMask(),-0.1f);
+            m_caster->UpdateAllowedPositionZ(px,py,pz);
         }
         // Summon if dest location not present near caster
         else
@@ -6640,7 +6641,10 @@ void Spell::DoSummonWild(SpellEffectIndex eff_idx, uint32 forceFaction)
             {
                 // not using bounding radius of caster here
                 m_caster->GetClosePoint(px, py, pz, 0.0f, radius);
-                checkPath = true;
+                float ox, oy, oz;
+                m_caster->GetPosition(ox, oy, oz);
+                m_caster->GetMap()->GetHitPosition(ox,oy,oz, px, py, pz, m_caster->GetPhaseMask(),-0.1f);
+                m_caster->UpdateAllowedPositionZ(px,py,pz);
             }
             else
             {
@@ -6649,14 +6653,6 @@ void Spell::DoSummonWild(SpellEffectIndex eff_idx, uint32 forceFaction)
                 py = m_caster->GetPositionY();
                 pz = m_caster->GetPositionZ();
             }
-        }
-
-        if (checkPath)
-        {
-            float ox, oy, oz;
-            m_caster->GetPosition(ox, oy, oz);
-            m_caster->GetMap()->GetHitPosition(ox,oy,oz, px, py, pz, m_caster->GetPhaseMask(),-0.1f);
-            m_caster->UpdateAllowedPositionZ(px,py,pz);
         }
 
         if (Creature* summon = m_caster->SummonCreature(creature_entry, px, py, pz, m_caster->GetOrientation(), summonType, m_duration))
@@ -11637,7 +11633,10 @@ void Spell::EffectCharge(SpellEffectIndex /*eff_idx*/)
 
     float speed = m_spellInfo->speed ? m_spellInfo->speed : BASE_CHARGE_SPEED;
 
-    m_caster->MonsterMoveToDestination(x, y, z, m_caster->GetOrientation(), speed, 0, false, unitTarget);
+    if (m_caster->IsFalling())
+        m_caster->MonsterMoveWithSpeed(x, y, z, speed, false, false);
+    else
+        m_caster->MonsterMoveToDestination(x, y, z, m_caster->GetOrientation(), speed, 0, false, unitTarget);
 
     // not all charge effects used in negative spells
     if (unitTarget != m_caster && !IsPositiveSpell(m_spellInfo->Id))
@@ -11670,7 +11669,10 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
 
     float speed = m_spellInfo->speed ? m_spellInfo->speed : BASE_CHARGE_SPEED;
 
-    m_caster->MonsterMoveToDestination(x, y, z, m_caster->GetOrientation(), speed, 0, false, unitTarget);
+    if (m_caster->IsFalling())
+        m_caster->MonsterMoveWithSpeed(x, y, z, speed, false, false);
+    else
+        m_caster->MonsterMoveToDestination(x, y, z, m_caster->GetOrientation(), speed, 0, false, unitTarget);
 
     // not all charge effects used in negative spells
     if (unitTarget && unitTarget != m_caster && !IsPositiveSpell(m_spellInfo->Id))

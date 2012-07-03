@@ -1694,17 +1694,17 @@ void Unit::CalculateMeleeDamage(DamageInfo* damageInfo)
         case BASE_ATTACK:
             damageInfo->procAttacker = PROC_FLAG_SUCCESSFUL_MELEE_HIT;
             damageInfo->procVictim   = PROC_FLAG_TAKEN_MELEE_HIT;
-            damageInfo->HitInfo      = HITINFO_NORMALSWING2;
+            damageInfo->HitInfo      = HITINFO_AFFECTS_VICTIM;
             break;
         case OFF_ATTACK:
             damageInfo->procAttacker = PROC_FLAG_SUCCESSFUL_MELEE_HIT | PROC_FLAG_SUCCESSFUL_OFFHAND_HIT;
-            damageInfo->procVictim   = PROC_FLAG_TAKEN_MELEE_HIT;//|PROC_FLAG_TAKEN_OFFHAND_HIT // not used
-            damageInfo->HitInfo = HITINFO_LEFTSWING;
+            damageInfo->procVictim   = PROC_FLAG_TAKEN_MELEE_HIT;     //|PROC_FLAG_TAKEN_OFFHAND_HIT // not used
+            damageInfo->HitInfo      = HITINFO_OFFHAND;
             break;
         case RANGED_ATTACK:
             damageInfo->procAttacker = PROC_FLAG_SUCCESSFUL_RANGED_HIT;
             damageInfo->procVictim   = PROC_FLAG_TAKEN_RANGED_HIT;
-            damageInfo->HitInfo = HITINFO_UNK3;             // test (dev note: test what? HitInfo flag possibly not confirmed.)
+            damageInfo->HitInfo      = HITINFO_UNK3;                  // test (dev note: test what? HitInfo flag possibly not confirmed.)
             break;
         default:
             break;
@@ -1716,7 +1716,7 @@ void Unit::CalculateMeleeDamage(DamageInfo* damageInfo)
         damageInfo->HitInfo       |= HITINFO_NORMALSWING;
         damageInfo->TargetState    = VICTIMSTATE_IS_IMMUNE;
 
-        damageInfo->procEx |=PROC_EX_IMMUNE;
+        damageInfo->procEx        |= PROC_EX_IMMUNE;
         damageInfo->damage         = 0;
         damageInfo->cleanDamage    = 0;
         return;
@@ -1925,21 +1925,11 @@ void Unit::CalculateMeleeDamage(DamageInfo* damageInfo)
     if (int32(damageInfo->damage) > 0)
     {
         damageInfo->procVictim |= PROC_FLAG_TAKEN_ANY_DAMAGE;
-        damageInfo->procEx |= PROC_EX_DIRECT_DAMAGE;
+        damageInfo->procEx     |= PROC_EX_DIRECT_DAMAGE;
 
         // Calculate absorb & resists
         damageInfo->target->CalculateDamageAbsorbAndResist(this, damageInfo, true);
 
-        if (damageInfo->absorb)
-        {
-            damageInfo->HitInfo|=HITINFO_ABSORB;
-            damageInfo->procEx|=PROC_EX_ABSORB;
-        }
-        if (damageInfo->resist)
-            damageInfo->HitInfo|=HITINFO_RESIST;
-
-        if (damageInfo->damage <= 0)
-            damageInfo->procEx &= ~PROC_EX_DIRECT_DAMAGE;
     }
     else // Umpossible get negative result but....
         damageInfo->damage = 0;
@@ -2817,10 +2807,16 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, DamageInfo* damageInfo,
     damageInfo->absorb = damageInfo->damage - damageInfo->resist - RemainingDamage - absorb_unaffected_damage;
 
     if (damageInfo->absorb)
-        damageInfo->procEx |= PROC_EX_ABSORB;
+    {
+        damageInfo->procEx  |= PROC_EX_ABSORB;
+        damageInfo->HitInfo |= (damageInfo->damage <= damageInfo->absorb) ? HITINFO_ABSORB : HITINFO_PARTIAL_ABSORB;
+    }
 
     if (damageInfo->resist)
-        damageInfo->procEx |= PROC_EX_RESIST;
+    {
+        damageInfo->procEx  |= PROC_EX_RESIST;
+        damageInfo->HitInfo |= (damageInfo->damage <= damageInfo->resist) ? HITINFO_RESIST : HITINFO_PARTIAL_RESIST;
+    }
 
     if (damageInfo->damage <= (damageInfo->absorb + damageInfo->resist))
     {
@@ -2933,9 +2929,9 @@ void Unit::AttackerStateUpdate (Unit *pVictim, WeaponAttackType attType, bool ex
 
     uint32 hitInfo;
     if (attType == BASE_ATTACK)
-        hitInfo = HITINFO_NORMALSWING2;
+        hitInfo = HITINFO_AFFECTS_VICTIM;
     else if (attType == OFF_ATTACK)
-        hitInfo = HITINFO_LEFTSWING;
+        hitInfo = HITINFO_OFFHAND;
     else
         return;                                             // ignore ranged case
 
@@ -5961,7 +5957,7 @@ void Unit::RemoveDynObject(uint32 spellid)
 {
     if (m_dynObjGUIDs.empty())
         return;
-    for (DynObjectGUIDs::iterator i = m_dynObjGUIDs.begin(); i != m_dynObjGUIDs.end();)
+    for (GuidList::iterator i = m_dynObjGUIDs.begin(); i != m_dynObjGUIDs.end();)
     {
         DynamicObject* dynObj = GetMap()->GetDynamicObject(*i);
         if(!dynObj)
@@ -5990,7 +5986,7 @@ void Unit::RemoveAllDynObjects()
 
 DynamicObject * Unit::GetDynObject(uint32 spellId, SpellEffectIndex effIndex)
 {
-    for (DynObjectGUIDs::iterator i = m_dynObjGUIDs.begin(); i != m_dynObjGUIDs.end();)
+    for (GuidList::iterator i = m_dynObjGUIDs.begin(); i != m_dynObjGUIDs.end();)
     {
         DynamicObject* dynObj = GetMap()->GetDynamicObject(*i);
         if(!dynObj)
@@ -6008,7 +6004,7 @@ DynamicObject * Unit::GetDynObject(uint32 spellId, SpellEffectIndex effIndex)
 
 DynamicObject * Unit::GetDynObject(uint32 spellId)
 {
-    for (DynObjectGUIDs::iterator i = m_dynObjGUIDs.begin(); i != m_dynObjGUIDs.end();)
+    for (GuidList::iterator i = m_dynObjGUIDs.begin(); i != m_dynObjGUIDs.end();)
     {
         DynamicObject* dynObj = GetMap()->GetDynamicObject(*i);
         if(!dynObj)
@@ -6285,13 +6281,13 @@ void Unit::SendAttackStateUpdate(DamageInfo* damageInfo)
         data << uint32(damageInfo->damage);                 // Sub Damage
     }
 
-    if (damageInfo->HitInfo & (HITINFO_ABSORB | HITINFO_ABSORB2))
+    if (damageInfo->HitInfo & (HITINFO_ABSORB | HITINFO_PARTIAL_ABSORB))
     {
         for(uint32 i = 0; i < count; ++i)
             data << uint32(damageInfo->absorb);             // Absorb
     }
 
-    if (damageInfo->HitInfo & (HITINFO_RESIST | HITINFO_RESIST2))
+    if (damageInfo->HitInfo & (HITINFO_RESIST | HITINFO_PARTIAL_RESIST))
     {
         for(uint32 i = 0; i < count; ++i)
             data << uint32(damageInfo->resist);             // Resist
@@ -6305,7 +6301,7 @@ void Unit::SendAttackStateUpdate(DamageInfo* damageInfo)
     if (damageInfo->HitInfo & HITINFO_BLOCK)
         data << uint32(damageInfo->blocked);
 
-    if (damageInfo->HitInfo & HITINFO_UNK22)
+    if (damageInfo->HitInfo & HITINFO_RAGE_GAIN)
         data << uint32(0);                                  // count of some sort?
 
     if (damageInfo->HitInfo & HITINFO_UNK0)
@@ -7172,7 +7168,7 @@ void Unit::RemoveGuardians()
 
 Pet* Unit::FindGuardianWithEntry(uint32 entry)
 {
-    for (GuardianPetList::const_iterator itr = m_guardianPets.begin(); itr != m_guardianPets.end(); ++itr)
+    for (GuidSet::const_iterator itr = m_guardianPets.begin(); itr != m_guardianPets.end(); ++itr)
         if (Pet* pet = GetMap()->GetPet(*itr))
             if (pet->GetEntry() == entry)
                 return pet;
@@ -7182,7 +7178,7 @@ Pet* Unit::FindGuardianWithEntry(uint32 entry)
 
 Pet* Unit::GetProtectorPet()
 {
-    for (GuardianPetList::const_iterator itr = m_guardianPets.begin(); itr != m_guardianPets.end(); ++itr)
+    for (GuidSet::const_iterator itr = m_guardianPets.begin(); itr != m_guardianPets.end(); ++itr)
         if (Pet* pet = GetMap()->GetPet(*itr))
             if (pet->getPetType() == PROTECTOR_PET)
                 return pet;
@@ -12729,10 +12725,10 @@ void Unit::NearTeleportTo( float x, float y, float z, float orientation, bool ca
 
 void Unit::MonsterMoveWithSpeed(float x, float y, float z, float speed, bool generatePath, bool forceDestination)
 {
-    Movement::MoveSplineInit init(*this);
-    init.MoveTo(x,y,z, generatePath, forceDestination);
-    init.SetVelocity(speed);
-    init.Launch();
+    MaNGOS::NormalizeMapCoord(x);
+    MaNGOS::NormalizeMapCoord(y);
+
+    GetMotionMaster()->MoveWithSpeed(x, y, z, speed, generatePath, forceDestination);
 }
 
 void Unit::MonsterMoveToDestination(float x, float y, float z, float o, float speed, float height, bool isKnockBack, Unit* target)
@@ -12796,9 +12792,6 @@ void Unit::EnterVehicle(Unit* vehicleBase, int8 seatId)
             return;
         }
     }
-
-    InterruptNonMeleeSpells(false);
-    RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
 
     SpellEntry const* spellInfo = NULL;
     int32 bp[MAX_EFFECT_INDEX];
@@ -12931,6 +12924,9 @@ void Unit::_EnterVehicle(VehicleKit* vehicle, int8 seatId)
     }
     else
     {
+        InterruptNonMeleeSpells(false);
+        RemoveSpellsCausingAura(SPELL_AURA_MOUNTED);
+
         if (Pet* pet = GetPet())
         {
             if (GetTypeId() == TYPEID_PLAYER)
@@ -12977,6 +12973,8 @@ void Unit::_ExitVehicle()
     GetVehicle()->RemovePassenger(this, true);
 
     m_pVehicle = NULL;
+
+    SendHeartBeat();
 
     if (isAlive() && GetTypeId() == TYPEID_PLAYER)
         ((Player*)this)->ResummonPetTemporaryUnSummonedIfAny();
@@ -13513,7 +13511,7 @@ uint32 Unit::CalculateSpellDurationWithHaste(SpellEntry const* spellProto, uint3
     return duration;
 }
 
-bool Unit::IsVisibleTargetForAoEDamage(WorldObject const* caster, SpellEntry const* spellInfo) const
+bool Unit::IsVisibleTargetForSpell(WorldObject const* caster, SpellEntry const* spellInfo) const
 {
     bool no_stealth = false;
     switch (spellInfo->SpellFamilyName)
@@ -13529,12 +13527,18 @@ bool Unit::IsVisibleTargetForAoEDamage(WorldObject const* caster, SpellEntry con
             break;
     }
 
-    // spell can't hit stealth/invisible targets (LoS check included)
-    if (no_stealth && caster->isType(TYPEMASK_UNIT))
-        return isVisibleForOrDetect(static_cast<Unit const*>(caster), caster, false);
-    // spell can hit stealth/invisible targets, just check for LoS
-    else
-        return spellInfo->HasAttribute(SPELL_ATTR_EX2_IGNORE_LOS) ? true : caster->IsWithinLOSInMap(this);
+    // spell can hit all targets in two cases:
+    if (VMAP::VMapFactory::checkSpellForLoS(spellInfo->Id))
+        return true;
+
+    if (spellInfo->HasAttribute(SPELL_ATTR_EX6_IGNORE_DETECTION))
+        return true;
+
+    // spell can't hit stealth/invisible targets
+    if (no_stealth && caster->isType(TYPEMASK_UNIT) && !isVisibleForOrDetect(static_cast<Unit const*>(caster), caster, false))
+        return false;
+
+    return spellInfo->HasAttribute(SPELL_ATTR_EX2_IGNORE_LOS) ? true : IsWithinLOSInMap(caster);
 }
 
 uint32 Unit::GetModelForForm(SpellShapeshiftFormEntry const* ssEntry) const
@@ -13745,6 +13749,7 @@ void DamageInfo::Reset(uint32 _damage)
     reduction     = 0;
     bonusDone     = 0;
     bonusTaken    = 0;
+    rage          = 0;
     unused        = false;
     HitInfo       = HITINFO_NORMALSWING;
     TargetState   = VICTIMSTATE_UNAFFECTED;
