@@ -765,6 +765,19 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         }
                         break;
                     }
+                    // Defile (Lich King)
+                    case 72754:
+                    case 73708:
+                    case 73709:
+                    case 73710:
+                    {
+                        damage = damage * m_caster->GetObjectScale();
+
+                        if (!unitTarget->GetDummyAura(m_spellInfo->Id))
+                            m_caster->CastSpell(m_caster, 72756, true);
+
+                        break;
+                    }
                     // Shadow Prison
                     case 72999:
                     {
@@ -4159,13 +4172,13 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         ihit->effectMask &= ~(1<<1);
 
                     // not empty (checked), copy
-                    ObjectGuidSet attackers = friendTarget->GetMap()->GetAttackersFor(friendTarget->GetObjectGuid());
+                    GuidSet attackers = friendTarget->GetMap()->GetAttackersFor(friendTarget->GetObjectGuid());
                     if (!attackers.empty())
                     {
                         // selected from list 3
                         for(uint32 i = 0; i < std::min(size_t(3), attackers.size()); ++i)
                         {
-                            ObjectGuidSet::iterator aItr = attackers.begin();
+                            GuidSet::iterator aItr = attackers.begin();
                             std::advance(aItr, rand() % attackers.size());
                             if (Unit* nTarget = friendTarget->GetMap()->GetUnit(*aItr))
                                 AddUnitTarget(nTarget, EFFECT_INDEX_1);
@@ -6848,7 +6861,7 @@ void Spell::DoSummonVehicle(SpellEffectIndex eff_idx, uint32 forceFaction)
     else
         m_caster->GetClosePoint(px, py, pz,m_caster->GetObjectBoundingRadius());
 
-    TempSummonType summonType = (GetSpellDuration(m_spellInfo) == 0) ? TEMPSUMMON_DEAD_DESPAWN : TEMPSUMMON_TIMED_OR_DEAD_DESPAWN;
+    TempSummonType summonType = (GetSpellDuration(m_spellInfo) == 0) ? TEMPSUMMON_DEAD_OR_LOST_OWNER_DESPAWN : TEMPSUMMON_TIMED_OR_DEAD_OR_LOST_OWNER_DESPAWN;
 
     Creature* vehicle = m_caster->SummonCreature(vehicle_entry,px,py,pz,m_caster->GetOrientation(),summonType,GetSpellDuration(m_spellInfo),true);
 
