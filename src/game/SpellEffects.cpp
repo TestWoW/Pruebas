@@ -1830,6 +1830,15 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, spell_id, true, NULL);
                     return;
                 }
+                case 33923:                                 // Sonic Boom
+                case 38796:                                 // Sonic Boom (heroic)
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, m_spellInfo->Id == 33923 ? 33666 : 38795, true);
+                    return;
+                }
                 case 35745:                                 // Socrethar's Stone
                 {
                     uint32 spell_id;
@@ -3569,12 +3578,28 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                         unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true);
                     break;
                 }
-                case 71861:                                 // Swarming Shadows
+                case 71837:                                 // Vampiric Bite
                 {
-                    if(!unitTarget)
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    m_caster->CastSpell(unitTarget, 71264, false);
+                    m_caster->CastSpell(unitTarget, 71726, true);
+                    return;
+                }
+                case 71861:                                 // Swarming Shadows
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, 71264, true);
+                    return;
+                }
+                case 72202:                                 // Blade power
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 72195, true);
                     break;
                 }
                 case 72261:                                 // Delirious Slash
@@ -3593,14 +3618,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(unitTarget, m_caster->GetMap()->IsRegularDifficulty() ? 71446 : 71478, true);
                     break;
                 }
-                case 72202:                                 // Blade power
-                {
-                    if (!unitTarget)
-                        return;
 
-                    unitTarget->CastSpell(unitTarget, 72195, true);
-                    break;
-                }
                 case 72752:                                 // Will of the Forsaken Cooldown Trigger
                 case 72757:                                 // Will of the Forsaken Cooldown Trigger (WOTF)
                 {
@@ -3615,6 +3633,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     data << uint32(m_spellInfo->Id);
                     data << uint32(0);
                     target->GetSession()->SendPacket(&data);
+
                     return;
                 }
                 default:
@@ -8433,6 +8452,19 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(m_caster, 32300, true);
                     return;
                 }
+                case 35865:                                 // Summon Nether Vapor
+                {
+                    if (!unitTarget)
+                        return;
+
+                    float x, y, z;
+                    for (uint8 i = 0; i < 4; ++i)
+                    {
+                        m_caster->GetNearPoint(m_caster, x, y, z, 0, 5.0f, M_PI_F*.5f*i + M_PI_F*.25f);
+                        m_caster->SummonCreature(21002, x, y, z, 0, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 30000);
+                    }
+                    return;
+                }
                 case 38358:                                 // Tidal Surge
                 {
                     if (!unitTarget)
@@ -9133,13 +9165,13 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 50250, true);
                     return;
                 }
-                case 50255:                                  // Skadi Poison Spear (N/H)
-                case 59331:
+                case 50255:                                 // Poisoned Spear
+                case 59331:                                 // Poisoned Spear (heroic)
                 {
                     if (!unitTarget)
                         return;
 
-                    unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true);
+                    unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true, NULL, NULL, m_originalCasterGUID);
                     return;
                 }
                 case 50439:                                 // Script Cast Summon Image of Drakuru 05
@@ -10314,6 +10346,14 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0));
                         unitTarget->RemoveAurasDueToSpell(m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_1));
                     }
+                    return;
+                }
+                case 71806:                                 // Glittering Sparks
+                {
+                    if (!unitTarget)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(eff_idx), true);
                     return;
                 }
                 case 71952:                                 // Presence of the Darkfallen (Queen Lana'thel ICC)
