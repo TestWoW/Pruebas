@@ -893,6 +893,10 @@ uint32 Unit::DealDamage(Unit *pVictim, DamageInfo* damageInfo, bool durabilityLo
             {
                 // FIXME: kept by compatibility. don't know in BG if the restriction apply.
                 bg->UpdatePlayerScore(killer, SCORE_DAMAGE_DONE, damageInfo->damage);
+                /** World of Warcraft Armory **/
+                if (BattleGround *bgV = ((Player*)pVictim)->GetBattleGround())	  	
+                    bgV->UpdatePlayerScore(((Player*)pVictim), SCORE_DAMAGE_TAKEN, damageInfo->damage);	  	
+                /** World of Warcraft Armory **/
             }
         }
 
