@@ -39,9 +39,9 @@ namespace MaNGOS
         GuidSet i_clientGUIDs;
         std::set<WorldObject*> i_visibleNow;
 
-        explicit VisibleNotifier(Camera &c) : i_camera(c), i_clientGUIDs(c.GetOwner()->m_clientGUIDs) {}
-        template<class T> void Visit(GridRefManager<T> &m);
-        void Visit(CameraMapType &m) {}
+        explicit VisibleNotifier(Camera& c) : i_camera(c), i_clientGUIDs(c.GetOwner()->m_clientGUIDs) {}
+        template<class T> void Visit(GridRefManager<T>& m);
+        void Visit(CameraMapType& /*m*/) {}
         void Notify(void);
     };
 
@@ -1279,6 +1279,22 @@ namespace MaNGOS
             WorldObject const* i_obj;
             float i_range;
             uint32 i_spellId;
+    };
+
+    class AnyPlayerInObjectRangeWithOutdoorPvPCheck
+    {
+        public:
+            AnyPlayerInObjectRangeWithOutdoorPvPCheck(WorldObject const* obj, float range)
+                : i_obj(obj), i_range(range) {}
+            WorldObject const& GetFocusObject() const { return *i_obj; }
+            bool operator()(Player* u)
+            {
+                return u->CanUseOutdoorCapturePoint() &&
+                    i_obj->IsWithinDistInMap(u, i_range);
+            }
+        private:
+            WorldObject const* i_obj;
+            float i_range;
     };
 
     // Prepare using Builder localized packets with caching and send to player
