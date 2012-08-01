@@ -80,7 +80,7 @@ void VehicleKit::RemoveAllPassengers()
 {
     for (SeatMap::iterator itr = m_Seats.begin(); itr != m_Seats.end(); ++itr)
     {
-        if (Unit *passenger = itr->second.passenger)
+        if (Unit* passenger = GetBase()->GetMap()->GetUnit(itr->second.passenger))
         {
             passenger->ExitVehicle();
 
@@ -135,17 +135,17 @@ int8 VehicleKit::GetNextEmptySeatWithFlag(int8 seatId, bool next /*= true*/, uin
     return -1;
 }
 
-Unit *VehicleKit::GetPassenger(int8 seatId) const
+Unit* VehicleKit::GetPassenger(int8 seatId) const
 {
     SeatMap::const_iterator seat = m_Seats.find(seatId);
 
     if (seat == m_Seats.end())
         return NULL;
 
-    return seat->second.passenger;
+    return GetBase()->GetMap()->GetUnit(seat->second.passenger);
 }
 
-bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
+bool VehicleKit::AddPassenger(Unit* passenger, int8 seatId)
 {
     SeatMap::iterator seat;
 
@@ -172,7 +172,7 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
     }
 
     VehicleSeatEntry const* seatInfo = seat->second.seatInfo;
-    seat->second.passenger = passenger;
+    seat->second.passenger = passenger->GetObjectGuid();
 
     if (!(seatInfo->m_flags & SEAT_FLAG_FREE_ACTION))
         passenger->addUnitState(UNIT_STAT_ON_VEHICLE);
@@ -318,6 +318,11 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
         if (((Creature*)m_pBase)->AI())
             ((Creature*)m_pBase)->AI()->PassengerBoarded(passenger, seat->first, true);
     }
+    if (passenger->GetTypeId() == TYPEID_UNIT)
+    {
+        if (((Creature*)passenger)->AI())
+            ((Creature*)passenger)->AI()->EnteredVehicle(m_pBase, seat->first, true);
+    }
 
     if (b_dstSet && (seatInfo->m_flagsB & VEHICLE_SEAT_FLAG_B_EJECTABLE_FORCED))
     {
@@ -334,13 +339,13 @@ void VehicleKit::RemovePassenger(Unit* passenger, bool dismount)
     SeatMap::iterator seat;
 
     for (seat = m_Seats.begin(); seat != m_Seats.end(); ++seat)
-        if (seat->second.passenger == passenger)
+        if (seat->second.passenger == passenger->GetObjectGuid())
             break;
 
     if (seat == m_Seats.end())
         return;
 
-    seat->second.passenger = NULL;
+    seat->second.passenger.Clear();
     passenger->clearUnitState(UNIT_STAT_ON_VEHICLE);
 
     passenger->m_movementInfo.ClearTransportData();
@@ -402,6 +407,11 @@ void VehicleKit::RemovePassenger(Unit* passenger, bool dismount)
     {
         if (((Creature*)m_pBase)->AI())
             ((Creature*)m_pBase)->AI()->PassengerBoarded(passenger, seat->first, false);
+    }
+    if (passenger->GetTypeId() == TYPEID_UNIT)
+    {
+        if (((Creature*)passenger)->AI())
+            ((Creature*)passenger)->AI()->EnteredVehicle(m_pBase, seat->first, false);
     }
     if (dismount)
     {
@@ -483,7 +493,7 @@ void VehicleKit::RelocatePassengers(float x, float y, float z, float ang)
 {
     for (SeatMap::const_iterator itr = m_Seats.begin(); itr != m_Seats.end(); ++itr)
     {
-        if (Unit *passenger = itr->second.passenger)
+        if (Unit* passenger = GetBase()->GetMap()->GetUnit(itr->second.passenger))
         {
             float px = x + passenger->m_movementInfo.GetTransportPos()->x;
             float py = y + passenger->m_movementInfo.GetTransportPos()->y;
@@ -497,9 +507,13 @@ void VehicleKit::RelocatePassengers(float x, float y, float z, float ang)
 
 VehicleSeatEntry const* VehicleKit::GetSeatInfo(Unit* passenger)
 {
-    for (SeatMap::iterator itr = m_Seats.begin(); itr != m_Seats.end(); ++itr)
+    if (m_Seats.empty())
+        return NULL;
+
+    for (SeatMap::const_iterator itr = m_Seats.begin(); itr != m_Seats.end(); ++itr)
     {
-        if (Unit *_passenger = itr->second.passenger)
+        ObjectGuid guid = itr->second.passenger;
+        if (Unit* _passenger = GetBase()->GetMap()->GetUnit(guid))
             if (_passenger == passenger)
                 return itr->second.seatInfo;
     }
@@ -510,7 +524,7 @@ int8 VehicleKit::GetSeatId(Unit* passenger)
 {
     for (SeatMap::iterator itr = m_Seats.begin(); itr != m_Seats.end(); ++itr)
     {
-        if (Unit *_passenger = itr->second.passenger)
+        if (Unit* _passenger = GetBase()->GetMap()->GetUnit(itr->second.passenger))
             if (_passenger == passenger)
                 return itr->first;
     }
