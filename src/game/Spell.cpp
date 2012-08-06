@@ -5274,13 +5274,6 @@ void Spell::CastPreCastSpells(Unit* target)
 
 SpellCastResult Spell::CheckCast(bool strict)
 {
-    // Temp Battleground summon fix
-    if(BattleGround * bg = ((Player*)m_caster)->GetBattleGround())
-    {
-        if(m_spellInfo->Id == 698) return SPELL_FAILED_BAD_TARGETS;
-    }
-    /////////////////////////////////////
-
     // check cooldowns to prevent cheating (ignore passive spells, that client side visual only)
     if (m_caster->GetTypeId()==TYPEID_PLAYER && !m_spellInfo->HasAttribute(SPELL_ATTR_PASSIVE) &&
         ((Player*)m_caster)->HasSpellCooldown(m_spellInfo->Id))
