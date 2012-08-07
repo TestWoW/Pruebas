@@ -514,23 +514,6 @@ enum PlayerFieldByte2Flags
     PLAYER_FIELD_BYTE2_INVISIBILITY_GLOW = 0x40
 };
 
-enum ActivateTaxiReplies
-{
-    ERR_TAXIOK                      = 0,
-    ERR_TAXIUNSPECIFIEDSERVERERROR  = 1,
-    ERR_TAXINOSUCHPATH              = 2,
-    ERR_TAXINOTENOUGHMONEY          = 3,
-    ERR_TAXITOOFARAWAY              = 4,
-    ERR_TAXINOVENDORNEARBY          = 5,
-    ERR_TAXINOTVISITED              = 6,
-    ERR_TAXIPLAYERBUSY              = 7,
-    ERR_TAXIPLAYERALREADYMOUNTED    = 8,
-    ERR_TAXIPLAYERSHAPESHIFTED      = 9,
-    ERR_TAXIPLAYERMOVING            = 10,
-    ERR_TAXISAMENODE                = 11,
-    ERR_TAXINOTSTANDING             = 12
-};
-
 enum MirrorTimerType
 {
     FATIGUE_TIMER      = 0,
@@ -2093,8 +2076,13 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void SendInitWorldStates(uint32 zone, uint32 area);
         void SendUpdateWorldState(uint32 Field, uint32 Value);
+        void _SendUpdateWorldState(uint32 Field, uint32 Value);
+        void UpdateWorldState(uint32 state, uint32 value);
+        void SendUpdatedWorldStates(bool force = false);
+        time_t const& GetLastWorldStateUpdateTime() { return m_lastWSUpdateTime; };
+        void SetLastWorldStateUpdateTime(time_t _time)   { m_lastWSUpdateTime = _time; };
+
         void SendDirectMessage(WorldPacket *data);
-        void FillBGWeekendWorldStates(WorldPacket& data, uint32& count);
 
         void SendAurasForTarget(Unit *target);
 
@@ -2392,7 +2380,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool CheckTransferPossibility(AreaTrigger const*& at, bool b_onlyMainReq = false);
 
         // LFG
-        LFGPlayerState* GetLFGState() { return m_LFGState;};
+        LFGPlayerState* GetLFGPlayerState() { return m_LFGState;};
         uint8 GetTalentsCount(uint8 tab);
         void  ResetTalentsCount() { m_cachedTC[0] = 0; m_cachedTC[1] = 0; m_cachedTC[2] = 0;};
 
@@ -2667,6 +2655,8 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 m_deathTimer;
         time_t m_deathExpireTime;
+
+        time_t m_lastWSUpdateTime;
 
         uint32 m_restTime;
 
