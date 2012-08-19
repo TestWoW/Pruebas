@@ -3641,9 +3641,20 @@ void Spell::cast(bool skipCheck)
     }
 
     //grounding totem fix
-
     switch(m_spellInfo->SpellFamilyName)
     {
+        case SPELLFAMILY_PALADIN:
+        {
+            switch(m_spellInfo->Id)
+            {
+                case 62124:                                                     //Hand of Reckoning
+                {
+                    if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);
+                    break;
+                }
+            }
+            break;
+        }
         case SPELLFAMILY_DRUID:
         {
             if(m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE)
@@ -3662,7 +3673,6 @@ void Spell::cast(bool skipCheck)
             }
             break;
         }
-
         case SPELLFAMILY_WARRIOR:
         {
             if(m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE)
@@ -3685,7 +3695,6 @@ void Spell::cast(bool skipCheck)
             }
             break;
         }
-
         case SPELLFAMILY_ROGUE:
         {
             if(m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MELEE)
@@ -3718,7 +3727,6 @@ void Spell::cast(bool skipCheck)
             }
             break;
         }
-            
         default:
         {
             if(m_spellInfo->Id == 72293) if(m_targets.getUnitTarget()->HasAura(8178)) m_targets.getUnitTarget()->RemoveAurasDueToSpell(8178);

@@ -90,7 +90,7 @@ ArenaTeam::ArenaTeam()
             m_stats.rating    = 1500;
     }
     else
-        m_stats.rating = uint32(conf_value);
+        m_stats.rating = 1000;
 
     m_stats.wins_week     = 0;
     m_stats.wins_season   = 0;
@@ -253,7 +253,7 @@ bool ArenaTeam::AddMember(ObjectGuid playerGuid)
         }
     }
     else
-        newmember.personal_rating = uint32(conf_value);
+        newmember.personal_rating = 1000;
 
     m_members.push_back(newmember);
 
