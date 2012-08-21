@@ -319,13 +319,10 @@ void ChaseMovementGenerator<Creature>::Initialize(Creature &owner)
 template<class T>
 void ChaseMovementGenerator<T>::Finalize(T &owner)
 {
-     owner.clearUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
-     if (owner.GetTypeId() == TYPEID_UNIT && !((Creature*)&owner)->IsPet() && owner.isAlive())
-     {
-        if (!owner.isInCombat())
-             owner.GetMotionMaster()->MoveTargetedHome();
-     }
- }
+    owner.clearUnitState(UNIT_STAT_CHASE|UNIT_STAT_CHASE_MOVE);
+    if (owner.GetTypeId() == TYPEID_UNIT && owner.isAlive() && !owner.IsInEvadeMode())
+        owner.AddEvent(new EvadeDelayEvent(owner), EVADE_TIME_DELAY);
+}
 
 template<class T>
 void ChaseMovementGenerator<T>::Interrupt(T &owner)

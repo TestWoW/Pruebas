@@ -263,8 +263,8 @@ public:
     void RemoveDungeon(LFGDungeonEntry const* dungeon);
     void AddDungeon(LFGDungeonEntry const* dungeon);
 
-
-    LFGType const& GetType() const { return m_type;};
+    void SetType(LFGType type) { m_type = type; };
+    LFGType GetType() { return m_type;};
 
     void SetState(LFGState state) { m_state = state; };
     LFGState GetState() { return m_state; };
@@ -309,6 +309,7 @@ public:
     void           AddRole(LFGRoles role) { m_rolesMask = LFGRoleMask( m_rolesMask | (1 << role)); };
     void           RemoveRole(LFGRoles role) { m_rolesMask = LFGRoleMask( m_rolesMask & ~(1 << role)); };
     bool           IsSingleRole();
+    bool           HasRole(LFGRoles role) { return (1 << role) & m_rolesMask; };
 
     void           SetJoined();
     time_t         GetJoinTime() { return m_jointime;};

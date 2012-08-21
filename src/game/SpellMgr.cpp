@@ -1397,8 +1397,9 @@ struct DoSpellProcEvent
 
         if (spe.procFlags == 0)
         {
-            if (spell->procFlags==0)
-                sLog.outErrorDb("Spell %u listed in `spell_proc_event` probally not triggered spell (no proc flags)", spell->Id);
+            if (spell->procFlags == 0)
+                DEBUG_LOG("Spell %u listed in `spell_proc_event` probally not triggered spell (no proc flags)", spell->Id);
+            isCustom = true;
         }
         else
         {
@@ -1936,6 +1937,8 @@ void SpellMgr::LoadSpellLinked()
 SpellLinkedSet SpellMgr::GetSpellLinked(uint32 spell_id, SpellLinkedType type) const
 {
     SpellLinkedSet result;
+
+    result.clear();
 
     SpellLinkedMapBounds const& bounds = GetSpellLinkedMapBounds(spell_id);
 
@@ -2539,6 +2542,7 @@ uint32 SpellMgr::GetSpellMaxTargetsWithCustom(SpellEntry const* spellInfo, Unit 
                 case 48278:                                 // Paralyze (Utgarde Pinnacle)
                 case 50988:                                 // Glare of the Tribunal (Halls of Stone)
                 case 51146:                                 // Searching Gaze (Halls Of Stone)
+                case 52438:                                 // Summon Skittering Swarmer (Azjol Nerub,  Krik'thir the Gatewatcher)
                 case 54148:                                 // Ritual of the Sword (Utgarde Pinnacle, Svala)
                 case 55479:                                 // Forced Obedience (Naxxramas, Razovius)
                 case 56140:                                 // Summon Power Spark (Eye of Eternity, Malygos)

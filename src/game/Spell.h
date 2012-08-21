@@ -186,6 +186,9 @@ class SpellCastTargets
         float GetElevation() const { return m_elevation; }
         float GetSpeed()     const { return m_speed; }
 
+        void  SetElevation(float elevation) { m_elevation = elevation; }
+        void  SetSpeed(float speed)         { m_speed = speed; }
+
         uint32 m_targetMask;
 
     private:
@@ -378,7 +381,7 @@ class Spell
         Spell(Unit* caster, SpellEntry const *info, bool triggered, ObjectGuid originalCasterGUID = ObjectGuid(), SpellEntry const* triggeredBy = NULL);
         ~Spell();
 
-        void prepare(SpellCastTargets const* targets, Aura* triggeredByAura = NULL);
+        void prepare(SpellCastTargets const* targets, Aura const* triggeredByAura = NULL);
 
         void cancel(bool force = false);
 
