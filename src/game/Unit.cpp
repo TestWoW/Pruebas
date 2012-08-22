@@ -2429,62 +2429,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, DamageInfo* damageInfo,
                     }
                     break;
                 }
-<<<<<<< HEAD
-                // Light Essence and Dark Essence (Trial of the Crusader, Twin Val'kyr encounter)
-                if (spellProto->SpellIconID == 2206 ||
-                    spellProto->SpellIconID == 2845)
-                {
-                    uint32 max_stacks = damageInfo->damage / 1000;
-                    for (uint32 itr = 0; itr < max_stacks; ++itr)
-                    {
-                        CastSpell(this, 67590, true, NULL, *i);
-                        uint32 uiSpell = 67590;
-                        if (Map* pMap = GetMap())
-                        {
-                            switch (pMap->GetDifficulty())
-                            {
-                            case RAID_DIFFICULTY_25MAN_NORMAL:
-                                uiSpell = 67602;
-                                break;
-                            case RAID_DIFFICULTY_10MAN_HEROIC:
-                                uiSpell = 67603;
-                                break;
-                            case RAID_DIFFICULTY_25MAN_HEROIC:
-                                uiSpell = 67604;
-                                break;
-                            }
-                        }
-                        if (Aura* pAur = GetAura(uiSpell, EFFECT_INDEX_0))
-                        {
-                            if (SpellAuraHolderPtr pHolder = pAur->GetHolder())
-                            {
-                                if (pHolder->GetStackAmount() >= 100)
-                                {
-                                    RemoveAurasDueToSpell(uiSpell);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                }
-                break;
-            }
-            case SPELLFAMILY_DRUID:
-            {
-                // Primal Tenacity
-                if (spellProto->SpellIconID == 2253)
-                {
-                    //reduces all damage taken while Stunned and in Cat Form
-                    if (GetShapeshiftForm() == FORM_CAT && (unitflag & UNIT_FLAG_STUNNED))
-                        RemainingDamage -= RemainingDamage * currentAbsorb / 100;
-                    continue;
-                }
-                // Moonkin Form passive
-                if (spellProto->Id == 69366)
-=======
                 case SPELLFAMILY_ROGUE:
->>>>>>> ab2788f8919721bcedd4e8e9dca34cdd5ded514a
                 {
                     // Cheat Death (make less prio with Guardian Spirit case)
                     if (spellProto->SpellIconID == 2109)
