@@ -85,9 +85,9 @@ ArenaTeam::ArenaTeam()
     if (conf_value < 0)                                     // -1 = select by season id
     {
         if (sWorldStateMgr.GetWorldStateValue(ARENA_SEASON_ID) >= 6)
-            m_stats.rating    = 0;
+            m_stats.rating    = 1000;
         else
-            m_stats.rating    = 1500;
+            m_stats.rating    = 1000;
     }
     else
         m_stats.rating = 1000;
@@ -243,7 +243,7 @@ bool ArenaTeam::AddMember(ObjectGuid playerGuid)
         if (sWorldStateMgr.GetWorldStateValue(ARENA_SEASON_ID) >= 6)
         {
             if (m_stats.rating < 1000)
-                newmember.personal_rating = 0;
+                newmember.personal_rating = 1000;
             else
                 newmember.personal_rating = 1000;
         }
