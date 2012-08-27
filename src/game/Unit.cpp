@@ -40,7 +40,7 @@
 #include "Util.h"
 #include "Totem.h"
 #include "Vehicle.h"
-#include "BattleGround.h"
+#include "BattleGround/BattleGround.h"
 #include "InstanceData.h"
 #include "OutdoorPvP/OutdoorPvP.h"
 #include "MapPersistentStateMgr.h"
@@ -2288,7 +2288,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, DamageInfo* damageInfo,
 
     // for absorb use only absorb_affected_damage
     uint32 absorb_affected_damage = pCaster->CalcNotIgnoreAbsorbDamage(damageInfo);
-    uint32 absorb_unaffected_damage = RemainingDamage > absorb_affected_damage ?
+    uint32 absorb_unaffected_damage = RemainingDamage > int32(absorb_affected_damage) ?
                                       RemainingDamage - absorb_affected_damage : 0;
 
     RemainingDamage -= absorb_unaffected_damage;
@@ -7982,7 +7982,7 @@ void Unit::SpellDamageBonusDone(DamageInfo* damageInfo, uint32 stack)
     }
     else
     {
-        damageInfo->bonusDone  = - damageInfo->damage;
+        damageInfo->bonusDone  = -int32(damageInfo->damage);
         damageInfo->damage     = 0;
     }
 }
@@ -8050,7 +8050,7 @@ void Unit::SpellDamageBonusTaken(DamageInfo* damageInfo, uint32 stack)
     }
     else
     {
-        damageInfo->bonusTaken = -damageInfo->damage;
+        damageInfo->bonusTaken = -int32(damageInfo->damage);
         damageInfo->damage     = 0;
     }
 }
@@ -9069,7 +9069,7 @@ void Unit::MeleeDamageBonusDone(DamageInfo* damageInfo, uint32 stack)
     }
     else
     {
-        damageInfo->bonusDone = -damageInfo->damage;
+        damageInfo->bonusDone = -int32(damageInfo->damage);
         damageInfo->damage     = 0;
     }
 }
@@ -9169,7 +9169,7 @@ void Unit::MeleeDamageBonusTaken(DamageInfo* damageInfo, uint32 stack)
     }
     else
     {
-        damageInfo->bonusTaken = -damageInfo->damage;
+        damageInfo->bonusTaken = -int32(damageInfo->damage);
         damageInfo->damage     = 0;
     }
 }

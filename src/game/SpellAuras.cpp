@@ -37,7 +37,7 @@
 #include "Totem.h"
 #include "Creature.h"
 #include "Formulas.h"
-#include "BattleGround.h"
+#include "BattleGround/BattleGround.h"
 #include "OutdoorPvP/OutdoorPvP.h"
 #include "CreatureAI.h"
 #include "ScriptMgr.h"
@@ -2056,22 +2056,23 @@ void Aura::TriggerSpell()
                             triggerTarget->CastSpell(triggerTarget, 71665, true);
 
                         break;
-                    // Mana Barrier
-                    case 70842:
+                    case 70842:                             // Mana Barrier
                     {
-                        // there should be some spell handling the effect?
-                        uint32 health = triggerTarget->GetHealth();
-                        uint32 amount = triggerTarget->GetMaxHealth() - health;
-                        uint32 mana = triggerTarget->GetPower(POWER_MANA);
+                        if (!triggerTarget || triggerTarget->getPowerType() != POWER_MANA)
+                            return;
 
-                        if (amount > mana)
+                        int32 damage = triggerTarget->GetHealth() - triggerTarget->GetMaxHealth();
+                        if (damage >= 0)
+                            return;
+
+                        if (triggerTarget->GetPower(POWER_MANA) < abs(damage))
                         {
-                            triggerTarget->RemoveAurasDueToSpell(GetId());
-                            amount = mana;
+                            damage = -int32(triggerTarget->GetPower(POWER_MANA));
+                            triggerTarget->RemoveAurasDueToSpell(auraId);
                         }
 
-                        triggerTarget->SetHealth(health + amount);
-                        triggerTarget->SetPower(POWER_MANA, mana - amount);
+                        triggerTarget->DealHeal(triggerTarget, -damage, auraSpellInfo);
+                        triggerTarget->ModifyPower(POWER_MANA, damage);
                         break;
                     }
 //                    // Summon Timer: Suppresser
@@ -8976,7 +8977,7 @@ void Aura::PeriodicTick()
                     damageInfo.damage = damageInfo.damage + addition;
                 }
             }
-            damageInfo.CleanDamage(-damageInfo.damage, 0, BASE_ATTACK, MELEE_HIT_NORMAL);
+            damageInfo.CleanDamage(-int32(damageInfo.damage), 0, BASE_ATTACK, MELEE_HIT_NORMAL);
 
             damageInfo.damage = target->SpellHealingBonusTaken(pCaster, spellProto, damageInfo.damage, DOT, GetStackAmount());
 
@@ -9273,7 +9274,7 @@ void Aura::PeriodicTick()
             if (powerType == POWER_MANA)
                 damageInfo.damage -= target->GetSpellCritDamageReduction(damageInfo.damage);
 
-            damageInfo.cleanDamage = uint32(-target->ModifyPower(powerType, -damageInfo.damage));
+            damageInfo.cleanDamage = abs(target->ModifyPower(powerType, -damageInfo.damage));
 
             damageInfo.damage = uint32(damageInfo.cleanDamage * spellProto->EffectMultipleValue[GetEffIndex()]);
 
@@ -12802,7 +12803,7 @@ bool Aura::IsAffectedByCrowdControlEffect(uint32 damage)
     if (!IsCrowdControlAura(m_modifier.m_auraname))
         return false;
 
-    if (damage > m_modifier.m_baseamount)
+    if (damage > abs(m_modifier.m_baseamount))
     {
         m_modifier.m_baseamount = 0;
         return false;
