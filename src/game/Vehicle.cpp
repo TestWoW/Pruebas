@@ -607,41 +607,6 @@ void VehicleKit::SetDestination(float x, float y, float z, float o, float speed,
         b_dstSet = true;
 };
 
-bool PassengerEjectEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
-{
-    if (!m_vehicle.GetVehicleInfo())
-        return true;
-
-    VehicleKitPtr pVehicle = m_vehicle.GetVehicleKit();
-
-    if (!pVehicle)
-        return true;
-
-    Unit* passenger = pVehicle->GetPassenger(m_seatId);
-
-    if (passenger && passenger->IsInWorld())
-    {
-        uint32 controlSpell = 0;
-        Unit::AuraList const& controlAuras = m_vehicle.GetAurasByType(SPELL_AURA_CONTROL_VEHICLE);
-        for(Unit::AuraList::const_iterator i = controlAuras.begin(); i != controlAuras.end(); ++i)
-        {
-            if ((*i)->GetCasterGuid() == passenger->GetObjectGuid())
-            {
-                controlSpell = (*i)->GetId();
-                break;
-            }
-        }
-
-        if (controlSpell)
-        {
-            m_vehicle.RemoveAurasByCasterSpell(controlSpell, passenger->GetObjectGuid());
-        }
-        else
-            passenger->ExitVehicle();
-    }
-    return true;
-}
-
 bool VehicleSeat::IsProtectPassenger() const
 {
     if (seatInfo &&

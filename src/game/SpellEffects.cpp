@@ -3206,9 +3206,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
 
                     // Init dest coordinates
                     float x,y,z;
-                    x = m_targets.m_destX;
-                    y = m_targets.m_destY;
-                    z = m_targets.m_destZ;
+                    m_targets.getDestination(x, y, z);
 
                     MaNGOS::NormalizeMapCoord(x);
                     MaNGOS::NormalizeMapCoord(y);
@@ -4825,10 +4823,7 @@ void Spell::EffectTriggerSpell(SpellEffectIndex effIndex)
     {
         // Init dest coordinates
         float x,y,z;
-
-        x = m_targets.m_destX;
-        y = m_targets.m_destY;
-        z = m_targets.m_destZ;
+        m_targets.getDestination(x, y, z);
         if (m_caster->GetTypeId() == TYPEID_PLAYER)
             ((Player*)m_caster)->RemoveSpellCooldown(triggered_spell_id);
 
@@ -4870,9 +4865,7 @@ void Spell::EffectTriggerMissileSpell(SpellEffectIndex effect_idx)
     {
         // Init dest coordinates
         float x,y,z;
-        x = m_targets.m_destX;
-        y = m_targets.m_destY;
-        z = m_targets.m_destZ;
+        m_targets.getDestination(x, y, z);
 
         MaNGOS::NormalizeMapCoord(x);
         MaNGOS::NormalizeMapCoord(y);
@@ -4913,9 +4906,7 @@ void Spell::EffectJump(SpellEffectIndex eff_idx)
     o = 0.0f;
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
     {
-        x = m_targets.m_destX;
-        y = m_targets.m_destY;
-        z = m_targets.m_destZ;
+        m_targets.getDestination(x, y, z);
 
         if (m_spellInfo->EffectImplicitTargetA[eff_idx] == TARGET_BEHIND_VICTIM)
         {
@@ -4963,7 +4954,7 @@ void Spell::EffectJump(SpellEffectIndex eff_idx)
     m_caster->MonsterMoveToDestination(x, y, z, o, float(speed_xy) / 2, float(speed_z) / 10, false, pTarget);
 }
 
-void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
+void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)   // TODO - Use target settings for this effect!
 {
     if (!unitTarget || unitTarget->IsTaxiFlying())
         return;
@@ -5022,9 +5013,8 @@ void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
                 pTarget = unitTarget->GetMap()->GetUnit(((Player*)unitTarget)->GetSelectionGuid());
 
             // Init dest coordinates
-            float x = m_targets.m_destX;
-            float y = m_targets.m_destY;
-            float z = m_targets.m_destZ;
+            float x,y,z;
+            m_targets.getDestination(x, y, z);
             float orientation = pTarget ? pTarget->GetOrientation() : unitTarget->GetOrientation();
             unitTarget->NearTeleportTo(x,y,z,orientation,unitTarget==m_caster);
             return;
@@ -5038,9 +5028,8 @@ void Spell::EffectTeleportUnits(SpellEffectIndex eff_idx)
                 return;
             }
             // Init dest coordinates
-            float x = m_targets.m_destX;
-            float y = m_targets.m_destY;
-            float z = m_targets.m_destZ;
+            float x,y,z;
+            m_targets.getDestination(x, y, z);
             float orientation = unitTarget->GetOrientation();
             // Teleport
             unitTarget->NearTeleportTo(x,y,z,orientation,unitTarget==m_caster);
@@ -6364,9 +6353,7 @@ void Spell::EffectSummonPossessed(SpellEffectIndex eff_idx)
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
     {
         // Summon 1 unit in dest location
-        px = m_targets.m_destX;
-        py = m_targets.m_destY;
-        pz = m_targets.m_destZ;
+        m_targets.getDestination(px, py, pz);
     }
     // Summon if dest location not present near caster
     else
@@ -6673,9 +6660,8 @@ void Spell::DoSummonWild(SpellEffectIndex eff_idx, uint32 forceFaction)
         return;
 
     // select center of summon position
-    float center_x = m_targets.m_destX;
-    float center_y = m_targets.m_destY;
-    float center_z = m_targets.m_destZ;
+    float center_x, center_y, center_z;
+    m_targets.getDestination(center_x, center_y, center_z);
 
     float radius = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
     TempSummonType summonType = (m_duration == 0) ? TEMPSUMMON_DEAD_DESPAWN : TEMPSUMMON_TIMED_OR_DEAD_DESPAWN;
@@ -6798,9 +6784,8 @@ void Spell::DoSummonGuardian(SpellEffectIndex eff_idx, uint32 forceFaction)
     }
 
     // select center of summon position
-    float center_x = m_targets.m_destX;
-    float center_y = m_targets.m_destY;
-    float center_z = m_targets.m_destZ;
+    float center_x, center_y, center_z;
+    m_targets.getDestination(center_x, center_y, center_z);
 
     if (!MapManager::ExistMapAndVMap(m_caster->GetMapId(),center_x,center_y))
     {
@@ -6899,9 +6884,7 @@ void Spell::DoSummonVehicle(SpellEffectIndex eff_idx, uint32 forceFaction)
     // If dest location present
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
     {
-        px = m_targets.m_destX;
-        py = m_targets.m_destY;
-        pz = m_targets.m_destZ;
+        m_targets.getDestination(px, py, pz);
     }
     // Summon if dest location not present near caster
     else
@@ -7868,11 +7851,7 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
 
     float x, y, z;
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
-    {
-        x = m_targets.m_destX;
-        y = m_targets.m_destY;
-        z = m_targets.m_destZ;
-    }
+        m_targets.getDestination(x, y, z);
     else
         m_caster->GetClosePoint(x, y, z, DEFAULT_WORLD_OBJECT_SIZE);
 
@@ -8470,6 +8449,15 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (item)
                         DoCreateItem(eff_idx,item);
 
+                    break;
+                }
+                case 30769:                                 // Pick Red Riding Hood
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    // cast Little Red Riding Hood
+                    m_caster->CastSpell(unitTarget, 30768, true);
                     break;
                 }
                 case 30918:                                 // Improved Sprint
@@ -11476,11 +11464,7 @@ void Spell::EffectSummonObject(SpellEffectIndex eff_idx)
     float x, y, z;
     // If dest location if present
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
-    {
-        x = m_targets.m_destX;
-        y = m_targets.m_destY;
-        z = m_targets.m_destZ;
-    }
+        m_targets.getDestination(x, y, z);
     // Summon in random point all other units if location present
     else
     {
@@ -11764,9 +11748,7 @@ void Spell::EffectCharge2(SpellEffectIndex /*eff_idx*/)
     float x, y, z;
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
     {
-        x = m_targets.m_destX;
-        y = m_targets.m_destY;
-        z = m_targets.m_destZ;
+        m_targets.getDestination(x, y, z);
 
         if (unitTarget->GetTypeId() != TYPEID_PLAYER)
             ((Creature *)unitTarget)->StopMoving();
@@ -12140,13 +12122,9 @@ void Spell::EffectTransmitted(SpellEffectIndex eff_idx)
     float fx, fy, fz;
 
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
-    {
-        fx = m_targets.m_destX;
-        fy = m_targets.m_destY;
-        fz = m_targets.m_destZ;
-    }
-    //FIXME: this can be better check for most objects but still hack
-    else if (m_spellInfo->EffectRadiusIndex[eff_idx] && m_spellInfo->speed==0)
+        m_targets.getDestination(fx, fy, fz);
+    // FIXME: this can be better check for most objects but still hack
+    else if (m_spellInfo->EffectRadiusIndex[eff_idx] && m_spellInfo->speed == 0)
     {
         float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
         m_caster->GetClosePoint(fx, fy, fz, DEFAULT_WORLD_OBJECT_SIZE, dis);
@@ -12896,9 +12874,7 @@ void Spell::EffectSuspendGravity(SpellEffectIndex eff_idx)
 
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
     {
-        x = m_targets.m_destX;
-        y = m_targets.m_destY;
-        z = m_targets.m_destZ;
+        m_targets.getDestination(x, y, z);
     }
     else
     {
@@ -12934,11 +12910,7 @@ void Spell::EffectKnockBackFromPosition(SpellEffectIndex eff_idx)
 
     float x, y, z;
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
-    {
-        x = m_targets.m_destX;
-        y = m_targets.m_destY;
-        z = m_targets.m_destZ;
-    }
+        m_targets.getDestination(x, y, z);
     else
         m_caster->GetPosition(x, y, z);
 
