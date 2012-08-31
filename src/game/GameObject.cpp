@@ -193,6 +193,9 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMa
     // Notify the outdoor pvp script
     else if (OutdoorPvP* outdoorPvP = sOutdoorPvPMgr.GetScript(GetZoneId()))
         outdoorPvP->HandleGameObjectCreate(this);
+    // Notify the map's instance data.
+    else if (InstanceData* iData = map->GetInstanceData())
+        iData->OnObjectCreate(this);
 
     switch (goinfo->type)
     {
