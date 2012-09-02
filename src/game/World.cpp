@@ -653,6 +653,9 @@ void World::LoadConfigSettings(bool reload)
     setConfig(CONFIG_BOOL_LFR_EXTEND, "LFR.Extend", false);
     setConfig(CONFIG_BOOL_LFG_ONLYLASTENCOUNTER, "LFG.OnlyLastEncounterForCompleteDungeon", false);
     setConfigMinMax(CONFIG_UINT32_LFG_MAXKICKS, "LFG.MaxKicks", 5, 1, 10);
+    std::string disabledMapIdForLFG = sConfig.GetStringDefault("LFG.DisableDungeonMapIds", "");
+    setDisabledMapIdForDungeonFinder(disabledMapIdForLFG.c_str());
+
 
     setConfig(CONFIG_BOOL_ALLOW_CUSTOM_MAPS, "AllowTransferToCustomMap", false);
 
@@ -2734,3 +2737,20 @@ bool World::IsAreaIdEnabledDuelReset(uint32 areaId)
 {
     return areaEnabledIds.find(areaId) != areaEnabledIds.end();
 }
+
+void World::setDisabledMapIdForDungeonFinder(const char* mapIds)
+{
+    disabledMapIdForDungeonFinder.clear();
+
+    Tokens disabledMapId(mapIds, ',');
+    for(Tokens::iterator it = disabledMapId.begin(); it != disabledMapId.end(); ++it)
+    {
+        disabledMapIdForDungeonFinder.insert(atoi(*it));
+    }
+}
+
+bool World::IsDungeonMapIdDisable(uint32 mapId)
+{
+    return disabledMapIdForDungeonFinder.find(mapId) != disabledMapIdForDungeonFinder.end();
+}
+

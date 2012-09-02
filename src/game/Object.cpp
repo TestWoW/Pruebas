@@ -1723,6 +1723,11 @@ void WorldObject::AddObjectToRemoveList()
     GetMap()->AddObjectToRemoveList(this);
 }
 
+void WorldObject::RemoveObjectFromRemoveList()
+{
+    GetMap()->RemoveObjectFromRemoveList(this);
+}
+
 Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, float ang,TempSummonType spwtype,uint32 despwtime, bool asActiveObject)
 {
     CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(id);
@@ -2275,7 +2280,7 @@ uint32 WorldObject::GetWorldState(uint32 stateId)
     return sWorldStateMgr.GetWorldStateValueFor(this, stateId);
 }
 
-EventProcessor* WorldObject::GetEvents()
+WorldObjectEventProcessor* WorldObject::GetEvents()
 {
     return &m_Events;
 }
