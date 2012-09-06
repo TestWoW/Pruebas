@@ -1200,14 +1200,15 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
     }
     else if (missInfo == SPELL_MISS_MISS || missInfo == SPELL_MISS_RESIST)
     {
-        if (real_caster && real_caster != unit)
+        if (unit && real_caster && real_caster != unit)
         {
             // can cause back attack (if detected)
-            if (!m_spellInfo->HasAttribute(SPELL_ATTR_EX3_NO_INITIAL_AGGRO) && !m_spellInfo->HasAttribute(SPELL_ATTR_EX_NO_THREAT) && !IsPositiveSpell(m_spellInfo->Id) &&
-                (m_caster->isVisibleForOrDetect(unit, unit, false) && !m_IsTriggeredSpell))
+            if (!m_spellInfo->HasAttribute(SPELL_ATTR_EX3_NO_INITIAL_AGGRO) 
+                && !m_spellInfo->HasAttribute(SPELL_ATTR_EX_NO_THREAT) 
+                && (!IsPositiveSpell(m_spellInfo->Id) || (IsNonPositiveSpell(m_spellInfo) && !real_caster->IsFriendlyTo(unit)))
+                && real_caster->isVisibleForOrDetect(unit, unit, false))
             {
-                if (!unit->isInCombat() && unit->GetTypeId() != TYPEID_PLAYER && ((Creature*)unit)->AI())
-                    unit->AttackedBy(real_caster);
+                unit->AttackedBy(real_caster);
             }
         }
     }
@@ -1403,7 +1404,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
     // Recheck immune (only for delayed spells)
     if (m_spellInfo->speed && (
         (IsSpellCauseDamage(m_spellInfo) && unit->IsImmunedToDamage(GetSpellSchoolMask(m_spellInfo))) ||
-        unit->IsImmuneToSpell(m_spellInfo)) &&
+        unit->IsImmuneToSpell(m_spellInfo, realCaster->IsFriendlyTo(unit))) &&
         !m_spellInfo->HasAttribute(SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY))
     {
         if (realCaster)
@@ -1445,13 +1446,15 @@ void Spell::DoSpellHitOnUnit(Unit *unit, uint32 effectMask)
                 return;
             }
 
-            if (!m_spellInfo->HasAttribute(SPELL_ATTR_EX3_NO_INITIAL_AGGRO) && !m_spellInfo->HasAttribute(SPELL_ATTR_EX_NO_THREAT) && !IsPositiveSpell(m_spellInfo->Id))
+            if (!m_spellInfo->HasAttribute(SPELL_ATTR_EX3_NO_INITIAL_AGGRO) 
+                && !m_spellInfo->HasAttribute(SPELL_ATTR_EX_NO_THREAT) 
+                && (!IsPositiveSpell(m_spellInfo->Id) || IsNonPositiveSpell(m_spellInfo))
+                && realCaster->isVisibleForOrDetect(unit, unit, false))
             {
                 if (!unit->IsStandState() && !unit->hasUnitState(UNIT_STAT_STUNNED))
                     unit->SetStandState(UNIT_STAND_STATE_STAND);
 
-                if (!m_spellInfo->HasAttribute(SPELL_ATTR_EX_NO_THREAT) && !unit->isInCombat())
-                    unit->AttackedBy(realCaster);
+                unit->AttackedBy(realCaster);
             }
         }
         else
@@ -5636,7 +5639,7 @@ SpellCastResult Spell::CheckCast(bool strict)
 
         if (IsPositiveSpell(m_spellInfo->Id) && m_caster->IsFriendlyTo(target))
         {
-            if (!target->IsImmunedToSchool(GetSpellSchoolMask(m_spellInfo)) && target->IsImmuneToSpell(m_spellInfo))
+            if (!target->IsImmunedToSchool(GetSpellSchoolMask(m_spellInfo)) && target->IsImmuneToSpell(m_spellInfo, true))
                 return SPELL_FAILED_TARGET_AURASTATE;
 
             if (target->IsInWorld() && target->IsInMap(m_caster))
