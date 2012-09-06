@@ -47,7 +47,7 @@
 
 #include "Policies/SingletonImp.h"
 
-//#include <fstream>
+#include <fstream>
 
 INSTANTIATE_SINGLETON_1(BattleGroundMgr);
 
