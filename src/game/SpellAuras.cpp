@@ -870,11 +870,9 @@ void Aura::AreaAuraUpdate(uint32 diff)
 
                 if (i_target->GetTypeId() == TYPEID_PLAYER && ((Player*)i_target)->IsBeingTeleportedFar())
                     continue;
- 
-/* revert mr1911   
+   
                 if (GetSpellProto()->HasAttribute(SPELL_ATTR_EX3_TARGET_ONLY_PLAYER) && i_target->GetTypeId() != TYPEID_PLAYER)
                     continue;
-*/
 
                 if (i_target->IsImmuneToSpell(GetSpellProto(), GetAffectiveCaster() ? GetAffectiveCaster()->IsFriendlyTo(i_target) : true))
                     continue;
