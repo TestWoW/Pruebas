@@ -2016,6 +2016,23 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     return;
 
                 }
+                case 42628:                                 // Fire Bomb (throw)
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 42629, true);
+                    return;
+                }
+                case 42631:                                 // Fire Bomb (explode)
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->RemoveAurasDueToSpell(42629);
+                    unitTarget->CastSpell(unitTarget, 42630, true);
+                    return;
+                }
                 case 42793:                                 // Burn Body
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT || m_caster->GetTypeId() != TYPEID_PLAYER)
@@ -2064,6 +2081,22 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 {
                     // Towers of Certain Doom: Tower Caster Instakill
                     m_caster->CastSpell(m_caster, 43072, true);
+                    return;
+                }
+                case 43096:                                 // Summon All Players
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    m_caster->CastSpell(unitTarget, 43097, true);
+                    return;
+                }
+                case 43144:                                 // Hatch All Eggs
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 42493, true, NULL, NULL, m_caster->GetObjectGuid());
                     return;
                 }
                 case 43209:                                 // Place Ram Meat
@@ -6983,20 +7016,16 @@ void Spell::EffectTeleUnitsFaceCaster(SpellEffectIndex eff_idx)
     if (!unitTarget || unitTarget->IsTaxiFlying())
         return;
 
+    float fx, fy, fz;
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
-    {
-        unitTarget->NearTeleportTo(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, -m_caster->GetOrientation(), unitTarget == m_caster);
-    }
+        m_targets.getDestination(fx, fy, fz);
     else
     {
         float dis = GetSpellRadius(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[eff_idx]));
-
-        float fx, fy, fz;
         m_caster->GetClosePoint(fx, fy, fz, unitTarget->GetObjectBoundingRadius(), dis);
-
-        unitTarget->NearTeleportTo(fx, fy, fz, -m_caster->GetOrientation(), unitTarget == m_caster);
-//        DEBUG_LOG("Spell::EffectTeleUnitsFaceCaster teleport %s  desination point not setted. Use old method.", unitTarget->GetObjectGuid().GetString().c_str()););
     }
+
+    unitTarget->NearTeleportTo(fx, fy, fz, -m_caster->GetOrientation(), unitTarget == m_caster);
 }
 
 void Spell::EffectLearnSkill(SpellEffectIndex eff_idx)

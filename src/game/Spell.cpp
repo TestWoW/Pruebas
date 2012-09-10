@@ -501,8 +501,7 @@ Spell::~Spell()
 {
 }
 
-template<typename T>
-WorldObject* Spell::FindCorpseUsing(uint32 corpseTypeMask)
+template<typename T> WorldObject* Spell::FindCorpseUsing(uint32 corpseTypeMask)
 {
     // non-standard target selection
     SpellRangeEntry const* srange = sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex);
@@ -523,9 +522,6 @@ WorldObject* Spell::FindCorpseUsing(uint32 corpseTypeMask)
 
     return result;
 }
-
-// explicitly instantiate for use in SpellEffects.cpp
-template WorldObject* Spell::FindCorpseUsing<MaNGOS::RaiseDeadObjectCheck>(uint32 corpseTypeMask = CREATURE_TYPEMASK_NONE);
 
 void Spell::FillTargetMap()
 {
@@ -765,11 +761,14 @@ void Spell::FillTargetMap()
         if (tmpUnitLists[effToIndex[i]].size() == 1 && *tmpUnitLists[effToIndex[i]].begin() == m_caster->getVictim())
         {
             if (Unit* pMagnetTarget = m_caster->SelectMagnetTarget(*tmpUnitLists[effToIndex[i]].begin(), this, SpellEffectIndex(i)))
+            {
                 if (pMagnetTarget != *tmpUnitLists[effToIndex[i]].begin())
                 {
                     tmpUnitLists[effToIndex[i]].clear();
                     tmpUnitLists[effToIndex[i]].push_back(pMagnetTarget);
+                    m_spellFlags |= SPELL_FLAG_REDIRECTED;
                 }
+            }
         }
 
         for (UnitList::iterator itr = tmpUnitLists[effToIndex[i]].begin(); itr != tmpUnitLists[effToIndex[i]].end();)
@@ -921,7 +920,7 @@ void Spell::CleanupTargetList()
 
 void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
 {
-    if (m_spellInfo->Effect[effIndex] == 0)
+    if (m_spellInfo->Effect[effIndex] == SPELL_EFFECT_NONE || !pVictim)
         return;
 
     // Check for effect immune skip if immuned
@@ -1800,7 +1799,10 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             m_caster->GetClosePoint(dest_x, dest_y, dest_z, 0.0f, radius, angle);
             m_targets.setDestination(dest_x, dest_y, dest_z);
 
-            targetUnitMap.push_back(m_caster);
+            // This targetMode is often used as 'last' implicitTarget for positive spells, that just require coordinates
+            // and no unitTarget (e.g. summon effects). As MaNGOS always needs a unitTarget we add just the caster here.
+            if (IsPositiveSpell(m_spellInfo))
+                targetUnitMap.push_back(m_caster);
             break;
         }
         case TARGET_91:
@@ -2065,8 +2067,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             {
                 if (Unit* pUnitTarget = m_caster->SelectMagnetTarget(m_targets.getUnitTarget(), this, effIndex))
                 {
-                    m_targets.setUnitTarget(pUnitTarget);
-                    m_spellFlags |= SPELL_FLAG_REDIRECTED;
+                    if (m_targets.getUnitTarget() != pUnitTarget)
+                    {
+                        m_targets.setUnitTarget(pUnitTarget);
+                        m_spellFlags |= SPELL_FLAG_REDIRECTED;
+                    }
                     targetUnitMap.push_back(pUnitTarget);
                 }
             }
@@ -2613,8 +2618,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 {
                     if (Unit* pUnitTarget = m_caster->SelectMagnetTarget(m_targets.getUnitTarget(), this, effIndex))
                     {
-                        m_targets.setUnitTarget(pUnitTarget);
-                        m_spellFlags |= SPELL_FLAG_REDIRECTED;
+                        if (m_targets.getUnitTarget() != pUnitTarget)
+                        {
+                            m_targets.setUnitTarget(pUnitTarget);
+                            m_spellFlags |= SPELL_FLAG_REDIRECTED;
+                        }
                         targetUnitMap.push_back(pUnitTarget);
                     }
                 }
@@ -2644,8 +2652,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
         {
             if (Unit* pUnitTarget = m_caster->SelectMagnetTarget(m_targets.getUnitTarget(), this, effIndex))
             {
-                m_targets.setUnitTarget(pUnitTarget);
-                m_spellFlags |= SPELL_FLAG_REDIRECTED;
+                if (m_targets.getUnitTarget() != pUnitTarget)
+                {
+                    m_targets.setUnitTarget(pUnitTarget);
+                    m_spellFlags |= SPELL_FLAG_REDIRECTED;
+                }
                 targetUnitMap.push_back(pUnitTarget);
             }
             break;
@@ -7993,8 +8004,8 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
             // Get GO cast coordinates if original caster -> GO
             if (target != m_caster)
             {
-                if (WorldObject *caster = GetCastingObject())
-                    if (!target->IsVisibleTargetForSpell(m_caster, m_spellInfo))
+                if (WorldObject* caster = GetCastingObject())
+                    if (!target->IsVisibleTargetForSpell(caster, m_spellInfo))
                         return false;
             }
             break;
