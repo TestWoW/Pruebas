@@ -2965,8 +2965,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                                 m_caster->CastSpell(m_caster, spellID, true, NULL);
                             return;
                         }
-                        case EFFECT_INDEX_1:                // additional data for dummy[0]
-                        case EFFECT_INDEX_2:
+                        default:                            // additional data for dummy[0]
                             return;
                     }
                     return;
@@ -5368,7 +5367,6 @@ void Spell::EffectPowerDrain(SpellEffectIndex eff_idx)
     unitTarget->SpellDamageBonusTaken(&drainDamageInfo);
 
     // resilience reduce mana draining effect at spell crit damage reduction (added in 2.4)
-    uint32 power = drainDamageInfo.damage;
     if (drain_power == POWER_MANA)
         drainDamageInfo.damage -= unitTarget->GetSpellCritDamageReduction(drainDamageInfo.damage);
 
