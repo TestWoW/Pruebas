@@ -576,7 +576,7 @@ void Spell::FillTargetMap()
                     switch(m_spellInfo->EffectImplicitTargetB[i])
                     {
                         case TARGET_NONE:
-                            if (m_caster->GetObjectGuid().IsPet())
+                            if (m_caster->GetObjectGuid().IsPet() && m_spellInfo->TargetCreatureType == CREATURE_TYPEMASK_NONE)
                                 SetTargetMap(SpellEffectIndex(i), TARGET_SELF, tmpUnitLists[i /*==effToIndex[i]*/]);
                             else
                                 SetTargetMap(SpellEffectIndex(i), TARGET_EFFECT_SELECT, tmpUnitLists[i /*==effToIndex[i]*/]);
@@ -762,7 +762,7 @@ void Spell::FillTargetMap()
         {
             if (Unit* pMagnetTarget = m_caster->SelectMagnetTarget(*tmpUnitLists[effToIndex[i]].begin(), this, SpellEffectIndex(i)))
             {
-                if (pMagnetTarget != *tmpUnitLists[effToIndex[i]].begin())
+                if (pMagnetTarget && pMagnetTarget != *tmpUnitLists[effToIndex[i]].begin())
                 {
                     tmpUnitLists[effToIndex[i]].clear();
                     tmpUnitLists[effToIndex[i]].push_back(pMagnetTarget);
@@ -782,8 +782,11 @@ void Spell::FillTargetMap()
                 ++itr;
         }
 
-        for (UnitList::const_iterator iunit = tmpUnitLists[effToIndex[i]].begin(); iunit != tmpUnitLists[effToIndex[i]].end(); ++iunit)
-            AddUnitTarget((*iunit), SpellEffectIndex(i));
+        if (!tmpUnitLists[effToIndex[i]].empty())
+        {
+            for (UnitList::const_iterator iunit = tmpUnitLists[effToIndex[i]].begin(); iunit != tmpUnitLists[effToIndex[i]].end(); ++iunit)
+                AddUnitTarget((*iunit), SpellEffectIndex(i));
+        }
     }
 }
 
@@ -1805,7 +1808,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 targetUnitMap.push_back(m_caster);
             break;
         }
-        case TARGET_91:
+        case TARGET_DEST_RADIUS:
         case TARGET_RANDOM_NEARBY_DEST:
         {
             // Get a random point IN the CIRCEL around current M_TARGETS COORDINATES(!).
@@ -2998,8 +3001,15 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             {
                 case SPELL_EFFECT_DUMMY:
                 {
-
-                    if (m_targets.getUnitTarget())
+                    // Voracious Appetite && Cannibalize && Carrion Feeder additional check
+                    if (m_spellInfo->HasAttribute(SPELL_ATTR_ABILITY)
+                        && m_spellInfo->HasAttribute(SPELL_ATTR_EX2_ALLOW_DEAD_TARGET)
+                        && m_spellInfo->TargetCreatureType != CREATURE_TYPEMASK_NONE)
+                    {
+                        if (m_targets.getUnitTarget() != m_caster)
+                            targetUnitMap.push_back(m_targets.getUnitTarget());
+                    }
+                    else if (m_targets.getUnitTarget())
                         targetUnitMap.push_back(m_targets.getUnitTarget());
 
                     // Add AoE target-mask to self, if no target-dest provided already
@@ -5962,25 +5972,26 @@ SpellCastResult Spell::CheckCast(bool strict)
                     && m_spellInfo->HasAttribute(SPELL_ATTR_EX2_ALLOW_DEAD_TARGET)
                     && m_spellInfo->TargetCreatureType != CREATURE_TYPEMASK_NONE)
                 {
+                    m_targets.setUnitTarget(NULL);
                     WorldObject* result = FindCorpseUsing<MaNGOS::CannibalizeObjectCheck>(m_spellInfo->TargetCreatureType);
-                    if (result)
+                    if (result && result->IsInWorld())
                     {
-                        switch(result->GetTypeId())
+                        switch (result->GetTypeId())
                         {
                             case TYPEID_UNIT:
                             case TYPEID_PLAYER:
                                 m_targets.setUnitTarget((Unit*)result);
                                 break;
                             case TYPEID_CORPSE:
-                                m_targets.setCorpseTarget((Corpse*)result);
                                 if (Player* owner = ObjectAccessor::FindPlayer(((Corpse*)result)->GetOwnerGuid()))
-                                    m_targets.setUnitTarget(owner);
+                                    if (owner->IsInMap(m_caster) && !owner->isAlive())
+                                        m_targets.setUnitTarget((Unit*)owner);
                                 break;
                             default:
-                                return SPELL_FAILED_NO_EDIBLE_CORPSES;
+                                break;
                         }
                     }
-                    else
+                    if (!m_targets.getUnitTarget())
                         return SPELL_FAILED_NO_EDIBLE_CORPSES;
                 }
                 break;
@@ -6890,7 +6901,8 @@ SpellCastResult Spell::CheckCastTargets() const
 {
 
     // Spell without any target
-    if (!m_targets.HasLocation() &&
+    if (!IsSpellWithCasterSourceTargetsOnly(m_spellInfo) &&
+        !m_targets.HasLocation() &&
         m_UniqueTargetInfo.empty() &&
         m_UniqueGOTargetInfo.empty() &&
         m_UniqueItemInfo.empty())
@@ -7810,8 +7822,11 @@ bool Spell::CheckTargetBeforeLimitation(Unit* target, SpellEffectIndex eff)
     return true;
 }
 
-bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
+bool Spell::CheckTarget(Unit* target, SpellEffectIndex eff )
 {
+    if (!target)
+        return false;
+
     // Check targets for creature type mask and remove not appropriate (skip explicit self target case, maybe need other explicit targets)
     if (m_spellInfo->EffectImplicitTargetA[eff] != TARGET_SELF )
     {
